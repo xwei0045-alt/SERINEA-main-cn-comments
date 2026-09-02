@@ -23,7 +23,7 @@ MapApp
   -> ReachRepository
   -> CsvReachRepository (default now)
   -> DemoReachRepository (optional fallback)
-  -> PostgresReachRepository (future AWS database step)
+  -> PostgresReachRepository (AWS deployment)
 ```
 
 ## Object-oriented responsibilities
@@ -35,6 +35,7 @@ MapApp
 - `CsvDatasetLoader` parses and validates both supplied files once per service instance.
 - `SpatialGridIndex` limits statewide POI searches to nearby grid cells.
 - `CsvReachRepository` maps supported data categories and calculates walking estimates.
+- `PostgresReachRepository` reads the active validated dataset version from PostgreSQL.
 - `DemoReachRepository` adapts the existing static data to that contract.
 - `PostgresDatabase` owns the PostgreSQL connection pool.
 - `Environment` owns validated backend configuration.
@@ -44,6 +45,6 @@ MapApp
 
 `REACH_DATA_SOURCE` defaults to `csv`. The detailed file powers `/api/reach`; the locality summary file powers `/api/localities`. The loader rejects malformed coordinates, duplicate OSM IDs, invalid counts, or a mismatch between detailed and summary totals.
 
-## Future AWS database step
+## AWS database mode
 
-The API contract and repository boundary are already stable. Moving to RDS PostgreSQL will require a migration/import process and a `PostgresReachRepository`, followed by integration and performance tests. The frontend API client does not need to change.
+`database/schema.sql` stores complete dataset versions. The importer writes a version transactionally, validates row totals, and changes the active pointer only when reconciliation succeeds. Both `/api/reach` and `/api/localities` switch to PostgreSQL when `REACH_DATA_SOURCE=database`; the frontend API client does not change.

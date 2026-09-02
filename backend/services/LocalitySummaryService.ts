@@ -1,5 +1,6 @@
-import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
 import type { LocalityPoiSummaryRecord } from "@/backend/data/RegionalDataset";
+import { CsvLocalitySummaryRepository } from "@/backend/repositories/CsvLocalitySummaryRepository";
+import type { LocalitySummaryRepository } from "@/backend/repositories/LocalitySummaryRepository";
 import type {
   LocalitySummaryItem,
   LocalitySummaryQuery,
@@ -27,15 +28,17 @@ type MutableLocality = {
 
 /** Builds searchable locality statistics from the second supplied CSV file. */
 export class LocalitySummaryService {
+  private dataPromise: ReturnType<LocalitySummaryRepository["load"]> | undefined;
   private summariesPromise: Promise<LocalitySummaryItem[]> | undefined;
 
-  constructor(private readonly loader = new CsvDatasetLoader()) {}
+  constructor(
+    private readonly repository: LocalitySummaryRepository =
+      new CsvLocalitySummaryRepository()
+  ) {}
 
   async search(query: LocalitySummaryQuery): Promise<LocalitySummaryResponse> {
-    const [dataset, summaries] = await Promise.all([
-      this.loader.load(),
-      this.getSummaries()
-    ]);
+    const data = await this.getData();
+    const summaries = await this.getSummaries(data.rows);
     const searchText = query.q.toLocaleLowerCase("en-AU");
     const matches = searchText
       ? summaries.filter((item) =>
@@ -49,17 +52,20 @@ export class LocalitySummaryService {
       items: matches.slice(0, query.limit),
       totalMatches: matches.length,
       totalLocalities: summaries.length,
-      totalPois: dataset.metadata.summaryPoiCount,
-      dataSource: "csv",
+      totalPois: data.totalPois,
+      dataSource: this.repository.dataSource,
       generatedAt: new Date().toISOString()
     };
   }
 
-  private getSummaries(): Promise<LocalitySummaryItem[]> {
+  private getData(): ReturnType<LocalitySummaryRepository["load"]> {
+    if (!this.dataPromise) this.dataPromise = this.repository.load();
+    return this.dataPromise;
+  }
+
+  private getSummaries(rows: LocalityPoiSummaryRecord[]): Promise<LocalitySummaryItem[]> {
     if (!this.summariesPromise) {
-      this.summariesPromise = this.loader
-        .load()
-        .then((dataset) => this.aggregate(dataset.localitySummaries));
+      this.summariesPromise = Promise.resolve(this.aggregate(rows));
     }
     return this.summariesPromise;
   }

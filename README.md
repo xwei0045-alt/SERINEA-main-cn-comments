@@ -39,7 +39,7 @@ npm test
 | Map | Leaflet (client-only on `/map`) |
 | Backend | Next.js route handlers, object-oriented service/repository layers |
 | Current data | Validated CSV files with an in-memory spatial index |
-| Database-ready code | PostgreSQL connection pool (`pg`) |
+| Database | Versioned PostgreSQL schema, transactional importer, and repositories |
 
 ## Routes
 
@@ -77,6 +77,7 @@ SERINEA/
 │   └── sources.ts          # Source stamps & demo banner
 ├── docs/
 │   ├── ARCHITECTURE.md     # Frontend/backend ownership and object flow
+│   ├── AWS_DEPLOYMENT.md   # EC2, PostgreSQL, Nginx deployment details
 │   ├── BACKEND.md          # API and operating instructions
 │   └── DATASET.md          # Supplied fields, mapping, and limitations
 ├── PRODUCT.md              # Product spec (mentor reference)
@@ -92,6 +93,8 @@ SERINEA/
 - **Round-trip filter:** if return does not fit, the place is omitted (or shown as ghost on the landing demo only).
 
 See `docs/BACKEND.md` for integration points for the backend developer.
+
+See `docs/AWS_DEPLOYMENT.md` for the current low-cost AWS development architecture and the future dataset update process.
 
 ## Branch
 

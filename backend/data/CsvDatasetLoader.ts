@@ -116,6 +116,16 @@ export class CsvDatasetLoader {
         line
       ),
       displayName: row.display_name?.trim() ?? "",
+      osmTagType: row.osm_tag_type?.trim() ?? "",
+      osmTagValue: row.osm_tag_value?.trim() ?? "",
+      addressHouseNumber: row.addr_housenumber?.trim() ?? "",
+      addressStreet: row.addr_street?.trim() ?? "",
+      osmAddressSuburb: row.osm_addr_suburb?.trim() ?? "",
+      addressPostcode: row.addr_postcode?.trim() ?? "",
+      operator: row.operator?.trim() ?? "",
+      brand: row.brand?.trim() ?? "",
+      phone: row.phone?.trim() ?? "",
+      website: row.website?.trim() ?? "",
       openingHours: row.opening_hours?.trim() ?? "",
       wheelchair: row.wheelchair?.trim() ?? ""
     };

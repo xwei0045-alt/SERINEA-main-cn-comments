@@ -36,7 +36,7 @@ export const localitySummaryResponseSchema = z.object({
   totalMatches: z.number().int().nonnegative(),
   totalLocalities: z.number().int().nonnegative(),
   totalPois: z.number().int().nonnegative(),
-  dataSource: z.literal("csv"),
+  dataSource: z.enum(["csv", "database"]),
   generatedAt: z.string().datetime()
 });
 

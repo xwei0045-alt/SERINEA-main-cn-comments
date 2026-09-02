@@ -2,7 +2,7 @@ import type { Poi } from "@/lib/types";
 import type { PoiCategoryId } from "@/shared/contracts/reach";
 import type { RegionalPoiRecord } from "@/backend/data/RegionalDataset";
 
-const CATEGORY_BY_SUBCATEGORY: Partial<Record<string, PoiCategoryId>> = {
+export const CATEGORY_BY_SUBCATEGORY: Partial<Record<string, PoiCategoryId>> = {
   park: "park",
   nature_reserve: "park",
   playground: "park",
@@ -17,9 +17,22 @@ const CATEGORY_BY_SUBCATEGORY: Partial<Record<string, PoiCategoryId>> = {
   dentist: "gp"
 };
 
+export const SUPPORTED_SUBCATEGORIES = Object.keys(CATEGORY_BY_SUBCATEGORY);
+
+export type MappableRegionalPoi = Pick<
+  RegionalPoiRecord,
+  | "osmId"
+  | "name"
+  | "displayName"
+  | "subcategory"
+  | "latitude"
+  | "longitude"
+  | "locality"
+>;
+
 /** Converts a data-team row into the smaller POI shape already used by the map. */
 export class RegionalPoiMapper {
-  toMapPoi(record: RegionalPoiRecord): Poi | null {
+  toMapPoi(record: MappableRegionalPoi): Poi | null {
     const category = CATEGORY_BY_SUBCATEGORY[record.subcategory];
     if (!category) return null;
 

@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import type { QueryResult, QueryResultRow } from "pg";
+import type { PoolClient, QueryResult, QueryResultRow } from "pg";
 
 /** Stores the one shared database object during Next.js development reloads. */
 const databaseGlobal = globalThis as typeof globalThis & {
@@ -46,6 +46,22 @@ export class PostgresDatabase {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  /** Runs related statements on one client and rolls them back together on failure. */
+  async transaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await work(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
     }
   }
 

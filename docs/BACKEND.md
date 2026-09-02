@@ -17,6 +17,15 @@ CSV mode is the default and needs no secret configuration. To make the selection
 REACH_DATA_SOURCE=csv
 ```
 
+To create and import a PostgreSQL database:
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE" npm run db:migrate
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE" npm run db:import -- --version=iteration1
+```
+
+After import, run the application with `REACH_DATA_SOURCE=database`. Database mode powers both reachability and locality summary APIs from the active dataset version.
+
 ## API routes
 
 ### Reachability
@@ -65,13 +74,12 @@ No transit feed was supplied. `EstimatedJourneyCalculator` therefore uses straig
 | `ReachService` | Enforce round-trip and category business rules |
 | `ReachController` | Validate HTTP input and return safe errors |
 | `LocalitySummaryService` | Aggregate and search the supplied summary data |
-| `PostgresDatabase` | Own the future PostgreSQL connection pool |
+| `PostgresDatabase` | Own the PostgreSQL connection pool and transactions |
+| `PostgresReachRepository` | Query nearby POIs from the active database version |
+| `PostgresLocalitySummaryRepository` | Query locality summaries from the active version |
 
-## What remains before database mode
+## AWS development deployment
 
-1. Create the AWS RDS PostgreSQL instance and private/network access rules.
-2. Confirm whether PostGIS is permitted and choose the production schema.
-3. Import and reconcile both CSV files in a staging table before replacing production data.
-4. Implement and test `PostgresReachRepository` against that confirmed schema.
-5. Store `DATABASE_URL` in the deployment secret manager and set `REACH_DATA_SOURCE=database`.
-6. Add GTFS data and real round-trip routing if the product is expected to show public-transport times.
+The current AWS plan uses PostgreSQL and Next.js on one EC2 instance, connected through a local Unix socket. This keeps PostgreSQL off the public network and avoids a database password. See `AWS_DEPLOYMENT.md` for the automated bootstrap and limitations.
+
+For a production architecture, move PostgreSQL to private RDS, add managed secrets, HTTPS, backups, monitoring, and multiple application instances. GTFS data and real routing are still required before journey times can be described as public transport.

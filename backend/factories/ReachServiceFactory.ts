@@ -1,6 +1,8 @@
 import { Environment } from "@/backend/config/Environment";
 import { CsvReachRepository } from "@/backend/repositories/CsvReachRepository";
 import { DemoReachRepository } from "@/backend/repositories/DemoReachRepository";
+import { PostgresReachRepository } from "@/backend/repositories/PostgresReachRepository";
+import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { ReachService } from "@/backend/services/ReachService";
 
 /**
@@ -21,8 +23,10 @@ export class ReachServiceFactory {
       return new ReachService(new CsvReachRepository());
     }
 
-    throw new Error(
-      "The database repository will be enabled after the real data schema is confirmed."
+    return new ReachService(
+      new PostgresReachRepository(
+        PostgresDatabase.getInstance(environment.databaseUrl as string)
+      )
     );
   }
 }

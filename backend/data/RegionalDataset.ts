@@ -13,6 +13,16 @@ export type RegionalPoiRecord = {
   category: string;
   subcategory: string;
   displayName: string;
+  osmTagType: string;
+  osmTagValue: string;
+  addressHouseNumber: string;
+  addressStreet: string;
+  osmAddressSuburb: string;
+  addressPostcode: string;
+  operator: string;
+  brand: string;
+  phone: string;
+  website: string;
   openingHours: string;
   wheelchair: string;
 };
