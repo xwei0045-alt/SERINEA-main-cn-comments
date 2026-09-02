@@ -7,6 +7,7 @@ readonly REPOSITORY_URL="https://github.com/neervasa00000000/SERINEA.git"
 readonly DEPLOYMENT_BRANCH="backend-integration"
 readonly APPLICATION_DIRECTORY="/opt/serinea"
 readonly DATABASE_URL="postgresql:///serinea?host=/var/run/postgresql"
+readonly SOURCE_DIRECTORY="${SERINEA_SOURCE_DIRECTORY:-}"
 
 echo "Starting SERINEA EC2 bootstrap."
 
@@ -44,17 +45,31 @@ if ! runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='
   runuser -u postgres -- createdb --owner=serinea serinea
 fi
 
-if [[ ! -d "${APPLICATION_DIRECTORY}/.git" ]]; then
+# A private repository can be deployed from a source package downloaded from S3.
+# Public repositories continue to use the Git workflow below.
+if [[ -n "${SOURCE_DIRECTORY}" ]]; then
+  if [[ ! -f "${SOURCE_DIRECTORY}/package.json" ]]; then
+    echo "The supplied source directory does not contain package.json: ${SOURCE_DIRECTORY}"
+    exit 1
+  fi
+
   install -d -o serinea -g serinea "${APPLICATION_DIRECTORY}"
-  runuser -u serinea -- git clone \
-    --branch "${DEPLOYMENT_BRANCH}" \
-    --single-branch \
-    "${REPOSITORY_URL}" \
-    "${APPLICATION_DIRECTORY}"
+  find "${APPLICATION_DIRECTORY}" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+  cp -a "${SOURCE_DIRECTORY}/." "${APPLICATION_DIRECTORY}/"
+  chown -R serinea:serinea "${APPLICATION_DIRECTORY}"
 else
-  runuser -u serinea -- git -C "${APPLICATION_DIRECTORY}" fetch origin "${DEPLOYMENT_BRANCH}"
-  runuser -u serinea -- git -C "${APPLICATION_DIRECTORY}" checkout "${DEPLOYMENT_BRANCH}"
-  runuser -u serinea -- git -C "${APPLICATION_DIRECTORY}" pull --ff-only origin "${DEPLOYMENT_BRANCH}"
+  if [[ ! -d "${APPLICATION_DIRECTORY}/.git" ]]; then
+    install -d -o serinea -g serinea "${APPLICATION_DIRECTORY}"
+    runuser -u serinea -- git clone \
+      --branch "${DEPLOYMENT_BRANCH}" \
+      --single-branch \
+      "${REPOSITORY_URL}" \
+      "${APPLICATION_DIRECTORY}"
+  else
+    runuser -u serinea -- git -C "${APPLICATION_DIRECTORY}" fetch origin "${DEPLOYMENT_BRANCH}"
+    runuser -u serinea -- git -C "${APPLICATION_DIRECTORY}" checkout "${DEPLOYMENT_BRANCH}"
+    runuser -u serinea -- git -C "${APPLICATION_DIRECTORY}" pull --ff-only origin "${DEPLOYMENT_BRANCH}"
+  fi
 fi
 
 runuser -u serinea -- bash -lc "
