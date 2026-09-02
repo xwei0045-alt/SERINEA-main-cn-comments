@@ -25,6 +25,8 @@ export const localitySummaryItemSchema = z.object({
   lgaName: z.string(),
   regionalGroup: z.string(),
   totalPoiCount: z.number().int().nonnegative(),
+  latitude: z.number().finite().min(-90).max(90).optional(),
+  longitude: z.number().finite().min(-180).max(180).optional(),
   categories: z.array(categorySummarySchema)
 });
 

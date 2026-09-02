@@ -49,9 +49,19 @@ export type RegionalDatasetMetadata = {
   summaryPoiCount: number;
 };
 
+/** Mean coordinate for one locality, used to drop the map pin on a town name. */
+export type LocalityCentroid = {
+  locality: string;
+  lgaName: string;
+  regionalGroup: string;
+  latitude: number;
+  longitude: number;
+};
+
 /** Validated in-memory representation of the complete Iteration 1 handover. */
 export type RegionalDataset = {
   pois: RegionalPoiRecord[];
   localitySummaries: LocalityPoiSummaryRecord[];
+  localityCentroids: LocalityCentroid[];
   metadata: RegionalDatasetMetadata;
 };

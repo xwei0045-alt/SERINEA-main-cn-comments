@@ -1,6 +1,6 @@
 ---
 name: SERINEA
-description: Melbourne public-transport reach as a street-directory plate — 15 minutes printed as the only overlay, listed places the only index.
+description: Regional Victoria reach as a street-directory plate — 15 minutes printed as the only overlay, listed places the only index.
 colors:
   ink: "#1c211c"
   ink-soft: "#4a5248"
@@ -211,7 +211,7 @@ components:
 
 **Creative North Star: "The Street Directory Plate"**
 
-SERINEA is a Melbourne street directory that happens to live on a screen. Cool atlas paper, cyan water, olive park plates, arterial-red roads and pin, a solid orange 15-minute overlay, and a hairline letter-number grid. Home is the printed plate: inner Melbourne full-bleed, Flinders Street as the square marker, listed places as the only index. Map and How it works are the same atlas opened on the kitchen table — the map is the field, not a hero screenshot.
+SERINEA is a street directory that happens to live on a screen, drawn for **regional Victoria**. Cool atlas paper, cyan water, olive park plates, arterial-red roads and pin, a solid orange 15-minute overlay, and a hairline letter-number grid. Home is the scroll reel that sells fifteen minutes there and back in a regional town. The map opens on Shepparton — the field, not a Melbourne CBD plate.
 
 The world refuses night sounding charts, SaaS map heroes, cream editorial landings, Victorian bond-form chrome, and split-flap lettering. Fifteen minutes is printed once, as an opaque overlay with an ink stroke. Places that fit outbound but blow the return are ghosts: open squares, never indexed.
 
@@ -240,7 +240,7 @@ Cool atlas paper with cyan water, olive parks, one arterial red, one overlay ora
 ### Neutral
 - **Atlas ink** (`{colors.ink}` / `{colors.ink-soft}`): body type, overlay stroke, listed-mark fill, pin stroke, pressed filters, locate fill, footer.
 - **Cool paper** (`{colors.paper}` / `{colors.paper-2}` / `{colors.paper-3}`): chrome field, ghost column, source plates, hairline rules. Green-grey atlas stock, not cream.
-- **Land wash** (`{colors.land}`): inner-Melbourne land on the plate.
+- **Land wash** (`{colors.land}`): land on the atlas plate.
 - **Grid hairline** (`{colors.grid}`): 1px letter-number ticks on the plate.
 - **Map wash** (`{colors.map-wash}`): Leaflet stage behind atlas-filtered tiles.
 - **Enamel** (`{colors.enamel}`): type on arterial and ink; selected index/result rows.

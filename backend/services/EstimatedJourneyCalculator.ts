@@ -22,21 +22,21 @@ export class EstimatedJourneyCalculator {
     const minutes = Math.max(0.1, (distanceKm / this.walkingSpeedKmPerHour) * 60);
     const roundedMinutes = this.round(minutes);
     const roundedTrip = this.round(roundedMinutes * 2);
-    const distanceText = `${distanceKm.toFixed(2)} km`;
+    const distanceText = formatWalkDistance(distanceKm);
 
     return {
       outbound: [
         {
           mode: "walk",
           minutes: roundedMinutes,
-          text: `Walk approximately ${distanceText} to ${poi.name}`
+          text: `About ${distanceText} on foot`
         }
       ],
       inbound: [
         {
           mode: "walk",
           minutes: roundedMinutes,
-          text: `Walk approximately ${distanceText} back to the pin`
+          text: "Same walk back"
         }
       ],
       outboundMinutes: roundedMinutes,
@@ -61,4 +61,9 @@ export class EstimatedJourneyCalculator {
   private round(value: number): number {
     return Math.round(value * 10) / 10;
   }
+}
+
+function formatWalkDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(1)} km`;
 }

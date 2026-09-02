@@ -210,7 +210,7 @@ export function LandingExperience() {
       <div className={styles.sticky} onPointerMove={onMove}>
         <div className={styles.stage} aria-label="Scroll-driven SERINEA experience">
           <h1 className={styles.srOnly}>
-            SERINEA — fifteen-minute round-trip reach for rural towns
+            SERINEA — fifteen-minute round-trip reach for regional Victoria
           </h1>
           <div className={styles.noise} aria-hidden="true" />
           <div className={styles.gridDrift} aria-hidden="true" />
@@ -222,7 +222,7 @@ export function LandingExperience() {
               SERINEA
             </p>
             <p className={styles.brandTag}>
-              Reach that works in small towns
+              Reach that works in regional Victoria
             </p>
             <p className={styles.brandHint}>Scroll ↓</p>
           </div>
@@ -411,7 +411,7 @@ export function LandingExperience() {
             <ul className={styles.lockList}>
               <li>No accounts this pass</li>
               <li>Pin stays for reach — not a profile harvest</li>
-              <li>Demo journeys labelled · not live GTFS</li>
+              <li>Walking estimates labelled · no GTFS this pass</li>
               <li>Cybersecurity seat on the six</li>
             </ul>
           </div>
@@ -491,7 +491,8 @@ export function LandingExperience() {
             >
               <p className={styles.goTitle}>We've got your town's back.</p>
               <p className={styles.goBody}>
-                Drop a pin in a small town. Keep only what returns in fifteen minutes.
+                Drop a pin in regional Victoria. Keep only what you can walk to and
+                back from in fifteen minutes.
               </p>
               <div className={styles.actions}>
                 <Link className={styles.cta} href="/map">
@@ -501,7 +502,9 @@ export function LandingExperience() {
                   How it works
                 </Link>
               </div>
-              <p className={styles.goNote}>Demonstration journeys — not live GTFS.</p>
+              <p className={styles.goNote}>
+                Opens on Shepparton. Walking estimates from OpenStreetMap — not public transport times yet.
+              </p>
             </div>
           ) : null}
 

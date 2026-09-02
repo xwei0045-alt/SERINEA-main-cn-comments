@@ -5,10 +5,9 @@ export default function MapLoading() {
         <div className="map-stage" />
         <aside className="panel">
           <div className="panel-head">
-            <h1>Loading the map</h1>
+            <h1>Looking up places</h1>
             <p className="window-fixed">
-              <b>15</b>
-              <span>minutes round trip, public transport</span>
+              <span>Places you can walk to and back in 15 minutes.</span>
             </p>
           </div>
         </aside>

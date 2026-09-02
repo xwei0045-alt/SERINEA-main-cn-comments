@@ -1,9 +1,9 @@
-/** Inner-Melbourne plate used on the homepage atlas and for grid references. */
+/** Statewide plate for regional Victoria grid references. */
 export const PLATE = {
-  west: 144.908,
-  east: 145.028,
-  north: -37.768,
-  south: -37.876
+  west: 140.9,
+  east: 150.0,
+  north: -33.98,
+  south: -39.2
 } as const;
 
 const COLS = "ABCDEFGHIJKL";

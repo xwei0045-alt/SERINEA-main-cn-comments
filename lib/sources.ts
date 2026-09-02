@@ -1,8 +1,8 @@
 import type { SourceStamp } from "./types";
 
-/** Banner copy — demonstration / not live GTFS extracts. */
+/** Banner copy — regional OSM extract; journeys are walking estimates. */
 export const DEMO_BANNER =
-  "Demonstration data. Journeys are approximated, not live GTFS extracts.";
+  "The orange circle is a straight-line search. Pick a place to follow the streets, then start the walk for time remaining.";
 
 export const OSM_SOURCE: SourceStamp = {
   name: "OpenStreetMap (ODbL)",

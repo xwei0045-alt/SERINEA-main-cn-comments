@@ -46,27 +46,27 @@ export const PHASES: Phase[] = [
     id: "i1",
     n: "01",
     title: "Hard fifteen, round trip",
-    body: "Drop a pin in a small town. Keep only places you can reach and return from on PT in 15."
+    body: "Drop a pin in a regional town. Keep only parks, groceries, GPs, pharmacies and gyms you can walk to and back from in 15 minutes."
   },
   {
     id: "i2",
     n: "02",
-    title: "Small towns & regional Victoria",
-    body: "Built for places with one bus line and a long wait — not inner-city frequency."
+    title: "When the bus is the clock",
+    body: "Next: real public-transport times for places with one bus line and a long wait — not inner-city frequency."
   },
   {
     id: "i3",
     n: "03",
     title: "Where the network thins out",
-    body: "Surface the gaps between services — the hour after the pin still matters."
+    body: "Later: surface the gaps between services — the hour after the pin still matters."
   }
 ];
 
 export const FACTS: FunFact[] = [
   {
     id: "f1",
-    kicker: "Small towns first",
-    line: "For regional and rural life — where the GP, shop, and bus stop rarely sit on the same street."
+    kicker: "Regional Victoria",
+    line: "32,569 OpenStreetMap places across 1,778 localities — not the Melbourne CBD."
   },
   {
     id: "f2",

@@ -1,13 +1,20 @@
-import type { LocalityPoiSummaryRecord } from "@/backend/data/RegionalDataset";
 import { CsvLocalitySummaryRepository } from "@/backend/repositories/CsvLocalitySummaryRepository";
-import type { LocalitySummaryRepository } from "@/backend/repositories/LocalitySummaryRepository";
+import type {
+  LocalitySummaryData,
+  LocalitySummaryRepository
+} from "@/backend/repositories/LocalitySummaryRepository";
 import type {
   LocalitySummaryItem,
   LocalitySummaryQuery,
   LocalitySummaryResponse
 } from "@/shared/contracts/localities";
 
+function localityKey(locality: string, lgaName: string, regionalGroup: string) {
+  return `${locality}\u0000${lgaName}\u0000${regionalGroup}`;
+}
+
 type MutableLocality = {
+  key: string;
   locality: string;
   lgaName: string;
   regionalGroup: string;
@@ -38,7 +45,7 @@ export class LocalitySummaryService {
 
   async search(query: LocalitySummaryQuery): Promise<LocalitySummaryResponse> {
     const data = await this.getData();
-    const summaries = await this.getSummaries(data.rows);
+    const summaries = await this.getSummaries(data);
     const searchText = query.q.toLocaleLowerCase("en-AU");
     const matches = searchText
       ? summaries.filter((item) =>
@@ -63,29 +70,36 @@ export class LocalitySummaryService {
     return this.dataPromise;
   }
 
-  private getSummaries(rows: LocalityPoiSummaryRecord[]): Promise<LocalitySummaryItem[]> {
+  private getSummaries(data: LocalitySummaryData): Promise<LocalitySummaryItem[]> {
     if (!this.summariesPromise) {
-      this.summariesPromise = Promise.resolve(this.aggregate(rows));
+      this.summariesPromise = Promise.resolve(this.aggregate(data));
     }
     return this.summariesPromise;
   }
 
-  private aggregate(rows: LocalityPoiSummaryRecord[]): LocalitySummaryItem[] {
+  private aggregate(data: LocalitySummaryData): LocalitySummaryItem[] {
     const localities = new Map<string, MutableLocality>();
+    const centroidByKey = new Map(
+      data.centroids.map((centroid) => [
+        localityKey(centroid.locality, centroid.lgaName, centroid.regionalGroup),
+        centroid
+      ])
+    );
 
-    for (const row of rows) {
-      const localityKey = `${row.locality}\u0000${row.lgaName}\u0000${row.regionalGroup}`;
-      let locality = localities.get(localityKey);
+    for (const row of data.rows) {
+      const key = localityKey(row.locality, row.lgaName, row.regionalGroup);
+      let locality = localities.get(key);
 
       if (!locality) {
         locality = {
+          key,
           locality: row.locality,
           lgaName: row.lgaName,
           regionalGroup: row.regionalGroup,
           totalPoiCount: 0,
           categories: new Map()
         };
-        localities.set(localityKey, locality);
+        localities.set(key, locality);
       }
 
       locality.totalPoiCount += row.poiCount;
@@ -103,20 +117,25 @@ export class LocalitySummaryService {
     }
 
     return [...localities.values()]
-      .map((locality) => ({
-        locality: locality.locality,
-        lgaName: locality.lgaName,
-        regionalGroup: locality.regionalGroup,
-        totalPoiCount: locality.totalPoiCount,
-        categories: [...locality.categories.values()]
-          .map((category) => ({
-            ...category,
-            subcategories: category.subcategories.sort(
-              (first, second) => second.poiCount - first.poiCount
-            )
-          }))
-          .sort((first, second) => second.poiCount - first.poiCount)
-      }))
+      .map((locality) => {
+        const centroid = centroidByKey.get(locality.key);
+        return {
+          locality: locality.locality,
+          lgaName: locality.lgaName,
+          regionalGroup: locality.regionalGroup,
+          totalPoiCount: locality.totalPoiCount,
+          latitude: centroid?.latitude,
+          longitude: centroid?.longitude,
+          categories: [...locality.categories.values()]
+            .map((category) => ({
+              ...category,
+              subcategories: category.subcategories.sort(
+                (first, second) => second.poiCount - first.poiCount
+              )
+            }))
+            .sort((first, second) => second.poiCount - first.poiCount)
+        };
+      })
       .sort(
         (first, second) =>
           second.totalPoiCount - first.totalPoiCount ||

@@ -14,7 +14,8 @@ export class CsvLocalitySummaryRepository implements LocalitySummaryRepository {
     const dataset = await this.loader.load();
     return {
       rows: dataset.localitySummaries,
-      totalPois: dataset.metadata.summaryPoiCount
+      totalPois: dataset.metadata.summaryPoiCount,
+      centroids: dataset.localityCentroids
     };
   }
 }

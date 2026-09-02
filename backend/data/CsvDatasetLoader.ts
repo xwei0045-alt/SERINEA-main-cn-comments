@@ -2,6 +2,7 @@ import path from "path";
 import { readFile } from "fs/promises";
 import { parse } from "csv-parse/sync";
 import type {
+  LocalityCentroid,
   LocalityPoiSummaryRecord,
   RegionalDataset,
   RegionalPoiRecord
@@ -59,6 +60,7 @@ export class CsvDatasetLoader {
     return {
       pois,
       localitySummaries,
+      localityCentroids: this.centroidsFrom(pois),
       metadata: {
         detailFileName: DETAIL_FILE_NAME,
         summaryFileName: SUMMARY_FILE_NAME,
@@ -68,6 +70,48 @@ export class CsvDatasetLoader {
         summaryPoiCount
       }
     };
+  }
+
+  /** Averages POI coordinates so a town search can place the map pin. */
+  private centroidsFrom(pois: RegionalPoiRecord[]): LocalityCentroid[] {
+    const totals = new Map<
+      string,
+      {
+        locality: string;
+        lgaName: string;
+        regionalGroup: string;
+        latitude: number;
+        longitude: number;
+        count: number;
+      }
+    >();
+
+    for (const poi of pois) {
+      const key = `${poi.locality}\u0000${poi.lgaName}\u0000${poi.regionalGroup}`;
+      const current = totals.get(key);
+      if (!current) {
+        totals.set(key, {
+          locality: poi.locality,
+          lgaName: poi.lgaName,
+          regionalGroup: poi.regionalGroup,
+          latitude: poi.latitude,
+          longitude: poi.longitude,
+          count: 1
+        });
+        continue;
+      }
+      current.latitude += poi.latitude;
+      current.longitude += poi.longitude;
+      current.count += 1;
+    }
+
+    return [...totals.values()].map((entry) => ({
+      locality: entry.locality,
+      lgaName: entry.lgaName,
+      regionalGroup: entry.regionalGroup,
+      latitude: entry.latitude / entry.count,
+      longitude: entry.longitude / entry.count
+    }));
   }
 
   private parseRows(text: string, fileName: string): CsvRow[] {

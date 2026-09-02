@@ -10,4 +10,6 @@ test("searches locality summaries and keeps the supplied total", async () => {
   assert.equal(result.totalMatches, 1);
   assert.equal(result.items[0]?.locality, "ABBEYARD");
   assert.equal(result.items[0]?.totalPoiCount, 1);
+  assert.ok(result.items[0]?.latitude);
+  assert.ok(result.items[0]?.longitude);
 });

@@ -30,9 +30,11 @@ export function Chrome({ current }: { current: Current }) {
         <Link href="/how" aria-current={current === "how" ? "page" : undefined}>
           How it works
         </Link>
-        <Link className="mast-cta" href="/map">
-          Explore map
-        </Link>
+        {current !== "map" && (
+          <Link className="mast-cta" href="/map">
+            Explore map
+          </Link>
+        )}
       </nav>
     </header>
   );

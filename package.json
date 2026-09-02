@@ -9,7 +9,7 @@
     "data:validate": "tsx scripts/validate-regional-data.ts",
     "db:migrate": "tsx scripts/migrate-database.ts",
     "db:import": "tsx scripts/import-regional-data.ts",
-    "test": "tsx --test backend/**/*.test.ts"
+    "test": "tsx --test backend/**/*.test.ts lib/**/*.test.ts"
   },
   "dependencies": {
     "csv-parse": "^7.0.2",

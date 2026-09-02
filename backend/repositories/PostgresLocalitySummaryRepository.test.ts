@@ -10,6 +10,19 @@ test("locality API can read the active PostgreSQL dataset", async () => {
       if (sql.includes("summary_poi_count")) {
         return { rows: [{ totalPois: 32_569 }] };
       }
+      if (sql.includes("AVG(")) {
+        return {
+          rows: [
+            {
+              locality: "ABBEYARD",
+              lgaName: "ALPINE",
+              regionalGroup: "Ovens Murray",
+              latitude: -37.024456,
+              longitude: 146.695987
+            }
+          ]
+        };
+      }
       return {
         rows: [
           {

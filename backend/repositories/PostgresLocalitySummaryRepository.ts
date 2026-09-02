@@ -8,6 +8,13 @@ import type {
 
 type SummaryRow = QueryResultRow & LocalityPoiSummaryRecord;
 type DatasetCountRow = QueryResultRow & { totalPois: number };
+type CentroidRow = QueryResultRow & {
+  locality: string;
+  lgaName: string;
+  regionalGroup: string;
+  latitude: number;
+  longitude: number;
+};
 
 /** Reads locality summaries from the currently active database dataset. */
 export class PostgresLocalitySummaryRepository
@@ -18,7 +25,7 @@ export class PostgresLocalitySummaryRepository
   constructor(private readonly database: PostgresDatabase) {}
 
   async load(): Promise<LocalitySummaryData> {
-    const [rowsResult, countResult] = await Promise.all([
+    const [rowsResult, countResult, centroidResult] = await Promise.all([
       this.database.query<SummaryRow>(
         `SELECT
            summary.locality,
@@ -39,6 +46,19 @@ export class PostgresLocalitySummaryRepository
          FROM dataset_versions
          WHERE active = TRUE AND status = 'ready'
          LIMIT 1`
+      ),
+      this.database.query<CentroidRow>(
+        `SELECT
+           poi.locality,
+           poi.lga_name AS "lgaName",
+           poi.regional_group AS "regionalGroup",
+           AVG(poi.latitude) AS latitude,
+           AVG(poi.longitude) AS longitude
+         FROM regional_pois poi
+         INNER JOIN dataset_versions dataset
+           ON dataset.version = poi.dataset_version
+         WHERE dataset.active = TRUE AND dataset.status = 'ready'
+         GROUP BY poi.locality, poi.lga_name, poi.regional_group`
       )
     ]);
     const count = countResult.rows[0];
@@ -49,7 +69,14 @@ export class PostgresLocalitySummaryRepository
         ...row,
         poiCount: Number(row.poiCount)
       })),
-      totalPois: Number(count.totalPois)
+      totalPois: Number(count.totalPois),
+      centroids: centroidResult.rows.map((row) => ({
+        locality: row.locality,
+        lgaName: row.lgaName,
+        regionalGroup: row.regionalGroup,
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude)
+      }))
     };
   }
 }
