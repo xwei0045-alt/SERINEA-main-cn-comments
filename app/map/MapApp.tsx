@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { IconLocate } from "../components/Icons";
+import { reachApiClient } from "@/frontend/api/ReachApiClient";
 import { gridRef } from "@/lib/grid";
-import { isochroneFrom, reachFrom } from "@/lib/reach";
-import { DEMO_BANNER, GTFS_SOURCE, OSM_SOURCE } from "@/lib/sources";
+import { DEMO_BANNER } from "@/lib/sources";
 import { CATEGORIES, MELBOURNE_DEFAULT, WINDOW_MINUTES } from "@/lib/types";
-import type { LatLng, Leg, PoiCategory } from "@/lib/types";
+import type { LatLng, Leg, PoiCategory, WaterKind } from "@/lib/types";
+import type { ReachResponse } from "@/shared/contracts/reach";
 import ReachMap from "./ReachMap";
 
-function waterCopy(kind: ReturnType<typeof reachFrom>["water"]) {
+function waterCopy(kind: WaterKind) {
   if (kind === "bay") return "That’s Port Phillip. Public transport does not run on the water. Drop a pin on land.";
   if (kind === "lake") return "That’s Albert Park Lake. Drop a pin on land.";
   if (kind === "harbour") return "That’s Victoria Harbour. Drop a pin on land.";
@@ -40,16 +41,55 @@ export default function MapApp() {
   const [locating, setLocating] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [active, setActive] = useState<PoiCategory[] | "all">("all");
+  const [result, setResult] = useState<ReachResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
-  const result = useMemo(() => reachFrom(pin), [pin]);
-  const hull = useMemo(() => isochroneFrom(pin), [pin]);
+  /** Requests fresh server data whenever the user moves the map pin. */
+  useEffect(() => {
+    const controller = new AbortController();
+    let currentRequest = true;
+
+    setLoading(true);
+    setRequestError(null);
+    setResult(null);
+
+    reachApiClient
+      .search(
+        {
+          pin,
+          windowMinutes: WINDOW_MINUTES
+        },
+        controller.signal
+      )
+      .then((nextResult) => {
+        if (currentRequest) setResult(nextResult);
+      })
+      .catch((error: unknown) => {
+        if (!currentRequest || controller.signal.aborted) return;
+        console.error("Reachability request failed.", error);
+        setRequestError(
+          "Reachable places could not be loaded. Move the pin to try again."
+        );
+      })
+      .finally(() => {
+        if (currentRequest) setLoading(false);
+      });
+
+    // Cancelling the old request prevents a slow response from replacing newer pin data.
+    return () => {
+      currentRequest = false;
+      controller.abort();
+    };
+  }, [pin]);
 
   const listed = useMemo(() => {
-    if (active === "all") return result.reachable;
-    return result.reachable.filter((row) => active.includes(row.poi.category));
-  }, [result.reachable, active]);
+    const reachable = result?.reachable ?? [];
+    if (active === "all") return reachable;
+    return reachable.filter((row) => active.includes(row.poi.category));
+  }, [result, active]);
 
-  const waterMessage = waterCopy(result.water);
+  const waterMessage = waterCopy(result?.water ?? null);
 
   function locate() {
     if (!navigator.geolocation) {
@@ -91,7 +131,7 @@ export default function MapApp() {
         <div className="map-stage">
           <ReachMap
             pin={pin}
-            hull={hull}
+            hull={result?.hull ?? []}
             reachable={listed}
             selectedId={selectedId}
             onPin={(pt) => {
@@ -139,8 +179,10 @@ export default function MapApp() {
           {failed && !denied && (
             <p className="status note">Location could not be read. Click the map to drop a pin.</p>
           )}
+          {loading && <p className="status note">Updating reachable places…</p>}
+          {requestError && <p className="status halt">{requestError}</p>}
           {waterMessage && <p className="status halt">{waterMessage}</p>}
-          {!waterMessage && result.outboundOnlyCount > 0 && (
+          {!waterMessage && result && result.outboundOnlyCount > 0 && (
             <p className="status note">
               {result.outboundOnlyCount} place{result.outboundOnlyCount === 1 ? "" : "s"} sit within 15 minutes
               outbound but the return would blow the budget — hidden.
@@ -154,7 +196,7 @@ export default function MapApp() {
                 <p>Move the pin onto land. The overlay only draws where a round trip is possible.</p>
               </div>
             )}
-            {!waterMessage && listed.length === 0 && (
+            {!loading && !requestError && !waterMessage && listed.length === 0 && (
               <div className="empty">
                 <h2>Nothing in a 15-minute round trip</h2>
                 <p>
@@ -195,18 +237,22 @@ export default function MapApp() {
                       <h3>Back · {row.journey.inboundMinutes} min</h3>
                       <LegRow legs={row.journey.inbound} label="Return legs" />
                     </div>
-                    <p className="source">
-                      <b>
-                        {OSM_SOURCE.name} · {OSM_SOURCE.date}
-                      </b>
-                      {OSM_SOURCE.note}
-                    </p>
-                    <p className="source">
-                      <b>
-                        {GTFS_SOURCE.name} · {GTFS_SOURCE.date}
-                      </b>
-                      {GTFS_SOURCE.note}
-                    </p>
+                    {result && (
+                      <>
+                        <p className="source">
+                          <b>
+                            {result.sources.poi.name} · {result.sources.poi.date}
+                          </b>
+                          {result.sources.poi.note}
+                        </p>
+                        <p className="source">
+                          <b>
+                            {result.sources.transit.name} · {result.sources.transit.date}
+                          </b>
+                          {result.sources.transit.note}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </article>
               );

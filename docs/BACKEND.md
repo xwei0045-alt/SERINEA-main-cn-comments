@@ -1,88 +1,77 @@
-# Backend integration (Iteration 1+)
+# Backend integration
 
-This repo ships **frontend only**. The map and landing page consume **static demo data** under `lib/`. A backend or data pipeline should replace or feed these modules without changing route structure.
+The Next.js backend now uses both Iteration 1 CSV files supplied by the data team. The map consumes `/api/reach`; locality statistics are available through `/api/localities`; `/api/health` reports whether the selected repository is ready.
 
-## What the UI expects
+## Run and verify
 
-### Types (`lib/types.ts`)
+```bash
+npm install
+npm run data:validate
+npm test
+npm run dev
+```
 
-All API responses should map to these shapes:
+CSV mode is the default and needs no secret configuration. To make the selection explicit, copy `.env.example` to `.env.local` and keep:
 
-- `Poi` — id, name, category, lat, lng, suburb
-- `Stop` — id, name, lat, lng, mode (`tram` | `train` | `bus`), routes[], optional oneWay
-- `Journey` — outbound/inbound legs, minute totals, `roundTripMinutes`
-- `ReachablePoi` — `{ poi, journey }`
-- `SourceStamp` — name, date, note (shown on every result)
+```env
+REACH_DATA_SOURCE=csv
+```
 
-### Reach rule (product invariant)
+## API routes
+
+### Reachability
+
+```http
+GET /api/reach?lat=-37.024456&lng=146.695987&window=15
+GET /api/reach?lat=-37.024456&lng=146.695987&window=15&categories=park,gp
+```
+
+The response contains mapped POIs, outbound and inbound legs, a 15-minute round-trip hull, source notes, and `dataSource: "csv"`. The backend only returns POIs whose outbound plus return estimate is 15 minutes or less.
+
+### Locality summaries
+
+```http
+GET /api/localities?q=ABBEYARD&limit=10
+```
+
+The endpoint searches locality, LGA, and regional group names. It returns category and subcategory totals from `locality_poi_summary_iteration1.csv`.
+
+### Health
+
+```http
+GET /api/health
+```
+
+CSV mode returns `status: "ok"` only after both source files parse and reconcile successfully. PostgreSQL remains `not-configured` until a connection string is supplied.
+
+## Product rule
 
 ```text
 roundTripMinutes = outboundMinutes + inboundMinutes
-Include POI only if roundTripMinutes <= WINDOW_MINUTES (15)
+include only when roundTripMinutes <= 15
 ```
 
-Implemented today in `lib/reach.ts` (`reachableFromPin`). Backend can precompute or expose an endpoint; frontend will swap the caller.
+No transit feed was supplied. `EstimatedJourneyCalculator` therefore uses straight-line distance at 4.8 km/h and labels every result accordingly. This estimate must be replaced with actual routing when GTFS and a routing method become available.
 
-## Files to replace or feed
+## Object-oriented backend structure
 
-| File | Current | Backend target |
-| --- | --- | --- |
-| `lib/pois.ts` | Static Melbourne demo POIs | OSM extract or API: `/pois?bbox=…` |
-| `lib/stops.ts` | Static inner-Melbourne stops | GTFS stops API or bundled extract |
-| `lib/reach.ts` | Client-side walk + mode approximation | GTFS routing service: `/reach?lat=&lng=&window=15` |
-| `lib/sources.ts` | Hard-coded demo stamps | Return real extract dates from API |
-| `lib/landingDemo.ts` | Scroll-reel demo pins only | Optional; marketing can stay static |
+| Class | Responsibility |
+| --- | --- |
+| `CsvDatasetLoader` | Parse, type, cache, and cross-check both files |
+| `RegionalPoiMapper` | Convert supplied subcategories to existing UI categories |
+| `SpatialGridIndex` | Avoid a full statewide scan for every pin movement |
+| `EstimatedJourneyCalculator` | Create explicitly labelled walking estimates |
+| `CsvReachRepository` | Retrieve nearby mapped POIs from CSV data |
+| `ReachService` | Enforce round-trip and category business rules |
+| `ReachController` | Validate HTTP input and return safe errors |
+| `LocalitySummaryService` | Aggregate and search the supplied summary data |
+| `PostgresDatabase` | Own the future PostgreSQL connection pool |
 
-## Suggested API contract (future)
+## What remains before database mode
 
-```http
-GET /api/reach?lat=-37.82&lng=144.97&window=15
-```
-
-Response sketch:
-
-```json
-{
-  "windowMinutes": 15,
-  "sources": {
-    "poi": { "name": "OpenStreetMap (ODbL)", "date": "2026-08-01" },
-    "gtfs": { "name": "DTP GTFS Schedule", "date": "2026-08-18" }
-  },
-  "results": [
-    {
-      "poi": { "id": "…", "name": "…", "category": "grocery", "lat": 0, "lng": 0, "suburb": "…" },
-      "journey": {
-        "outboundMinutes": 4.2,
-        "inboundMinutes": 4.8,
-        "roundTripMinutes": 9.0,
-        "outbound": [{ "mode": "walk", "minutes": 4.2, "text": "…" }],
-        "inbound": [{ "mode": "bus", "minutes": 4.8, "text": "…" }]
-      }
-    }
-  ]
-}
-```
-
-## Frontend hook points
-
-| Component | Import today | Swap strategy |
-| --- | --- | --- |
-| `app/map/MapApp.tsx` | `reachableFromPin` from `lib/reach.ts` | `fetch('/api/reach')` or server action |
-| `app/map/ReachMap.tsx` | Leaflet + pin state | No change if coords come from same types |
-| `app/components/landing/LandingExperience.tsx` | `DEMO_PINS` from `lib/landingDemo.ts` | Optional API for live demo town |
-
-## Environment variables (when backend exists)
-
-Add to `.env.local` (not committed):
-
-```env
-NEXT_PUBLIC_API_BASE_URL=https://…
-```
-
-Document the variable here when the backend URL is known.
-
-## Out of scope this branch
-
-- Live GTFS zip in the browser
-- User accounts / auth
-- Regional statewide comparison (Iteration 3)
+1. Create the AWS RDS PostgreSQL instance and private/network access rules.
+2. Confirm whether PostGIS is permitted and choose the production schema.
+3. Import and reconcile both CSV files in a staging table before replacing production data.
+4. Implement and test `PostgresReachRepository` against that confirmed schema.
+5. Store `DATABASE_URL` in the deployment secret manager and set `REACH_DATA_SOURCE=database`.
+6. Add GTFS data and real round-trip routing if the product is expected to show public-transport times.

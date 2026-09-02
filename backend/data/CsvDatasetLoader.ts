@@ -1,0 +1,188 @@
+import path from "path";
+import { readFile } from "fs/promises";
+import { parse } from "csv-parse/sync";
+import type {
+  LocalityPoiSummaryRecord,
+  RegionalDataset,
+  RegionalPoiRecord
+} from "./RegionalDataset";
+
+type CsvRow = Record<string, string>;
+
+const DETAIL_FILE_NAME = "regional_pois_detail_optimized_iteration1.csv";
+const SUMMARY_FILE_NAME = "locality_poi_summary_iteration1.csv";
+const DATASET_HANDOVER_DATE = "2026-09-02";
+
+/**
+ * Loads and validates the two files supplied by the data team.
+ * The promise is cached so a server process parses the files only once.
+ */
+export class CsvDatasetLoader {
+  private datasetPromise: Promise<RegionalDataset> | undefined;
+
+  constructor(private readonly dataDirectory = path.join(process.cwd(), "data")) {}
+
+  load(): Promise<RegionalDataset> {
+    if (!this.datasetPromise) {
+      this.datasetPromise = this.readDataset();
+    }
+    return this.datasetPromise;
+  }
+
+  private async readDataset(): Promise<RegionalDataset> {
+    const detailPath = path.join(this.dataDirectory, DETAIL_FILE_NAME);
+    const summaryPath = path.join(this.dataDirectory, SUMMARY_FILE_NAME);
+    const [detailText, summaryText] = await Promise.all([
+      readFile(detailPath, "utf8"),
+      readFile(summaryPath, "utf8")
+    ]);
+
+    const detailRows = this.parseRows(detailText, DETAIL_FILE_NAME);
+    const summaryRows = this.parseRows(summaryText, SUMMARY_FILE_NAME);
+    const pois = detailRows.map((row, index) => this.toPoi(row, index + 2));
+    const localitySummaries = summaryRows.map((row, index) =>
+      this.toSummary(row, index + 2)
+    );
+
+    this.validateUniquePoiIds(pois);
+    const summaryPoiCount = localitySummaries.reduce(
+      (total, row) => total + row.poiCount,
+      0
+    );
+
+    if (summaryPoiCount !== pois.length) {
+      throw new Error(
+        `Dataset totals disagree: detail has ${pois.length} POIs but summary totals ${summaryPoiCount}.`
+      );
+    }
+
+    return {
+      pois,
+      localitySummaries,
+      metadata: {
+        detailFileName: DETAIL_FILE_NAME,
+        summaryFileName: SUMMARY_FILE_NAME,
+        sourceDate: DATASET_HANDOVER_DATE,
+        poiCount: pois.length,
+        summaryRowCount: localitySummaries.length,
+        summaryPoiCount
+      }
+    };
+  }
+
+  private parseRows(text: string, fileName: string): CsvRow[] {
+    try {
+      return parse(text, {
+        bom: true,
+        columns: true,
+        skip_empty_lines: true,
+        relax_column_count: false
+      }) as CsvRow[];
+    } catch (error) {
+      throw new Error(`Could not parse ${fileName}.`, { cause: error });
+    }
+  }
+
+  private toPoi(row: CsvRow, line: number): RegionalPoiRecord {
+    const latitude = this.requiredNumber(row.latitude, "latitude", DETAIL_FILE_NAME, line);
+    const longitude = this.requiredNumber(
+      row.longitude,
+      "longitude",
+      DETAIL_FILE_NAME,
+      line
+    );
+    const osmId = this.requiredText(row.osm_id, "osm_id", DETAIL_FILE_NAME, line);
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      throw new Error(`${DETAIL_FILE_NAME}:${line} contains invalid coordinates.`);
+    }
+
+    return {
+      osmId,
+      name: row.name?.trim() ?? "",
+      latitude,
+      longitude,
+      locality: this.requiredText(row.locality, "locality", DETAIL_FILE_NAME, line),
+      lgaName: this.requiredText(row.lga_name, "lga_name", DETAIL_FILE_NAME, line),
+      absLgaCode: row.abs_lga_code?.trim() ?? "",
+      vicmapLgaCode: row.vicmap_lga_code?.trim() ?? "",
+      regionalGroup: row.regional_group?.trim() ?? "",
+      areaType: row.area_type?.trim() ?? "",
+      category: this.requiredText(row.category, "category", DETAIL_FILE_NAME, line),
+      subcategory: this.requiredText(
+        row.subcategory,
+        "subcategory",
+        DETAIL_FILE_NAME,
+        line
+      ),
+      displayName: row.display_name?.trim() ?? "",
+      openingHours: row.opening_hours?.trim() ?? "",
+      wheelchair: row.wheelchair?.trim() ?? ""
+    };
+  }
+
+  private toSummary(row: CsvRow, line: number): LocalityPoiSummaryRecord {
+    const poiCount = this.requiredNumber(
+      row.poi_count,
+      "poi_count",
+      SUMMARY_FILE_NAME,
+      line
+    );
+
+    if (!Number.isInteger(poiCount) || poiCount < 0) {
+      throw new Error(`${SUMMARY_FILE_NAME}:${line} contains an invalid poi_count.`);
+    }
+
+    return {
+      locality: this.requiredText(row.locality, "locality", SUMMARY_FILE_NAME, line),
+      lgaName: this.requiredText(row.lga_name, "lga_name", SUMMARY_FILE_NAME, line),
+      absLgaCode: row.abs_lga_code?.trim() ?? "",
+      regionalGroup: row.regional_group?.trim() ?? "",
+      category: this.requiredText(row.category, "category", SUMMARY_FILE_NAME, line),
+      subcategory: this.requiredText(
+        row.subcategory,
+        "subcategory",
+        SUMMARY_FILE_NAME,
+        line
+      ),
+      displayName: row.display_name?.trim() ?? "",
+      poiCount
+    };
+  }
+
+  private requiredText(
+    value: string | undefined,
+    column: string,
+    fileName: string,
+    line: number
+  ): string {
+    const normalized = value?.trim();
+    if (!normalized) {
+      throw new Error(`${fileName}:${line} is missing ${column}.`);
+    }
+    return normalized;
+  }
+
+  private requiredNumber(
+    value: string | undefined,
+    column: string,
+    fileName: string,
+    line: number
+  ): number {
+    const number = Number(value);
+    if (!value?.trim() || !Number.isFinite(number)) {
+      throw new Error(`${fileName}:${line} contains an invalid ${column}.`);
+    }
+    return number;
+  }
+
+  private validateUniquePoiIds(pois: RegionalPoiRecord[]): void {
+    const ids = new Set<string>();
+    for (const poi of pois) {
+      if (ids.has(poi.osmId)) {
+        throw new Error(`The detailed dataset contains duplicate osm_id ${poi.osmId}.`);
+      }
+      ids.add(poi.osmId);
+    }
+  }
+}

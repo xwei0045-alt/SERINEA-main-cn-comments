@@ -2,9 +2,9 @@
 
 **FIT5120 S2 2026 · Team SERINEA (TA06) · Assignment 1 — Iteration 1**
 
-Frontend prototype for a **15-minute public-transport round-trip reach map**, framed for **small towns and regional Victoria** (not inner-city “nearby”).
+Full-stack prototype for a **15-minute round-trip reach map**, framed for **small towns and regional Victoria**. The map now reads the supplied Iteration 1 regional POI files through server-side APIs.
 
-This repository is **frontend only**. Map POIs, stops, and journey times are **demonstration data** in `lib/` until the backend/GTFS integration is wired in by the data team.
+POI coordinates and locality counts come from the data-team CSV handover. Journey times are still clearly labelled straight-line walking estimates because the supplied files do not contain GTFS routes or timetables.
 
 ## Quick start
 
@@ -22,6 +22,13 @@ npm run build
 npm start
 ```
 
+Backend checks:
+
+```bash
+npm run data:validate
+npm test
+```
+
 ## Stack
 
 | Layer | Technology |
@@ -30,6 +37,9 @@ npm start
 | UI | React 19, TypeScript |
 | Styling | CSS Modules + global CSS |
 | Map | Leaflet (client-only on `/map`) |
+| Backend | Next.js route handlers, object-oriented service/repository layers |
+| Current data | Validated CSV files with an in-memory spatial index |
+| Database-ready code | PostgreSQL connection pool (`pg`) |
 
 ## Routes
 
@@ -38,18 +48,26 @@ npm start
 | `/` | Scroll-driven landing / product story |
 | `/map` | Operate tool — pin, isochrone, reachable POIs |
 | `/how` | Short how-it-works |
+| `/api/reach` | Nearby mapped POIs and estimated round trips |
+| `/api/localities` | Searchable locality/LGA/regional POI summaries |
+| `/api/health` | Repository and database readiness |
 
 ## Repository layout
 
 ```
 SERINEA/
-├── app/                    # Next.js App Router
+├── app/                    # Next.js pages and thin API route handlers
 │   ├── components/         # Shared UI (Chrome, landing reel)
 │   ├── map/                # Map page + Leaflet shell
 │   ├── how/                # How-it-works page
 │   ├── globals.css         # Design tokens & base styles
 │   └── layout.tsx          # Root layout + fonts
-├── lib/                    # Data & domain logic (demo today)
+├── backend/                # Controllers, services, repositories, data loading
+├── frontend/               # Browser-side API clients
+├── shared/                 # Runtime-validated API contracts
+├── data/                   # Supplied Iteration 1 CSV files
+├── scripts/                # Dataset validation command
+├── lib/                    # Existing UI types and demonstration helpers
 │   ├── pois.ts             # Demo POI catalogue
 │   ├── stops.ts            # Demo PT stops
 │   ├── reach.ts            # Round-trip reach calculation (client)
@@ -58,7 +76,9 @@ SERINEA/
 │   ├── types.ts            # Shared TypeScript types
 │   └── sources.ts          # Source stamps & demo banner
 ├── docs/
-│   └── BACKEND.md          # Where backend / GTFS will plug in
+│   ├── ARCHITECTURE.md     # Frontend/backend ownership and object flow
+│   ├── BACKEND.md          # API and operating instructions
+│   └── DATASET.md          # Supplied fields, mapping, and limitations
 ├── PRODUCT.md              # Product spec (mentor reference)
 ├── DESIGN.md               # Visual / UX direction
 └── package.json
@@ -66,7 +86,8 @@ SERINEA/
 
 ## Data stance (Iteration 1)
 
-- **Not live GTFS.** All journeys and POIs are labelled demonstration data.
+- **Real supplied POIs.** The detailed file has 32,569 unique OSM IDs and valid coordinates.
+- **Not live GTFS.** Journeys are straight-line walking estimates at 4.8 km/h.
 - **Fixed 15-minute window** — outbound + return must fit; no 30/60 options.
 - **Round-trip filter:** if return does not fit, the place is omitted (or shown as ghost on the landing demo only).
 
@@ -74,7 +95,7 @@ See `docs/BACKEND.md` for integration points for the backend developer.
 
 ## Branch
 
-Active development for the mentor demo: **`Iteration-1`**.
+Backend and data integration: **`backend-integration`**.
 
 ## Team
 
