@@ -1,0 +1,25 @@
+# Dependencies & build
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Logs & OS
+*.log
+npm-debug.log*
+.DS_Store
+
+# Local env (backend URLs, secrets)
+.env
+.env.local
+.env.*.local
+
+# Editor / tooling (not part of the product)
+.cursor/
+.impeccable/
+.vscode/
+
+# Optional local screenshots
+*.png
+*.jpg
+!public/**
