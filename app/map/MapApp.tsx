@@ -1,5 +1,10 @@
 "use client";
 
+// Map screen. Pin starts in Shepparton because that town has places in the extract.
+// The list is a straight line walk both ways at 4.8 km/h.
+// After you pick a place we ask OSM streets for the orange path.
+// GPS only follows if you are actually near the pin, so a Melbourne laptop does not jump the map.
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IconCategory, IconLocate } from "../components/Icons";
 import { localityApiClient } from "@/frontend/api/LocalityApiClient";
@@ -91,6 +96,7 @@ export default function MapApp() {
   pinRef.current = pin;
   streetRouteRef.current = streetRoute;
 
+  // Drop the last reach call if the pin moves again before it comes back.
   useEffect(() => {
     const controller = new AbortController();
     let currentRequest = true;
@@ -125,6 +131,7 @@ export default function MapApp() {
     };
   }, [pin]);
 
+  // Wait a beat so we are not hitting town search on every letter.
   useEffect(() => {
     const query = townQuery.trim();
     if (query.length < 2) {
@@ -250,6 +257,7 @@ export default function MapApp() {
     return () => window.clearInterval(timer);
   }, [walkStarted, arrived, followGps, walkLeg]);
 
+  // Real GPS only if you are close to the pin. Otherwise the remaining clock just counts down.
   useEffect(() => {
     if (!walkStarted) return;
     if (!navigator.geolocation) return;
@@ -669,8 +677,8 @@ export default function MapApp() {
                       {overBudget && there && (
                         <p className="status note">
                           Along streets this round trip is about{" "}
-                          {Math.round(streetRoundTripSeconds / 60)} minutes — over the
-                          15-minute budget.
+                          {Math.round(streetRoundTripSeconds / 60)} minutes, which is over the
+                          15 minute budget.
                         </p>
                       )}
                       {there && there.steps.length > 0 && (

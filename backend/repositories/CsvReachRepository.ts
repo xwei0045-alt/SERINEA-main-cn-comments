@@ -11,7 +11,7 @@ import type {
 
 type IndexedPoi = Poi;
 
-/** Repository that answers map requests from the supplied Iteration 1 CSV files. */
+// CSV mode for Iteration 1. Parse the files once, then only search nearby grid cells.
 export class CsvReachRepository implements ReachRepository {
   readonly dataSource = "csv" as const;
 

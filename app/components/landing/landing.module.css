@@ -885,18 +885,18 @@
   .lockStamp { font-size: 18vw; }
   .crewGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: calc(100% - 56px);
+    width: calc(100% - 32px);
     gap: 8px;
   }
   .seat { padding: 10px; }
-  .goPlate { width: calc(100% - 56px); }
+  .goPlate { width: calc(100% - 32px); }
   .rail { right: 8px; }
   .tick::after { display: none; }
   .atlasLabel span { display: none; }
   .pinLabel { display: none; }
   .phaseStack,
   .factPlate,
-  .lockPlate { width: calc(100% - 56px); }
+  .lockPlate { width: calc(100% - 32px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

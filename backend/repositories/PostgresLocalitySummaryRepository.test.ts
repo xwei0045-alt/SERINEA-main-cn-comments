@@ -4,7 +4,7 @@ import type { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { PostgresLocalitySummaryRepository } from "./PostgresLocalitySummaryRepository";
 import { LocalitySummaryService } from "../services/LocalitySummaryService";
 
-test("locality API can read the active PostgreSQL dataset", async () => {
+test("TC-F11 locality API can read the active PostgreSQL dataset", async () => {
   const database = {
     async query(sql: string) {
       if (sql.includes("summary_poi_count")) {

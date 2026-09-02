@@ -1,5 +1,8 @@
 "use client";
 
+// Leaflet only loads here, not on the landing page.
+// We tell the map to resize when the panel changes so phones do not get a grey strip.
+
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap, Marker, Polygon, Polyline } from "leaflet";
 import type { Isochrone } from "@/lib/reach";
@@ -79,7 +82,7 @@ export default function ReachMap({
 
       const pinIcon = L.divIcon({
         className: "",
-        html: '<span class="pin-marker" title="Start — drag to move"></span>',
+        html: '<span class="pin-marker" title="Start, drag to move"></span>',
         iconSize: [18, 18],
         iconAnchor: [9, 9]
       });
@@ -88,9 +91,9 @@ export default function ReachMap({
         icon: pinIcon,
         draggable: true,
         zIndexOffset: 800,
-        title: "Start — drag to move"
+        title: "Start, drag to move"
       }).addTo(map);
-      marker.bindTooltip("Start — drag to move", { direction: "top", offset: [0, -10] });
+      marker.bindTooltip("Start, drag to move", { direction: "top", offset: [0, -10] });
       marker.on("dragend", () => {
         if (navigatingRef.current) {
           marker.setLatLng([pinPosRef.current.lat, pinPosRef.current.lng]);
@@ -121,6 +124,9 @@ export default function ReachMap({
 
       mapRef.current = map;
       setReady(true);
+      requestAnimationFrame(() => {
+        map?.invalidateSize({ animate: false });
+      });
     })();
 
     return () => {
@@ -136,6 +142,21 @@ export default function ReachMap({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const el = root.current;
+    const map = mapRef.current;
+    if (!el || !map || !ready) return;
+    const sync = () => map.invalidateSize({ animate: false });
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(el);
+    window.addEventListener("orientationchange", sync);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("orientationchange", sync);
+    };
+  }, [ready]);
 
   useEffect(() => {
     const marker = pinRef.current;

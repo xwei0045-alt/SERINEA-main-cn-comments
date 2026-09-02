@@ -35,6 +35,7 @@ body {
 html {
   background: var(--paper);
   caret-color: var(--arterial);
+  overflow-x: clip;
 }
 
 body {
@@ -45,6 +46,7 @@ body {
   font-feature-settings: "tnum" 1, "ss01" 0;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -80,6 +82,7 @@ svg {
   background: var(--arterial);
   color: var(--enamel);
   padding: 8px 12px;
+  min-height: 44px;
 }
 .skip:focus {
   top: 12px;
@@ -532,12 +535,24 @@ svg {
   color: var(--ink);
   min-height: 100svh;
 }
+.tool {
+  display: flex;
+  flex-direction: column;
+}
+.tool > #content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 
 .banner {
   background: var(--ink);
   color: var(--enamel);
   padding: 10px 28px;
   font-size: 0.92rem;
+  overflow-wrap: break-word;
 }
 .banner strong {
   color: var(--overlay);
@@ -547,7 +562,13 @@ svg {
 .map-shell {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(300px, 400px);
-  min-height: calc(100svh - 109px);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.map-stage,
+.panel {
+  min-width: 0;
 }
 .map-stage {
   position: relative;
@@ -788,7 +809,7 @@ svg {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100svh - 109px);
+  max-height: 100%;
 }
 .panel-head {
   padding: 18px 18px 12px;
@@ -856,7 +877,7 @@ svg {
   color: var(--ink);
   padding: 10px 12px;
   font: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 .town-search input:focus {
   outline: var(--focus);
@@ -1145,6 +1166,7 @@ svg {
   max-width: 42rem;
   margin: 0 auto;
   padding: 36px 24px 80px;
+  overflow-wrap: break-word;
 }
 .how h1 {
   font-family: var(--font-display);
@@ -1275,12 +1297,37 @@ svg {
   .build {
     padding: 40px 16px 48px;
   }
+  .mast {
+    padding: 14px max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left));
+    gap: 12px;
+  }
+  .mast-nav a,
+  .mast-cta {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+  .banner {
+    padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+  }
+  .how main {
+    padding: 24px 16px 64px;
+  }
+  .how .cta {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
   .map-shell {
     grid-template-columns: 1fr;
+    flex: none;
     min-height: auto;
   }
   .map-stage {
-    min-height: 48svh;
+    height: 55svh;
+    min-height: 55svh;
   }
   .panel {
     max-height: none;
@@ -1288,24 +1335,49 @@ svg {
     border-top: 1px solid var(--paper-3);
   }
   .map-legend {
-    bottom: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
     left: 8px;
     right: 8px;
     max-width: none;
+    max-height: 30%;
+    overflow: auto;
   }
   .walk-hud {
     top: 8px;
     right: 8px;
     left: 8px;
     width: auto;
+    max-height: 42%;
+    overflow: auto;
   }
-  .mast {
-    padding: 14px 16px;
-    gap: 12px;
+  .filters button,
+  .town-chips button,
+  .locate,
+  .walk-primary,
+  .walk-secondary,
+  .result-hit {
+    min-height: 44px;
   }
-  .mast-nav a {
-    padding: 8px 8px;
-    font-size: 0.88rem;
+  .town-search input {
+    min-height: 44px;
+  }
+  .leaflet-touch .leaflet-control-zoom a,
+  .leaflet-control-zoom a {
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+  }
+}
+
+@media (min-width: 901px) {
+  .tool {
+    height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
+  }
+  .map-stage {
+    height: auto;
+    min-height: 0;
   }
 }
 

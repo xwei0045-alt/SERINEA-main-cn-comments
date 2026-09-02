@@ -1,10 +1,7 @@
 import { z } from "zod";
 import type { ReachResponse } from "@/shared/contracts/reach";
 
-/**
- * Environment variables accepted by the backend.
- * CSV data is the default because the supplied Iteration 1 files are now available.
- */
+// Env for the backend. CSV is the default because that is what Iteration 1 actually ships.
 const environmentSchema = z
   .object({
     REACH_DATA_SOURCE: z.enum(["demo", "csv", "database"]).default("csv"),
@@ -22,16 +19,12 @@ const environmentSchema = z
 
 type EnvironmentValues = z.infer<typeof environmentSchema>;
 
-/**
- * Singleton that reads and validates backend configuration in one place.
- * Other classes ask this object for settings instead of reading process.env everywhere.
- */
+// Reads env once. Other classes ask this instead of poking process.env.
 export class Environment {
   private static instance: Environment | undefined;
 
   private constructor(private readonly values: EnvironmentValues) {}
 
-  /** Validates the configuration once, then reuses the same read-only instance. */
   static getInstance(): Environment {
     if (!Environment.instance) {
       Environment.instance = new Environment(environmentSchema.parse(process.env));

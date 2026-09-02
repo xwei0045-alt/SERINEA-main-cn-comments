@@ -5,10 +5,7 @@ import { PostgresReachRepository } from "@/backend/repositories/PostgresReachRep
 import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { ReachService } from "@/backend/services/ReachService";
 
-/**
- * Builds ReachService with the data source selected by the environment.
- * This is the only place that needs changing when the PostGIS repository is ready.
- */
+// Picks csv, postgres, or the old demo files from the env. Default is csv.
 export class ReachServiceFactory {
   private constructor() {}
 

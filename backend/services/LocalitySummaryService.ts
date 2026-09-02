@@ -33,7 +33,7 @@ type MutableLocality = {
   >;
 };
 
-/** Builds searchable locality statistics from the second supplied CSV file. */
+// Town search. We group the summary CSV so Shepparton is one row, not 40 category rows.
 export class LocalitySummaryService {
   private dataPromise: ReturnType<LocalitySummaryRepository["load"]> | undefined;
   private summariesPromise: Promise<LocalitySummaryItem[]> | undefined;

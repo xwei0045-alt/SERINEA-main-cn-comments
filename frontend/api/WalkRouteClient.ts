@@ -14,6 +14,7 @@ export class WalkRouteApiError extends Error {
   }
 }
 
+// Browser helper for /api/walk so the map page does not build the query string itself.
 export class WalkRouteApiClient {
   constructor(private readonly baseUrl = "") {}
 

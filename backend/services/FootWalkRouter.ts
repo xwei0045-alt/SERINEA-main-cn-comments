@@ -65,10 +65,8 @@ function mapSteps(steps: OsrmStep[] | undefined): WalkStep[] {
     .filter((step) => Number.isFinite(step.location.lat) && Number.isFinite(step.location.lng));
 }
 
-/**
- * Street-following walking routes from OpenStreetMap.
- * Times are walking durations; if a server reports driving speed we fall back to 4.8 km/h.
- */
+// Street path from OSM foot routing.
+// If the server gives a driving speed we throw that away and use 4.8 km/h.
 export class FootWalkRouter {
   constructor(
     private readonly endpoint = FOSSGIS_FOOT,

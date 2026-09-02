@@ -6,7 +6,7 @@ export type MapMark = {
   wide?: boolean;
 };
 
-/** Letter plus colour — never colour alone — so park / shop / clinic stay distinct. */
+// Letter plus colour, never colour alone, so park / shop / clinic stay distinct.
 export const MAP_MARK: Record<PoiCategory, MapMark> = {
   park: { letter: "P" },
   grocery: { letter: "S" },

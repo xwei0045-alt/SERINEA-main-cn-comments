@@ -4,7 +4,7 @@ import { CsvLocalitySummaryRepository } from "@/backend/repositories/CsvLocality
 import { PostgresLocalitySummaryRepository } from "@/backend/repositories/PostgresLocalitySummaryRepository";
 import { LocalitySummaryService } from "@/backend/services/LocalitySummaryService";
 
-/** Selects the locality source using the same setting as the reachability API. */
+// Same switch as reach. CSV unless REACH_DATA_SOURCE is database.
 export class LocalitySummaryServiceFactory {
   private constructor() {}
 

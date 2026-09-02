@@ -1,6 +1,6 @@
 import type { SourceStamp } from "./types";
 
-/** Banner copy — regional OSM extract; journeys are walking estimates. */
+// Banner on the map. Keep this honest: circle is straight line, orange line is streets.
 export const DEMO_BANNER =
   "The orange circle is a straight-line search. Pick a place to follow the streets, then start the walk for time remaining.";
 

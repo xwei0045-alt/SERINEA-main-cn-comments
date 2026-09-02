@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 const controller = new ReachController(ReachServiceFactory.create());
 
-/** Thin Next.js entry point; validation and business rules live in backend classes. */
+/** Thin Next.js entry. Validation and the 15 minute rule live in backend classes. */
 export async function GET(request: NextRequest) {
   return controller.handle(request);
 }

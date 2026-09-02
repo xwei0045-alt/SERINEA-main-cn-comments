@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 const controller = new LocalitySummaryController(LocalitySummaryServiceFactory.create());
 
-/** Returns searchable statistics from the supplied locality summary file. */
+/** Town search from the locality summary CSV. */
 export async function GET(request: NextRequest) {
   return controller.handle(request);
 }

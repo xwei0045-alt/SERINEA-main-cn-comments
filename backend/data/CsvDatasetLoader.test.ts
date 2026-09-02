@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { CsvDatasetLoader } from "./CsvDatasetLoader";
 
-test("loads both Iteration 1 files and reconciles their totals", async () => {
+test("TC-F03 loads both Iteration 1 files and reconciles their totals", async () => {
   const dataset = await new CsvDatasetLoader().load();
 
   assert.equal(dataset.metadata.poiCount, 32_569);

@@ -1,6 +1,6 @@
 export const WINDOW_MINUTES = 15;
 
-/** Opening pin: a regional centre that has mapped POIs in the Iteration 1 extract. */
+// Opening pin. Shepparton has mapped places in the extract. Melbourne does not.
 export const REGIONAL_DEFAULT = {
   lat: -36.378248,
   lng: 145.40295,

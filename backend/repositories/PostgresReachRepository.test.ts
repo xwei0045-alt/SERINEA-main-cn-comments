@@ -4,7 +4,7 @@ import type { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { PostgresReachRepository } from "./PostgresReachRepository";
 import { ReachService } from "../services/ReachService";
 
-test("database repository keeps the existing reachability response contract", async () => {
+test("TC-F07 database repository keeps the existing reachability response contract", async () => {
   const database = {
     async query(sql: string) {
       if (sql.includes("FROM dataset_versions")) {

@@ -3,7 +3,7 @@ import test from "node:test";
 import { CsvReachRepository } from "./CsvReachRepository";
 import { ReachService } from "../services/ReachService";
 
-test("returns a mapped real POI near a supplied coordinate", async () => {
+test("TC-F04 returns a mapped real POI near a supplied coordinate", async () => {
   const service = new ReachService(new CsvReachRepository());
   const result = await service.search({
     pin: { lat: -37.024456, lng: 146.695987 },
@@ -18,7 +18,7 @@ test("returns a mapped real POI near a supplied coordinate", async () => {
   assert.match(result.sources.transit.name, /no GTFS/i);
 });
 
-test("applies frontend category filters after CSV mapping", async () => {
+test("TC-F05 applies frontend category filters after CSV mapping", async () => {
   const service = new ReachService(new CsvReachRepository());
   const result = await service.search({
     pin: { lat: -37.024456, lng: 146.695987 },

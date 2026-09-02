@@ -63,6 +63,7 @@ SERINEA/
 │   ├── globals.css         # Design tokens & base styles
 │   └── layout.tsx          # Root layout + fonts
 ├── backend/                # Controllers, services, repositories, data loading
+│   └── iso/                # ISO 29119 automated test cases
 ├── frontend/               # Browser-side API clients
 ├── shared/                 # Runtime-validated API contracts
 ├── data/                   # Supplied Iteration 1 CSV files
@@ -79,7 +80,8 @@ SERINEA/
 │   ├── ARCHITECTURE.md     # Frontend/backend ownership and object flow
 │   ├── AWS_DEPLOYMENT.md   # EC2, PostgreSQL, Nginx deployment details
 │   ├── BACKEND.md          # API and operating instructions
-│   └── DATASET.md          # Supplied fields, mapping, and limitations
+│   ├── DATASET.md          # Supplied fields, mapping, and limitations
+│   └── TEST_CASES.md       # ISO 29119 test cases for Iteration 1
 ├── PRODUCT.md              # Product spec (mentor reference)
 ├── DESIGN.md               # Visual / UX direction
 └── package.json

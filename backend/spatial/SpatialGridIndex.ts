@@ -1,10 +1,7 @@
 import { haversineKm } from "@/lib/geo";
 import type { LatLng } from "@/lib/types";
 
-/**
- * Small in-memory spatial index used by CSV mode.
- * It avoids scanning all statewide POIs each time the map pin moves.
- */
+// Bucket POIs into small cells so a pin move does not scan all 32k rows.
 export class SpatialGridIndex<T extends LatLng> {
   private readonly cells = new Map<string, T[]>();
 
@@ -20,7 +17,7 @@ export class SpatialGridIndex<T extends LatLng> {
     }
   }
 
-  /** Returns points inside a radius after a cheap grid lookup and exact distance check. */
+  // Cheap cell lookup first, then the real walking distance check.
   withinRadius(origin: LatLng, radiusKm: number): T[] {
     const latitudeDelta = radiusKm / 110.574;
     const longitudeScale = Math.max(0.01, Math.cos((origin.lat * Math.PI) / 180));

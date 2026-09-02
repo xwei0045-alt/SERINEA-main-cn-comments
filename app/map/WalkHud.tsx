@@ -1,5 +1,7 @@
 import { formatRemainingClock, formatWalkDistance } from "@/lib/walkCopy";
 
+// Overlay while walking. The clock is time left on this leg, not the whole 15 minutes.
+
 type Props = {
   placeName: string;
   legLabel: string;

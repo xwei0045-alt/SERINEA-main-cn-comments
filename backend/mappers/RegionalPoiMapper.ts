@@ -30,7 +30,7 @@ export type MappableRegionalPoi = Pick<
   | "locality"
 >;
 
-/** Converts a data-team row into the smaller POI shape already used by the map. */
+// The extract also has schools and bus stops. We only keep the five types the map shows.
 export class RegionalPoiMapper {
   toMapPoi(record: MappableRegionalPoi): Poi | null {
     const category = CATEGORY_BY_SUBCATEGORY[record.subcategory];

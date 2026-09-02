@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { FootWalkRouter } from "@/backend/services/FootWalkRouter";
 import { walkQuerySchema } from "@/shared/contracts/walkRoute";
 
+// Checks the walk query, then asks the street router. Bad coords get 400, no path gets 502.
 export class WalkRouteController {
   constructor(private readonly router: FootWalkRouter) {}
 

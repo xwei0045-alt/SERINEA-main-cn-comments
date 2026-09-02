@@ -3,10 +3,7 @@ import type { Journey, LatLng, Poi } from "@/lib/types";
 
 const DEFAULT_WALKING_SPEED_KM_PER_HOUR = 4.8;
 
-/**
- * Provides an explicit straight-line walking estimate while GTFS data is unavailable.
- * This is intentionally separate from real transit routing so the two cannot be confused.
- */
+// Straight line walk at 4.8 km/h. This is the list filter, not the orange street line.
 export class EstimatedJourneyCalculator {
   constructor(
     private readonly walkingSpeedKmPerHour = DEFAULT_WALKING_SPEED_KM_PER_HOUR

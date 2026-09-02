@@ -1,6 +1,8 @@
 import { haversineKm } from "./geo";
 import type { LatLng } from "./types";
 
+// Snap the walker onto the orange line and drop the bit they already walked.
+
 export type RemainingAlongPath = {
   remainingMeters: number;
   remainingPath: LatLng[];

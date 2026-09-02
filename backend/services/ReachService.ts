@@ -1,14 +1,11 @@
 import type { ReachRepository } from "@/backend/repositories/ReachRepository";
 import type { ReachQuery, ReachResponse } from "@/shared/contracts/reach";
 
-/**
- * Applies product rules to data returned by a repository.
- * Keeping these rules here makes them independent from HTTP and database details.
- */
+// Product rules sit here, not in the HTTP layer.
+// A place has to be reachable both ways inside the 15 minute window or it stays off the list.
 export class ReachService {
   constructor(private readonly repository: ReachRepository) {}
 
-  /** Calculates and validates the list displayed by the map page. */
   async search(query: ReachQuery): Promise<ReachResponse> {
     const calculation = await this.repository.findReachable({
       pin: query.pin,
@@ -47,12 +44,10 @@ export class ReachService {
     };
   }
 
-  /** Reports whether the selected repository can answer requests. */
   async isHealthy(): Promise<boolean> {
     return this.repository.isHealthy();
   }
 
-  /** Exposes the selected source without leaking the repository itself. */
   get dataSource(): ReachResponse["dataSource"] {
     return this.repository.dataSource;
   }

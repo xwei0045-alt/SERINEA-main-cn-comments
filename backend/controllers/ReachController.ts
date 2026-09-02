@@ -2,14 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import type { ReachService } from "@/backend/services/ReachService";
 import { reachQuerySchema } from "@/shared/contracts/reach";
 
-/**
- * Translates an HTTP request into a ReachService call.
- * It keeps URL parsing and HTTP error responses out of the business service.
- */
+// HTTP in, ReachService out. Bad query is 400. Real failures stay in the server log.
 export class ReachController {
   constructor(private readonly service: ReachService) {}
 
-  /** Handles one GET /api/reach request. */
   async handle(request: NextRequest): Promise<NextResponse> {
     const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsedQuery = reachQuerySchema.safeParse(rawQuery);

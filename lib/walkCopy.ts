@@ -1,4 +1,4 @@
-/** Plain walking directions from OSRM maneuver codes. */
+// Plain English walking lines. Mentors should never see "maneuver: turn|left".
 
 const TURN: Record<string, string> = {
   left: "Turn left",

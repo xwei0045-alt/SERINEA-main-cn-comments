@@ -11,6 +11,8 @@ npm test
 npm run dev
 ```
 
+`npm test` runs the ISO 29119 cases in `backend/iso/iso29119.test.ts`. The written versions live in `docs/TEST_CASES.md`.
+
 CSV mode is the default and needs no secret configuration. To make the selection explicit, copy `.env.example` to `.env.local` and keep:
 
 ```env

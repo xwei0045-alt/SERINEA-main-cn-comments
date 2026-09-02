@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { LocalitySummaryService } from "./LocalitySummaryService";
 
-test("searches locality summaries and keeps the supplied total", async () => {
+test("TC-F06 searches locality summaries and keeps the supplied total", async () => {
   const result = await new LocalitySummaryService().search({ q: "ABBEYARD", limit: 10 });
 
   assert.equal(result.dataSource, "csv");

@@ -14,10 +14,8 @@ const DETAIL_FILE_NAME = "regional_pois_detail_optimized_iteration1.csv";
 const SUMMARY_FILE_NAME = "locality_poi_summary_iteration1.csv";
 const DATASET_HANDOVER_DATE = "2026-09-02";
 
-/**
- * Loads and validates the two files supplied by the data team.
- * The promise is cached so a server process parses the files only once.
- */
+// Loads the two CSVs Xiaowei handed over.
+// We keep the parsed result so the server does not read 32k rows on every pin move.
 export class CsvDatasetLoader {
   private datasetPromise: Promise<RegionalDataset> | undefined;
 
@@ -72,7 +70,7 @@ export class CsvDatasetLoader {
     };
   }
 
-  /** Averages POI coordinates so a town search can place the map pin. */
+  // Town search needs a pin. We average the POI coordinates in that locality.
   private centroidsFrom(pois: RegionalPoiRecord[]): LocalityCentroid[] {
     const totals = new Map<
       string,

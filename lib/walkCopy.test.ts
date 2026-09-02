@@ -3,7 +3,9 @@ import { remainingAlongPath } from "@/lib/routeProgress";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-test("turn instructions stay in plain English", () => {
+// TC-U01, TC-U02, TC-F08. Plain English walk copy and remaining path.
+
+test("TC-U01 turn instructions stay in plain English", () => {
   assert.equal(
     describeWalkStep({ type: "turn", modifier: "left", name: "Pall Mall" }),
     "Turn left onto Pall Mall"
@@ -12,13 +14,13 @@ test("turn instructions stay in plain English", () => {
   assert.equal(describeWalkStep({ type: "arrive" }), "You have arrived");
 });
 
-test("remaining clock pads seconds", () => {
+test("TC-U02 remaining clock pads seconds", () => {
   assert.equal(formatRemainingClock(0), "0:00");
   assert.equal(formatRemainingClock(62), "1:02");
   assert.equal(formatRemainingClock(6 * 60 + 4.4), "6:04");
 });
 
-test("remaining path drops the walked section", () => {
+test("TC-F08 remaining path drops the walked section", () => {
   const path = [
     { lat: -36.38, lng: 145.4 },
     { lat: -36.381, lng: 145.4 },
@@ -31,7 +33,7 @@ test("remaining path drops the walked section", () => {
   assert.ok(remaining.offPathMeters < 20);
 });
 
-test("walking seconds match 4.8 km/h", () => {
+test("TC-P03 walking seconds match 4.8 km/h", () => {
   const seconds = walkingSecondsFromMeters(4800);
   assert.equal(Math.round(seconds), 3600);
 });
