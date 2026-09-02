@@ -138,19 +138,6 @@ svg {
 .mast-nav a:hover {
   color: var(--arterial);
 }
-.mast-cta {
-  margin-left: 8px;
-  background: var(--ink);
-  color: var(--enamel) !important;
-  padding: 10px 14px !important;
-  font-family: var(--font-display);
-  font-weight: 700 !important;
-  letter-spacing: 0.02em;
-}
-.mast-cta:hover {
-  background: var(--arterial) !important;
-  color: var(--enamel) !important;
-}
 
 .home {
   background: var(--paper);
@@ -1301,8 +1288,7 @@ svg {
     padding: 14px max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left));
     gap: 12px;
   }
-  .mast-nav a,
-  .mast-cta {
+  .mast-nav a {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
