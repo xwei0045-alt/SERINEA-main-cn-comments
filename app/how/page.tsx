@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Chrome } from "../components/Chrome";
 
 export const metadata = {
-  title: "How it works — SERINEA",
+  title: "How it works - SERINEA",
   description: "Drop a pin in regional Victoria. Fifteen minutes there and back."
 };
 
@@ -19,17 +19,17 @@ export default function HowPage() {
         <ul className="read-key" aria-label="How to read the map">
           <li>
             <span className="key-overlay" aria-hidden="true" />
-            Orange area — a 15-minute walk there and back (straight line)
+            Orange area: a 15-minute walk there and back (straight line)
           </li>
           <li>
             <span className="poi-mark poi-mark--park" aria-hidden="true">
               P
             </span>
-            Letter on a square — park, grocery, doctor, pharmacy or gym
+            Letter on a square: park, grocery, doctor, pharmacy or gym
           </li>
           <li>
             <span className="key-pin" aria-hidden="true" />
-            Red square — the start. Drag it, or click the map to move.
+            Red square: the start. Drag it, or click the map to move.
           </li>
         </ul>
         <ol>

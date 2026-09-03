@@ -350,6 +350,7 @@ export default function MapApp() {
   const placeWord = listed.length === 1 ? "place" : "places";
   const streetRoundTripSeconds = streetRoute?.durationSeconds ?? 0;
   const overBudget = streetRoundTripSeconds > WINDOW_MINUTES * 60;
+  const thereLegPreview = streetRoute?.legs.find((leg) => leg.id === "there") ?? null;
   const nextInstruction = currentLeg
     ? instructionFor(currentLeg.distanceMeters, remainingMeters, currentLeg.steps)
     : "Follow the orange path";
@@ -397,8 +398,17 @@ export default function MapApp() {
   }
 
   function pickPlace(id: string) {
-    setSelectedId((prev) => (prev === id ? null : id));
-    setPanelOpen(true);
+    setSelectedId((prev) => {
+      if (prev === id) return null;
+      return id;
+    });
+    // Mobile: keep the map clear and show the Start card (Google Maps style).
+    // Desktop: open the side list so the journey details stay visible.
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) {
+      setPanelOpen(false);
+    } else {
+      setPanelOpen(true);
+    }
   }
 
   function closePanel() {
@@ -445,8 +455,8 @@ export default function MapApp() {
   return (
     <>
       <p className="banner banner--desktop">
-        <strong>Regional Victoria.</strong> Tap the map to place a pin · tap a place for the
-        path · then start the walk.
+        <strong>Regional Victoria.</strong> Tap the map to drop your pin, tap a place, then
+        press Start.
       </p>
       <div className={`map-shell${panelOpen ? " map-shell--panel-open" : ""}`}>
         <div className="map-stage">
@@ -480,6 +490,50 @@ export default function MapApp() {
               onWalkBack={startWalkBack}
             />
           )}
+
+          {!walkStarted && selected && (
+            <div className="place-card" role="dialog" aria-label="Selected place">
+              <div className="place-card-copy">
+                <p className="place-card-kicker">
+                  {categoryLabel(selected.poi.category)} · {selected.journey.roundTripMinutes} min round trip
+                </p>
+                <h2 className="place-card-title">{selected.poi.name}</h2>
+                <p className="place-card-meta">{titleCase(selected.poi.suburb)}</p>
+                {routeError && <p className="status note">{routeError}</p>}
+                {routeLoading && <p className="place-card-hint">Finding the walking path…</p>}
+                {!routeLoading && !routeError && thereLegPreview && (
+                  <p className="place-card-hint">
+                    Walk about {Math.max(1, Math.round(thereLegPreview.durationSeconds / 60))} min there
+                  </p>
+                )}
+              </div>
+              <div className="place-card-actions">
+                <button
+                  type="button"
+                  className="walk-primary place-card-start"
+                  disabled={!thereLegPreview || routeLoading}
+                  onClick={() => {
+                    startWalk();
+                    closePanel();
+                  }}
+                >
+                  {routeLoading ? "Finding path…" : "Start"}
+                </button>
+                <button
+                  type="button"
+                  className="walk-secondary place-card-clear"
+                  onClick={() => {
+                    setSelectedId(null);
+                    setStreetRoute(null);
+                    setRouteError(null);
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="map-fab-row">
             <button
               type="button"
@@ -503,10 +557,10 @@ export default function MapApp() {
               <IconLocate />
             </button>
           </div>
-          <ul className="map-legend" aria-label="Map key">
+          <ul className="map-legend map-legend--compact" aria-label="Map key">
             <li>
               <span className="pin-marker" aria-hidden="true" />
-              Start
+              You
             </li>
             {MAP_CATEGORIES.map((cat) => (
               <li key={cat.id}>
@@ -556,7 +610,7 @@ export default function MapApp() {
             <p className="window-fixed" aria-live="polite">
               {loading && !result
                 ? "Looking up places…"
-                : `${listed.length} ${placeWord} · tap one for the path`}
+                : `${listed.length} ${placeWord}. Tap one, then press Start`}
             </p>
 
             <label className="town-search">
@@ -634,10 +688,10 @@ export default function MapApp() {
           </div>
 
           {denied && (
-            <p className="status note">Location blocked — search a town or tap the map.</p>
+            <p className="status note">Location blocked. Search a town or tap the map.</p>
           )}
           {failed && !denied && (
-            <p className="status note">Location failed — search a town or tap the map.</p>
+            <p className="status note">Location failed. Search a town or tap the map.</p>
           )}
           {requestError && <p className="status halt">{requestError}</p>}
           {waterMessage && <p className="status halt">{waterMessage}</p>}
@@ -733,7 +787,7 @@ export default function MapApp() {
                           closePanel();
                         }}
                       >
-                        {routeLoading ? "Finding path…" : walkStarted ? "Walking…" : "Start walk"}
+                        {routeLoading ? "Finding path…" : walkStarted ? "Walking…" : "Start"}
                       </button>
                     </div>
                   )}

@@ -53,7 +53,7 @@ export const DEMO_AREAS: DemoArea[] = [
     name: "Shepparton",
     line: "Iteration 1 opening pin · walking estimate",
     scoreLabel: "Regional",
-    scoreNote: "Round-trip reach — not a ranking",
+    scoreNote: "Round-trip reach, not a ranking",
     tags: ["GP", "Pharmacy", "Grocery", "Park"]
   },
   {
@@ -61,7 +61,7 @@ export const DEMO_AREAS: DemoArea[] = [
     name: "Mildura",
     line: "Regional extract · OSM places",
     scoreLabel: "Regional",
-    scoreNote: "Services thin — open the map",
+    scoreNote: "Services thin: open the map",
     tags: ["Grocery", "Gym", "Park"]
   },
   {
@@ -78,7 +78,7 @@ export const DEMO_STEPS: DemoStep[] = [
   {
     n: "01",
     title: "Drop a pin",
-    body: "Start in a regional town — Shepparton if you do not share a location. Inner Melbourne is not in this extract."
+    body: "Start in a regional town. Shepparton if you do not share a location. Inner Melbourne is not in this extract."
   },
   {
     n: "02",

@@ -47,7 +47,7 @@ export const PHASES: Phase[] = [
     id: "i1",
     n: "01",
     title: "“Nearby” is not enough",
-    body: "In a small town, a shop or clinic can look close on a map — but if you cannot get back in time, it is not really reachable."
+    body: "In a small town, a shop or clinic can look close on a map, but if you cannot get back in time, it is not really reachable."
   },
   {
     id: "i2",
@@ -59,7 +59,7 @@ export const PHASES: Phase[] = [
     id: "i3",
     n: "03",
     title: "We show what actually fits",
-    body: "SERINEA keeps only places that work round-trip. If the return blows the window, it stays off the list — so the map stays honest."
+    body: "SERINEA keeps only places that work round-trip. If the return blows the window, it stays off the list, so the map stays honest."
   }
 ];
 
@@ -67,17 +67,17 @@ export const FACTS: FunFact[] = [
   {
     id: "f1",
     kicker: "Regional Victoria",
-    line: "32,569 OpenStreetMap places across 1,778 localities — not the Melbourne CBD."
+    line: "32,569 OpenStreetMap places across 1,778 localities, not the Melbourne CBD."
   },
   {
     id: "f2",
     kicker: "Hard window",
-    line: "No 30. No 60. Fifteen is the product — there and back."
+    line: "No 30. No 60. Fifteen is the product: there and back."
   },
   {
     id: "f3",
     kicker: "Team SERINEA",
-    line: "Six of us · TA06 · FIT5120 — rural reach without the marketing fluff."
+    line: "Six of us · TA06 · FIT5120: rural reach without the marketing fluff."
   }
 ];
 

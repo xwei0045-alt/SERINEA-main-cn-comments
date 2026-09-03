@@ -18,7 +18,7 @@ const condensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "SERINEA — The 15 minute map",
+  title: "SERINEA: The 15 minute map",
   description:
     "Drop a pin in regional Victoria. See parks, groceries, GPs, pharmacies and gyms you can reach and get back from in 15 minutes."
 };

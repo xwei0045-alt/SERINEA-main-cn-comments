@@ -224,7 +224,7 @@ export function LandingExperience() {
       <div className={styles.sticky} onPointerMove={onMove}>
         <div className={styles.stage} aria-label="Scroll-driven SERINEA experience">
           <h1 className={styles.srOnly}>
-            SERINEA — fifteen-minute round-trip reach for regional Victoria
+            SERINEA: fifteen-minute round-trip reach for regional Victoria
           </h1>
           <div className={styles.noise} aria-hidden="true" />
           <div className={styles.gridDrift} aria-hidden="true" />
@@ -426,7 +426,7 @@ export function LandingExperience() {
             </p>
             <ul className={styles.lockList}>
               <li>No accounts this pass</li>
-              <li>Your pin is for reach — not a profile</li>
+              <li>Your pin is for reach, not a profile</li>
               <li>Walking times labelled as estimates</li>
             </ul>
           </div>
@@ -443,7 +443,7 @@ export function LandingExperience() {
           >
             <p className={styles.phaseLead}>What we are solving</p>
             <p className={styles.phaseIntro}>
-              For people in regional and rural towns who rely on walking — not
+              For people in regional and rural towns who rely on walking, not
               drivers, and not city apps that pretend every place is “nearby.”
             </p>
             {PHASES.map((ph, i) => {
@@ -523,7 +523,7 @@ export function LandingExperience() {
                 </Link>
               </div>
               <p className={styles.goNote}>
-                Opens on Shepparton. Walking estimates from OpenStreetMap — not public transport times yet.
+                Opens on Shepparton. Walking estimates from OpenStreetMap, not public transport times yet.
               </p>
             </div>
           ) : null}

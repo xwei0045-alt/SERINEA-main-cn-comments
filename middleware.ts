@@ -8,12 +8,12 @@ const buckets = new Map<string, Bucket>();
 
 const WINDOW_MS = 60_000;
 const LIMITS: Record<string, number> = {
-  walk: 20,
-  reach: 60,
-  localities: 60,
-  health: 30
+  walk: 30,
+  reach: 120,
+  localities: 120,
+  health: 60
 };
-const DEFAULT_LIMIT = 40;
+const DEFAULT_LIMIT = 80;
 
 function clientKey(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for");

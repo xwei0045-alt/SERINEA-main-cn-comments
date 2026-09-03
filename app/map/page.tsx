@@ -3,7 +3,7 @@ import { Chrome } from "../components/Chrome";
 import MapApp from "./MapApp";
 
 export const metadata: Metadata = {
-  title: "Map — SERINEA 15 minute map",
+  title: "Map - SERINEA 15 minute map",
   description:
     "Drop a pin in regional Victoria. See parks, groceries, doctors, pharmacies and gyms within a 15-minute walk there and back."
 };
