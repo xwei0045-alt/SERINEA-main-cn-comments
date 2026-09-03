@@ -11,11 +11,7 @@ import {
   type PointerEvent as ReactPointerEvent
 } from "react";
 import { DEMO_PINS } from "../../../lib/landingDemo";
-import {
-  FACTS,
-  PHASES,
-  TEAM
-} from "../../../lib/landingStory";
+import { FACTS, PHASES } from "../../../lib/landingStory";
 import styles from "./landing.module.css";
 
 function clamp(n: number, a: number, b: number) {
@@ -163,14 +159,14 @@ export function LandingExperience() {
   const lie = smooth(0.06, 0.14, p) * (1 - smooth(0.16, 0.24, p));
   const cut = smooth(0.14, 0.24, p) * (1 - smooth(0.28, 0.36, p));
   // Soft handoff: atlas finishes retract, then chapters crossfade (no hard cuts)
-  const atlas = smooth(0.24, 0.34, p) * (1 - smooth(0.6, 0.69, p));
+  const atlas = smooth(0.24, 0.34, p) * (1 - smooth(0.58, 0.68, p));
   const orbit = atlas;
   const filterAmt = smooth(0.52, 0.58, p);
-  const crew = smooth(0.63, 0.71, p) * (1 - smooth(0.74, 0.82, p));
-  const lock = smooth(0.76, 0.83, p) * (1 - smooth(0.845, 0.88, p));
-  const phaseAmt = smooth(0.86, 0.9, p) * (1 - smooth(0.91, 0.935, p));
+  const crew = 0;
+  const lock = smooth(0.66, 0.74, p) * (1 - smooth(0.78, 0.84, p));
+  const phaseAmt = smooth(0.8, 0.86, p) * (1 - smooth(0.9, 0.93, p));
   // Fact plate lives long enough for all 3 cards, one at a time
-  const factAmt = smooth(0.92, 0.94, p) * (1 - smooth(0.972, 0.988, p));
+  const factAmt = smooth(0.91, 0.935, p) * (1 - smooth(0.972, 0.988, p));
   const go = smooth(0.975, 1, p);
   const invert = 0;
 
@@ -238,8 +234,14 @@ export function LandingExperience() {
             <p className={styles.brandTag}>
               Reach that works in regional Victoria
             </p>
-            <p className={styles.brandHint}>Scroll ↓</p>
           </div>
+          <p
+            className={styles.brandHint}
+            aria-hidden={name < 0.08}
+            style={{ opacity: name }}
+          >
+            Scroll ↓
+          </p>
 
           <p className={styles.lieStamp} aria-hidden={lie < 0.1} data-text="NEARBY">
             NEARBY
@@ -382,36 +384,6 @@ export function LandingExperience() {
           </div>
 
           <div
-            className={styles.crewGrid}
-            aria-hidden={crew < 0.05}
-            style={
-              {
-                opacity: crew,
-                transform: `translate(-50%, -54%) scale(${lerp(0.9, 1, crew)}) translateY(${lerp(28, 0, crew)}px)`
-              } as CSSProperties
-            }
-          >
-            {TEAM.map((seat, i) => {
-              // Enter stagger only — exit is a uniform plate fade/scale
-              const enter = smooth(0.635 + i * 0.008, 0.705 + i * 0.006, p);
-              return (
-                <article
-                  key={seat.id}
-                  className={styles.seat}
-                  style={{
-                    opacity: enter,
-                    transform: `translateY(${lerp(14, 0, enter)}px)`
-                  }}
-                >
-                  <span className={styles.seatTag}>{seat.short}</span>
-                  <h3 className={styles.seatRole}>{seat.role}</h3>
-                  <p className={styles.seatFocus}>{seat.focus}</p>
-                </article>
-              );
-            })}
-          </div>
-
-          <div
             className={styles.lockPlate}
             aria-hidden={lock < 0.05}
             style={
@@ -446,25 +418,14 @@ export function LandingExperience() {
               For people in regional and rural towns who rely on walking, not
               drivers, and not city apps that pretend every place is “nearby.”
             </p>
-            {PHASES.map((ph, i) => {
-              const enter = smooth(0.862 + i * 0.01, 0.895 + i * 0.008, p);
-              return (
-                <article
-                  key={ph.id}
-                  className={styles.phaseCard}
-                  style={{
-                    opacity: enter,
-                    transform: `translateY(${lerp(12, 0, enter)}px)`
-                  }}
-                >
-                  <span className={styles.phaseN}>{ph.n}</span>
-                  <div>
-                    <h3 className={styles.phaseTitle}>{ph.title}</h3>
-                    <p className={styles.phaseBody}>{ph.body}</p>
-                  </div>
-                </article>
-              );
-            })}
+            <div className={styles.phasePlate}>
+              {PHASES.map((ph) => (
+                <p key={ph.id} className={styles.phaseFact}>
+                  <span>{ph.title.replace(/[“”"]/g, "")}</span>
+                  {ph.body}
+                </p>
+              ))}
+            </div>
           </div>
 
           <div
