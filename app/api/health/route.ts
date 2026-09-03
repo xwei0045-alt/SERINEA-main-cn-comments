@@ -6,32 +6,28 @@ import { ReachServiceFactory } from "@/backend/factories/ReachServiceFactory";
 export const runtime = "nodejs";
 
 /**
- * Reports application, repository, and database health separately.
- * A missing database is expected while the application is using files.
+ * Lightweight liveness check. Omits data-source / DB detail from the public body
+ * (security report: info disclosure on /api/health).
  */
 export async function GET() {
   try {
     const environment = Environment.getInstance();
     const service = ReachServiceFactory.create();
     const repositoryHealthy = await service.isHealthy();
-    let database: "not-configured" | "connected" | "unreachable" =
-      "not-configured";
+    let databaseOk = true;
 
     if (environment.databaseUrl) {
       const connection = PostgresDatabase.getInstance(environment.databaseUrl);
-      database = (await connection.isHealthy()) ? "connected" : "unreachable";
+      databaseOk = await connection.isHealthy();
     }
 
     const healthy =
       repositoryHealthy &&
-      (environment.dataSource !== "database" || database === "connected");
+      (environment.dataSource !== "database" || databaseOk);
 
     return NextResponse.json(
       {
         status: healthy ? "ok" : "degraded",
-        dataSource: service.dataSource,
-        repository: repositoryHealthy ? "ready" : "unavailable",
-        database,
         checkedAt: new Date().toISOString()
       },
       { status: healthy ? 200 : 503 }
@@ -41,7 +37,6 @@ export async function GET() {
     return NextResponse.json(
       {
         status: "error",
-        message: "The backend configuration is not ready.",
         checkedAt: new Date().toISOString()
       },
       { status: 503 }
