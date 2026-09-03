@@ -12,7 +12,6 @@ import {
 } from "react";
 import { DEMO_PINS } from "../../../lib/landingDemo";
 import {
-  BEATS,
   FACTS,
   PHASES,
   TEAM
@@ -94,6 +93,7 @@ export function LandingExperience() {
   const smoothP = useRef(0);
   const [p, setP] = useState(0);
   const [reduced, setReduced] = useState(false);
+  const [narrow, setNarrow] = useState(false);
   const [mx, setMx] = useState(0.5);
   const [my, setMy] = useState(0.5);
 
@@ -108,15 +108,19 @@ export function LandingExperience() {
   useEffect(() => {
     const off = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setReduced(off);
+    const mq = window.matchMedia("(max-width: 900px)");
+    const syncNarrow = () => setNarrow(mq.matches);
+    syncNarrow();
+    mq.addEventListener("change", syncNarrow);
     if (off) {
       setP(1);
       targetP.current = 1;
       smoothP.current = 1;
-      return;
+      return () => mq.removeEventListener("change", syncNarrow);
     }
 
     let running = true;
-    const damp = 0.1; // silkier follow so expand/retract don’t stutter
+    const damp = 0.07; // silkier scroll follow
 
     const frame = () => {
       if (!running) return;
@@ -125,8 +129,8 @@ export function LandingExperience() {
       const tgt = targetP.current;
       const next = cur + (tgt - cur) * damp;
       // Snap when nearly there so we don't crawl forever
-      smoothP.current = Math.abs(tgt - next) < 0.00015 ? tgt : next;
-      if (Math.abs(smoothP.current - cur) > 0.00004) {
+      smoothP.current = Math.abs(tgt - next) < 0.00012 ? tgt : next;
+      if (Math.abs(smoothP.current - cur) > 0.00003) {
         setP(smoothP.current);
       }
       raf.current = requestAnimationFrame(frame);
@@ -144,6 +148,7 @@ export function LandingExperience() {
       cancelAnimationFrame(raf.current);
       window.removeEventListener("scroll", readTarget);
       window.removeEventListener("resize", readTarget);
+      mq.removeEventListener("change", syncNarrow);
     };
   }, [readTarget]);
 
@@ -171,12 +176,21 @@ export function LandingExperience() {
 
   const fifteenCount = Math.max(1, Math.round(lerp(1, 15, clamp(cut / 0.85, 0, 1))));
   const fifteenScale = lerp(0.55, 1.02, Math.min(1, cut));
-  const spin = atlas * 10 + filterAmt * 6;
-  const warp = filterAmt * 2;
+  const spin = narrow ? atlas * 4 : atlas * 8 + filterAmt * 4;
+  const warp = narrow ? 0 : filterAmt * 1.5;
   const brandSpread = lerp(0, 1, name);
   const atlasGlow = atlas > 0.9 && filterAmt < 0.08 && p >= 0.46 && p < 0.53;
 
   const pins = useMemo(() => DEMO_PINS, []);
+  // Phones: fewer labelled dots so the atlas stays readable
+  const showLabel = useCallback(
+    (i: number, keep: boolean) => {
+      if (!narrow) return true;
+      if (!keep) return false;
+      return i % 2 === 0;
+    },
+    [narrow]
+  );
   const showGo = reduced || go > 0.02;
 
   return (
@@ -352,7 +366,9 @@ export function LandingExperience() {
                     <em
                       className={`${styles.atlasLabel}${labelLeft ? ` ${styles.atlasLabelLeft}` : ""}`}
                       style={{
-                        opacity: labelOn * lerp(1, 0.2, kill),
+                        opacity: showLabel(i, pin.keep)
+                          ? labelOn * lerp(1, 0.2, kill)
+                          : 0,
                         transform: `translateY(${lerp(8, 0, labelOn)}px)`
                       }}
                     >
@@ -401,7 +417,7 @@ export function LandingExperience() {
             style={
               {
                 opacity: lock,
-                transform: `translate(-50%, -50%) scale(${lerp(0.92, 1, lock)}) translateY(${lerp(20, 0, lock)}px)`
+                transform: `translate(-50%, -50%) scale(${lerp(0.94, 1, lock)}) translateY(${lerp(16, 0, lock)}px)`
               } as CSSProperties
             }
           >
@@ -410,9 +426,8 @@ export function LandingExperience() {
             </p>
             <ul className={styles.lockList}>
               <li>No accounts this pass</li>
-              <li>Pin stays for reach — not a profile harvest</li>
-              <li>Walking estimates labelled · no GTFS this pass</li>
-              <li>Cybersecurity seat on the six</li>
+              <li>Your pin is for reach — not a profile</li>
+              <li>Walking times labelled as estimates</li>
             </ul>
           </div>
 
@@ -422,19 +437,24 @@ export function LandingExperience() {
             style={
               {
                 opacity: phaseAmt,
-                transform: `translate(-50%, -50%) scale(${lerp(0.94, 1, phaseAmt)}) translateY(${lerp(18, 0, phaseAmt)}px)`
+                transform: `translate(-50%, -50%) scale(${lerp(0.96, 1, phaseAmt)}) translateY(${lerp(14, 0, phaseAmt)}px)`
               } as CSSProperties
             }
           >
+            <p className={styles.phaseLead}>What we are solving</p>
+            <p className={styles.phaseIntro}>
+              For people in regional and rural towns who rely on walking — not
+              drivers, and not city apps that pretend every place is “nearby.”
+            </p>
             {PHASES.map((ph, i) => {
-              const enter = smooth(0.862 + i * 0.012, 0.9 + i * 0.01, p);
+              const enter = smooth(0.862 + i * 0.01, 0.895 + i * 0.008, p);
               return (
                 <article
                   key={ph.id}
                   className={styles.phaseCard}
                   style={{
                     opacity: enter,
-                    transform: `translateX(${lerp(18, 0, enter)}px)`
+                    transform: `translateY(${lerp(12, 0, enter)}px)`
                   }}
                 >
                   <span className={styles.phaseN}>{ph.n}</span>
@@ -507,18 +527,6 @@ export function LandingExperience() {
               </p>
             </div>
           ) : null}
-
-          <div className={styles.rail} aria-hidden="true">
-            <div className={styles.railFill} style={{ transform: `scaleY(${p})` }} />
-            {BEATS.map((b) => (
-              <span
-                key={b.at}
-                className={`${styles.tick}${p >= b.at ? ` ${styles.tickOn}` : ""}`}
-                style={{ top: `${b.at * 100}%` }}
-                data-label={b.label}
-              />
-            ))}
-          </div>
 
           <div className={styles.flash} aria-hidden="true" />
         </div>

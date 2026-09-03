@@ -13,8 +13,7 @@ import { walkRouteApiClient } from "@/frontend/api/WalkRouteClient";
 import { haversineKm } from "@/lib/geo";
 import { MAP_MARK, categoryLabel, poiMarkClass } from "@/lib/mapMarks";
 import { remainingAlongPath } from "@/lib/routeProgress";
-import { DEMO_BANNER } from "@/lib/sources";
-import { formatWalkDistance, walkingSecondsFromMeters } from "@/lib/walkCopy";
+import { walkingSecondsFromMeters } from "@/lib/walkCopy";
 import {
   MAP_CATEGORIES,
   REGIONAL_DEFAULT,
@@ -159,17 +158,35 @@ export default function MapApp() {
 
   const listed = useMemo(() => {
     const reachable = result?.reachable ?? [];
-    if (active === "all") return reachable;
-    return reachable.filter((row) => active.includes(row.poi.category));
+    const filtered =
+      active === "all"
+        ? reachable
+        : reachable.filter((row) => active.includes(row.poi.category));
+    // Closest first — keeps the panel and map readable
+    return [...filtered].sort(
+      (a, b) => a.journey.roundTripMinutes - b.journey.roundTripMinutes
+    );
   }, [result, active]);
+
+  // Cap map dots so towns don’t look like a sticker sheet
+  const mapListed = useMemo(() => {
+    const cap = 8;
+    const top = listed.slice(0, cap);
+    if (selectedId && !top.some((row) => row.poi.id === selectedId)) {
+      const picked = listed.find((row) => row.poi.id === selectedId);
+      if (picked) return [...top.slice(0, cap - 1), picked];
+    }
+    return top;
+  }, [listed, selectedId]);
 
   useEffect(() => {
     if (!listed.length) {
       setSelectedId(null);
       return;
     }
-    if (!listed.some((row) => row.poi.id === selectedId)) {
-      setSelectedId(listed[0].poi.id);
+    // Drop selection if that place left the list — do not auto-pick another
+    if (selectedId && !listed.some((row) => row.poi.id === selectedId)) {
+      setSelectedId(null);
     }
   }, [listed, selectedId]);
 
@@ -186,10 +203,12 @@ export default function MapApp() {
     setRemainingPath(null);
   }, [selectedId, pin.lat, pin.lng]);
 
+  // Path only after the user picks a place — never on pin drop alone
   useEffect(() => {
     if (!selected) {
       setStreetRoute(null);
       setRouteError(null);
+      setRouteLoading(false);
       return;
     }
 
@@ -370,6 +389,14 @@ export default function MapApp() {
   function movePin(next: LatLng) {
     setPin(next);
     setTownOpen(false);
+    setSelectedId(null);
+    setStreetRoute(null);
+    setRouteError(null);
+    setWalkStarted(false);
+  }
+
+  function pickPlace(id: string) {
+    setSelectedId((prev) => (prev === id ? null : id));
   }
 
   function jumpToTown(item: LocalitySummaryItem) {
@@ -412,14 +439,15 @@ export default function MapApp() {
   return (
     <>
       <p className="banner">
-        <strong>Regional Victoria.</strong> {DEMO_BANNER}
+        <strong>Regional Victoria.</strong> Tap the map to place a pin · tap a place for the
+        path · then start the walk.
       </p>
       <div className="map-shell">
         <div className="map-stage">
           <ReachMap
             pin={pin}
             hull={result?.hull ?? NO_HULL}
-            reachable={listed}
+            reachable={mapListed}
             selectedId={selectedId}
             routePath={displayPath}
             you={walkStarted ? you ?? pin : null}
@@ -430,7 +458,7 @@ export default function MapApp() {
               movePin(pt);
               setTownQuery("");
             }}
-            onSelect={(id) => setSelectedId(id)}
+            onSelect={(id) => pickPlace(id)}
           />
           {walkStarted && selected && (
             <WalkHud
@@ -451,10 +479,6 @@ export default function MapApp() {
               <span className="pin-marker" aria-hidden="true" />
               Start
             </li>
-            <li>
-              <span className="route-swatch" aria-hidden="true" />
-              Walking path
-            </li>
             {MAP_CATEGORIES.map((cat) => (
               <li key={cat.id}>
                 <span className={poiMarkClass(cat.id)} aria-hidden="true">
@@ -467,24 +491,30 @@ export default function MapApp() {
         </div>
         <aside className="panel" aria-label="Places within 15 minutes">
           <div className="panel-head">
-            <h1>Within 15 minutes</h1>
+            <div className="panel-title-row">
+              <h1>Within 15 minutes</h1>
+              <button
+                className="locate locate--compact"
+                type="button"
+                onClick={locate}
+                disabled={locating || walkStarted}
+              >
+                <IconLocate />
+                {locating ? "…" : "My location"}
+              </button>
+            </div>
             <p className="window-fixed" aria-live="polite">
-              {loading && !result ? (
-                <span>Looking up places you can walk to and back…</span>
-              ) : (
-                <span>
-                  {listed.length} {placeWord} you can walk to and back. Pick a place to
-                  see the street path.
-                </span>
-              )}
+              {loading && !result
+                ? "Looking up places…"
+                : `${listed.length} ${placeWord} · tap one for the path`}
             </p>
 
             <label className="town-search">
-              <span>Search a town</span>
+              <span className="sr-only">Search a town</span>
               <input
                 type="search"
                 value={townQuery}
-                placeholder="Shepparton, Mildura, Wodonga…"
+                placeholder="Search town…"
                 autoComplete="off"
                 aria-autocomplete="list"
                 aria-expanded={townOpen && townMatches.length > 0}
@@ -510,12 +540,7 @@ export default function MapApp() {
                         onClick={() => jumpToTown(item)}
                       >
                         <strong>{titleCase(item.locality)}</strong>
-                        <span>
-                          {titleCase(item.lgaName)}
-                          {item.totalPoiCount > 0
-                            ? ` · ${item.totalPoiCount.toLocaleString("en-AU")} places`
-                            : ""}
-                        </span>
+                        <span>{titleCase(item.lgaName)}</span>
                       </button>
                     </li>
                   ))}
@@ -523,32 +548,21 @@ export default function MapApp() {
               )}
             </label>
 
-            <div className="search-tools">
-              <div className="town-chips" role="group" aria-label="Regional towns">
-                {TOWN_JUMPS.map((town) => (
-                  <button
-                    key={town.label}
-                    type="button"
-                    aria-pressed={samePin(pin, town)}
-                    disabled={walkStarted}
-                    onClick={() => {
-                      movePin({ lat: town.lat, lng: town.lng });
-                      setTownQuery(town.label);
-                    }}
-                  >
-                    {town.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                className="locate"
-                type="button"
-                onClick={locate}
-                disabled={locating || walkStarted}
-              >
-                <IconLocate />
-                {locating ? "Finding you…" : "Use my location"}
-              </button>
+            <div className="town-chips" role="group" aria-label="Regional towns">
+              {TOWN_JUMPS.slice(0, 4).map((town) => (
+                <button
+                  key={town.label}
+                  type="button"
+                  aria-pressed={samePin(pin, town)}
+                  disabled={walkStarted}
+                  onClick={() => {
+                    movePin({ lat: town.lat, lng: town.lng });
+                    setTownQuery(town.label);
+                  }}
+                >
+                  {town.label}
+                </button>
+              ))}
             </div>
 
             <div className="filters" role="group" aria-label="Place type">
@@ -562,54 +576,44 @@ export default function MapApp() {
                   aria-pressed={active !== "all" && active.includes(cat.id)}
                   onClick={() => toggleCat(cat.id)}
                 >
-                  <IconCategory category={cat.id} size={16} />
-                  {cat.label}
+                  <IconCategory category={cat.id} size={14} />
+                  <span>{cat.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {denied && (
-            <p className="status note">
-              Location was blocked. The pin is at {REGIONAL_DEFAULT.label}. Search a
-              town or click the map.
-            </p>
+            <p className="status note">Location blocked — search a town or tap the map.</p>
           )}
           {failed && !denied && (
-            <p className="status note">Location could not be read. Search a town or click the map.</p>
+            <p className="status note">Location failed — search a town or tap the map.</p>
           )}
-          {loading && result && <p className="status note">Updating places…</p>}
           {requestError && <p className="status halt">{requestError}</p>}
           {waterMessage && <p className="status halt">{waterMessage}</p>}
-          {!waterMessage && result && result.outboundOnlyCount > 0 && (
-            <p className="status note">
-              {result.outboundOnlyCount} more{" "}
-              {result.outboundOnlyCount === 1 ? "place is" : "places are"} close one
-              way, but walking back would take more than 15 minutes. Those are hidden.
-            </p>
-          )}
 
           <div className="results">
             {waterMessage && (
               <div className="empty">
-                <h2>Nothing to list on water</h2>
-                <p>Move the pin onto land. The orange area only draws where a round trip is possible.</p>
+                <h2>Pin is on water</h2>
+                <p>Move it onto land to see places.</p>
               </div>
             )}
             {!loading && !requestError && !waterMessage && listed.length === 0 && (
               <div className="empty">
-                <h2>Nothing within a 15-minute walk there and back</h2>
-                <p>
-                  This map covers regional Victoria, not inner Melbourne. Try
-                  Shepparton, Bendigo, Mildura or Wodonga, or click a different spot.
-                </p>
+                <h2>Nothing in 15 minutes there and back</h2>
+                <p>Try Bendigo, Shepparton, or another town.</p>
               </div>
             )}
             {listed.map((row) => {
               const isSelected = selectedId === row.poi.id;
               const mark = MAP_MARK[row.poi.category];
-              const there = streetRoute?.legs.find((leg) => leg.id === "there");
-              const back = streetRoute?.legs.find((leg) => leg.id === "back");
+              const there = isSelected
+                ? streetRoute?.legs.find((leg) => leg.id === "there")
+                : null;
+              const back = isSelected
+                ? streetRoute?.legs.find((leg) => leg.id === "back")
+                : null;
               return (
                 <article
                   key={row.poi.id}
@@ -621,7 +625,7 @@ export default function MapApp() {
                     className="result-hit"
                     aria-expanded={isSelected}
                     aria-current={isSelected ? "true" : undefined}
-                    onClick={() => setSelectedId(row.poi.id)}
+                    onClick={() => pickPlace(row.poi.id)}
                   >
                     <div className="result-top">
                       <span className={poiMarkClass(row.poi.category, isSelected)} aria-hidden="true">
@@ -645,51 +649,30 @@ export default function MapApp() {
                         <div>
                           <p className="trip-label">There</p>
                           <p className="trip-min">
-                            {there
-                              ? `${Math.max(1, Math.round(there.durationSeconds / 60))}`
-                              : row.journey.outboundMinutes}{" "}
-                            min
-                          </p>
-                          <p className="trip-note">
                             {routeLoading
-                              ? "Finding the street path…"
+                              ? "…"
                               : there
-                                ? `${formatWalkDistance(there.distanceMeters)} along streets`
-                                : row.journey.outbound[0]?.text}
+                                ? `${Math.max(1, Math.round(there.durationSeconds / 60))} min`
+                                : `${row.journey.outboundMinutes} min`}
                           </p>
                         </div>
                         <div>
                           <p className="trip-label">Back</p>
                           <p className="trip-min">
-                            {back
-                              ? `${Math.max(1, Math.round(back.durationSeconds / 60))}`
-                              : row.journey.inboundMinutes}{" "}
-                            min
-                          </p>
-                          <p className="trip-note">
-                            {back
-                              ? `${formatWalkDistance(back.distanceMeters)} along streets`
-                              : row.journey.inbound[0]?.text}
+                            {routeLoading
+                              ? "…"
+                              : back
+                                ? `${Math.max(1, Math.round(back.durationSeconds / 60))} min`
+                                : `${row.journey.inboundMinutes} min`}
                           </p>
                         </div>
                       </div>
                       {routeError && <p className="status note">{routeError}</p>}
                       {overBudget && there && (
                         <p className="status note">
-                          Along streets this round trip is about{" "}
-                          {Math.round(streetRoundTripSeconds / 60)} minutes, which is over the
-                          15 minute budget.
+                          Street path is about {Math.round(streetRoundTripSeconds / 60)} min
+                          round-trip (over 15).
                         </p>
-                      )}
-                      {there && there.steps.length > 0 && (
-                        <ol className="walk-steps">
-                          {there.steps.slice(0, 6).map((step, index) => (
-                            <li key={`${step.instruction}-${index}`}>
-                              {step.instruction}
-                              <span>{formatWalkDistance(step.distanceMeters)}</span>
-                            </li>
-                          ))}
-                        </ol>
                       )}
                       <button
                         type="button"
@@ -697,15 +680,8 @@ export default function MapApp() {
                         disabled={!there || routeLoading || walkStarted}
                         onClick={startWalk}
                       >
-                        {walkStarted ? "Walking…" : "Start walk"}
+                        {routeLoading ? "Finding path…" : walkStarted ? "Walking…" : "Start walk"}
                       </button>
-                      {result && (
-                        <p className="source">
-                          Path from {streetRoute?.source ?? result.sources.poi.name}. The
-                          orange circle is a straight-line search; the orange line follows
-                          streets.
-                        </p>
-                      )}
                     </div>
                   )}
                 </article>

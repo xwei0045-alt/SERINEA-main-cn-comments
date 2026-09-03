@@ -196,15 +196,15 @@ export default function ReachMap({
       const poly = L.polygon(
         hull.map((p) => [p.lat, p.lng] as [number, number]),
         {
-          color: COLOR.ink,
-          weight: 1.5,
+          color: COLOR.overlay,
+          weight: 1,
           fillColor: COLOR.overlay,
-          fillOpacity: 0.34
+          fillOpacity: 0.18
         }
       ).addTo(map);
       hullRef.current = poly;
       if (!hasRoute) {
-        map.fitBounds(poly.getBounds().pad(0.16), { animate: true, maxZoom: 15 });
+        map.fitBounds(poly.getBounds().pad(0.2), { animate: true, maxZoom: 14 });
       }
     })();
     return () => {
@@ -267,11 +267,15 @@ export default function ReachMap({
       if (cancelled) return;
       for (const marker of dotsRef.current.values()) marker.remove();
       dotsRef.current.clear();
-      for (const row of reachable) {
+      // While walking, only keep the chosen place on the map
+      const rows = navigating
+        ? reachable.filter((row) => row.poi.id === selectedId)
+        : reachable;
+      for (const row of rows) {
         const on = row.poi.id === selectedId;
-        const label = `${row.poi.name} · ${row.journey.roundTripMinutes} min there and back`;
+        const label = `${row.poi.name} · ${row.journey.roundTripMinutes} min`;
         const wide = row.poi.category === "pharmacy";
-        const size = wide ? (on ? 32 : 28) : on ? 26 : 22;
+        const size = on ? (wide ? 30 : 26) : wide ? 24 : 20;
         const mark = L.marker([row.poi.lat, row.poi.lng], {
           icon: L.divIcon({
             className: "",
@@ -293,7 +297,7 @@ export default function ReachMap({
     return () => {
       cancelled = true;
     };
-  }, [reachable, selectedId, ready]);
+  }, [reachable, selectedId, ready, navigating]);
 
   return <div ref={root} className="map-canvas" role="application" aria-label="Regional Victoria map" />;
 }

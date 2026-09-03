@@ -592,22 +592,26 @@
 .lockPlate {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: 48%;
   z-index: 5;
-  width: min(34rem, calc(100% - 100px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: min(28rem, calc(100% - 72px));
   transform: translate(-50%, -50%);
-  transform-origin: 50% 45%;
+  transform-origin: 50% 50%;
   will-change: opacity, transform;
   pointer-events: none;
   text-align: center;
 }
 .lockStamp {
   position: relative;
-  margin: 0 0 18px;
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 12vw;
-  line-height: 0.8;
+  font-size: clamp(3.2rem, 9vw, 6.5rem);
+  line-height: 0.85;
   letter-spacing: -0.04em;
   color: transparent;
   -webkit-text-stroke: 2px var(--overlay);
@@ -625,9 +629,10 @@
 }
 .lockList {
   list-style: none;
-  margin: 0 auto;
-  padding: 16px 18px;
-  max-width: 28rem;
+  margin: 0;
+  padding: 14px 18px;
+  width: 100%;
+  max-width: 26rem;
   background: color-mix(in oklab, var(--paper) 94%, white);
   border: 1px solid var(--ink);
   color: var(--ink);
@@ -656,26 +661,46 @@
 .phaseStack {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: 48%;
   z-index: 5;
   display: grid;
-  gap: 12px;
-  width: min(36rem, calc(100% - 100px));
+  gap: 10px;
+  width: min(34rem, calc(100% - 72px));
   transform: translate(-50%, -50%);
   transform-origin: 50% 50%;
   will-change: opacity, transform;
   pointer-events: none;
 }
+.phaseLead {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.35rem, 3.2vw, 1.85rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--enamel);
+  text-align: center;
+  text-shadow: 0 0 20px color-mix(in oklab, var(--overlay) 35%, transparent);
+}
+.phaseIntro {
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: color-mix(in oklab, var(--enamel) 78%, transparent);
+  max-width: 36ch;
+  justify-self: center;
+}
 .phaseCard {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
+  grid-template-columns: 2.6rem 1fr;
+  gap: 12px;
   align-items: start;
   padding: 14px 16px;
   background: color-mix(in oklab, var(--paper) 94%, white);
   border: 1px solid var(--ink);
   color: var(--ink);
-  box-shadow: 5px 5px 0 color-mix(in oklab, var(--arterial) 70%, transparent);
+  box-shadow: 4px 4px 0 color-mix(in oklab, var(--arterial) 70%, transparent);
 }
 .phaseN {
   font-family: var(--font-display);
@@ -878,25 +903,76 @@
 }
 
 @media (max-width: 900px) {
-  .reel { height: 860vh; }
-  .lieStamp { font-size: 28vw; }
+  .reel { height: 720vh; }
+  .sticky {
+    top: 57px;
+    height: calc(100svh - 57px);
+  }
+  .lieStamp { font-size: 22vw; }
   .fifteen,
-  .fifteenGhost { font-size: 42vw; }
-  .lockStamp { font-size: 18vw; }
+  .fifteenGhost { font-size: 36vw; }
+  .fifteenUnit {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+  }
+  .brandStamp { font-size: clamp(2.4rem, 14vw, 4.2rem); }
+  .brandTag { font-size: 1rem; max-width: 18ch; }
   .crewGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: calc(100% - 32px);
+    grid-template-columns: 1fr 1fr;
+    width: calc(100% - 28px);
     gap: 8px;
+    top: 48%;
   }
   .seat { padding: 10px; }
-  .goPlate { width: calc(100% - 32px); }
-  .rail { right: 8px; }
+  .seatRole { font-size: 1rem; }
+  .seatFocus { font-size: 0.8rem; }
+  .goPlate { width: calc(100% - 28px); }
+  .goTitle { font-size: clamp(1.5rem, 7vw, 2.1rem); }
+  .rail {
+    right: 6px;
+    top: 16%;
+    bottom: 18%;
+    width: 2px;
+  }
+  .tick {
+    width: 8px;
+    height: 8px;
+    left: -3px;
+  }
   .tick::after { display: none; }
+  .atlasLabel {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+  }
+  .atlasLabel b { font-size: 0.7rem; max-width: 10ch; }
   .atlasLabel span { display: none; }
+  .atlasDot {
+    width: 10px;
+    height: 10px;
+  }
+  .atlasYou {
+    font-size: 0.7rem;
+    padding: 5px 8px;
+  }
   .pinLabel { display: none; }
   .phaseStack,
   .factPlate,
-  .lockPlate { width: calc(100% - 32px); }
+  .lockPlate { width: calc(100% - 24px); }
+  .phaseLead { font-size: 1.35rem; }
+  .phaseIntro { font-size: 0.88rem; max-width: 30ch; }
+  .phaseCard {
+    grid-template-columns: 2.2rem 1fr;
+    padding: 12px;
+    gap: 10px;
+  }
+  .phaseN { font-size: 1.35rem; }
+  .phaseTitle { font-size: 1.05rem; }
+  .phaseBody { font-size: 0.86rem; }
+  .lockStamp { font-size: clamp(2.6rem, 14vw, 4rem); }
+  .lockList { padding: 12px 14px; }
+  .lockList li { font-size: 0.9rem; }
+  .noise,
+  .scan { opacity: 0.2; }
 }
 
 @media (prefers-reduced-motion: reduce) {

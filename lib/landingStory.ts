@@ -41,24 +41,25 @@ export const TEAM: TeamSeat[] = [
   { id: "ux", role: "Experience", focus: "Clear reach for rural towns & settlements", short: "UX" }
 ];
 
+/** Problem story for people in small towns — not a project roadmap. */
 export const PHASES: Phase[] = [
   {
     id: "i1",
     n: "01",
-    title: "Hard fifteen, round trip",
-    body: "Drop a pin in a regional town. Keep only parks, groceries, GPs, pharmacies and gyms you can walk to and back from in 15 minutes."
+    title: "“Nearby” is not enough",
+    body: "In a small town, a shop or clinic can look close on a map — but if you cannot get back in time, it is not really reachable."
   },
   {
     id: "i2",
     n: "02",
-    title: "When the bus is the clock",
-    body: "Next: real public-transport times for places with one bus line and a long wait — not inner-city frequency."
+    title: "People need the essentials",
+    body: "A GP, pharmacy, grocery, park or gym only counts if you can walk there and home again inside a hard fifteen minutes."
   },
   {
     id: "i3",
     n: "03",
-    title: "Where the network thins out",
-    body: "Later: surface the gaps between services — the hour after the pin still matters."
+    title: "We show what actually fits",
+    body: "SERINEA keeps only places that work round-trip. If the return blows the window, it stays off the list — so the map stays honest."
   }
 ];
 
