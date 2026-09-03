@@ -87,6 +87,7 @@ export default function MapApp() {
   const [you, setYou] = useState<LatLng | null>(null);
   const [followGps, setFollowGps] = useState(false);
   const [arrived, setArrived] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const followGpsRef = useRef(false);
   const lastRerouteRef = useRef(0);
   const pinRef = useRef(pin);
@@ -397,6 +398,11 @@ export default function MapApp() {
 
   function pickPlace(id: string) {
     setSelectedId((prev) => (prev === id ? null : id));
+    setPanelOpen(true);
+  }
+
+  function closePanel() {
+    setPanelOpen(false);
   }
 
   function jumpToTown(item: LocalitySummaryItem) {
@@ -438,11 +444,11 @@ export default function MapApp() {
 
   return (
     <>
-      <p className="banner">
+      <p className="banner banner--desktop">
         <strong>Regional Victoria.</strong> Tap the map to place a pin · tap a place for the
         path · then start the walk.
       </p>
-      <div className="map-shell">
+      <div className={`map-shell${panelOpen ? " map-shell--panel-open" : ""}`}>
         <div className="map-stage">
           <ReachMap
             pin={pin}
@@ -474,6 +480,29 @@ export default function MapApp() {
               onWalkBack={startWalkBack}
             />
           )}
+          <div className="map-fab-row">
+            <button
+              type="button"
+              className="map-fab map-fab--places"
+              aria-expanded={panelOpen}
+              aria-controls="places-panel"
+              aria-label={panelOpen ? "Close places list" : "Open places list"}
+              onClick={() => setPanelOpen((v) => !v)}
+            >
+              <span className="map-fab-ham" aria-hidden="true" />
+              Places
+              <span className="map-fab-count">{listed.length}</span>
+            </button>
+            <button
+              type="button"
+              className="map-fab map-fab--locate"
+              onClick={locate}
+              disabled={locating || walkStarted}
+              aria-label="Use my location"
+            >
+              <IconLocate />
+            </button>
+          </div>
           <ul className="map-legend" aria-label="Map key">
             <li>
               <span className="pin-marker" aria-hidden="true" />
@@ -489,7 +518,28 @@ export default function MapApp() {
             ))}
           </ul>
         </div>
-        <aside className="panel" aria-label="Places within 15 minutes">
+
+        {panelOpen ? (
+          <button
+            type="button"
+            className="panel-scrim"
+            aria-label="Close places list"
+            onClick={closePanel}
+          />
+        ) : null}
+
+        <aside
+          id="places-panel"
+          className="panel"
+          aria-label="Places within 15 minutes"
+          data-open={panelOpen ? "true" : "false"}
+        >
+          <div className="panel-mobile-bar">
+            <button type="button" className="panel-grab" aria-hidden="true" tabIndex={-1} />
+            <button type="button" className="panel-close" onClick={closePanel}>
+              Close
+            </button>
+          </div>
           <div className="panel-head">
             <div className="panel-title-row">
               <h1>Within 15 minutes</h1>
@@ -678,7 +728,10 @@ export default function MapApp() {
                         type="button"
                         className="walk-primary walk-primary--block"
                         disabled={!there || routeLoading || walkStarted}
-                        onClick={startWalk}
+                        onClick={() => {
+                          startWalk();
+                          closePanel();
+                        }}
                       >
                         {routeLoading ? "Finding path…" : walkStarted ? "Walking…" : "Start walk"}
                       </button>

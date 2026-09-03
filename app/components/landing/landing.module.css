@@ -903,20 +903,23 @@
 }
 
 @media (max-width: 900px) {
-  .reel { height: 720vh; }
+  .reel { height: 380vh; }
   .sticky {
-    top: 57px;
-    height: calc(100svh - 57px);
+    top: 53px;
+    height: calc(100svh - 53px);
   }
-  .lieStamp { font-size: 22vw; }
+  .lieStamp { font-size: 18vw; }
   .fifteen,
-  .fifteenGhost { font-size: 36vw; }
+  .fifteenGhost { font-size: 28vw; }
   .fifteenUnit {
     font-size: 0.8rem;
     letter-spacing: 0.1em;
   }
-  .brandStamp { font-size: clamp(2.4rem, 14vw, 4.2rem); }
-  .brandTag { font-size: 1rem; max-width: 18ch; }
+  .brandStamp { font-size: clamp(2.1rem, 11vw, 3.4rem); }
+  .brandTag { font-size: 0.92rem; max-width: 20ch; line-height: 1.35; }
+  .brandPlate {
+    padding: 0 16px;
+  }
   .crewGrid {
     grid-template-columns: 1fr 1fr;
     width: calc(100% - 28px);
@@ -929,17 +932,8 @@
   .goPlate { width: calc(100% - 28px); }
   .goTitle { font-size: clamp(1.5rem, 7vw, 2.1rem); }
   .rail {
-    right: 6px;
-    top: 16%;
-    bottom: 18%;
-    width: 2px;
+    display: none;
   }
-  .tick {
-    width: 8px;
-    height: 8px;
-    left: -3px;
-  }
-  .tick::after { display: none; }
   .atlasLabel {
     padding: 3px 6px;
     font-size: 0.7rem;
@@ -972,8 +966,9 @@
   .lockList { padding: 12px 14px; }
   .lockList li { font-size: 0.9rem; }
   .noise,
-  .scan { opacity: 0.2; }
+  .scan { opacity: 0.15; }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   .reel { height: auto; }
