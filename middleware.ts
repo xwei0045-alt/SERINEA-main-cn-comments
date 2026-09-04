@@ -11,6 +11,7 @@ const LIMITS: Record<string, number> = {
   walk: 30,
   reach: 120,
   localities: 120,
+  compare: 60,
   health: 60
 };
 const DEFAULT_LIMIT = 80;

@@ -65,6 +65,21 @@ export class LocalitySummaryService {
     };
   }
 
+  /** Full aggregated locality list for ranking (not capped like the search API). */
+  async listAll(): Promise<{
+    items: LocalitySummaryItem[];
+    totalPois: number;
+    dataSource: LocalitySummaryResponse["dataSource"];
+  }> {
+    const data = await this.getData();
+    const items = await this.getSummaries(data);
+    return {
+      items,
+      totalPois: data.totalPois,
+      dataSource: this.repository.dataSource
+    };
+  }
+
   private getData(): ReturnType<LocalitySummaryRepository["load"]> {
     if (!this.dataPromise) this.dataPromise = this.repository.load();
     return this.dataPromise;

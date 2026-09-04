@@ -711,6 +711,21 @@ svg {
 .poi-mark--gym {
   background: var(--water);
 }
+.poi-mark--hospital {
+  background: var(--halt);
+}
+.poi-mark--school {
+  background: color-mix(in oklab, var(--overlay) 70%, var(--ink));
+}
+.poi-mark--library {
+  background: color-mix(in oklab, var(--water) 55%, var(--ink));
+}
+.poi-mark--community {
+  background: color-mix(in oklab, var(--park) 40%, var(--ink));
+}
+.poi-mark--transit {
+  background: color-mix(in oklab, var(--ink-soft) 70%, var(--ink));
+}
 .poi-mark--museum {
   background: var(--water);
 }
@@ -1724,9 +1739,6 @@ svg {
   .walk-hud-time {
     font-size: 1.8rem;
   }
-  .town-chips button:nth-child(n + 4) {
-    display: none;
-  }
   .filters {
     gap: 6px;
   }
@@ -1800,4 +1812,155 @@ svg {
     animation: none;
     opacity: 1;
   }
+}
+
+
+.town-not-found {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  color: var(--halt);
+  border: 1px solid color-mix(in oklab, var(--halt) 35%, var(--paper-3));
+  background: color-mix(in oklab, var(--halt) 8%, var(--paper));
+}
+
+.compare-page .compare-main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 28px 20px 72px;
+}
+.compare-panel {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid var(--paper-3);
+  background: color-mix(in oklab, var(--paper) 92%, white);
+}
+.compare-panel h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+.compare-hint {
+  margin: 0 0 14px;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+.compare-prefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.compare-pref {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 650;
+  cursor: pointer;
+}
+.compare-pref[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--enamel);
+}
+.compare-search {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+.compare-search input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  font: inherit;
+  color: var(--ink);
+}
+.compare-reco {
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  box-shadow: 6px 6px 0 var(--overlay);
+}
+.compare-reco-kicker {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--arterial);
+  font-weight: 700;
+}
+.compare-reco h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+}
+.compare-reco h2 span {
+  font-size: 1rem;
+  color: var(--ink-soft);
+  font-weight: 650;
+}
+.compare-results h2 {
+  margin: 28px 0 12px;
+  font-family: var(--font-display);
+}
+.compare-count {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.compare-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.compare-row {
+  padding: 14px;
+  border: 1px solid var(--paper-3);
+  background: color-mix(in oklab, var(--paper) 94%, white);
+}
+.compare-row-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+.compare-rank {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--arterial);
+}
+.compare-row h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+.compare-row-top p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+.compare-score {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+.compare-break {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+.compare-row > a {
+  font-weight: 700;
+  color: var(--arterial);
 }

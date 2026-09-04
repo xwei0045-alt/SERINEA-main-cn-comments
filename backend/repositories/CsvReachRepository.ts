@@ -76,9 +76,17 @@ export class CsvReachRepository implements ReachRepository {
   private getIndex(): Promise<SpatialGridIndex<IndexedPoi>> {
     if (!this.indexPromise) {
       this.indexPromise = this.loader.load().then((dataset) => {
-        const mappedPois = dataset.pois
-          .map((record) => this.mapper.toMapPoi(record))
-          .filter((poi): poi is Poi => poi !== null);
+        const seen = new Set<string>();
+        const mappedPois: Poi[] = [];
+        for (const record of dataset.pois) {
+          const poi = this.mapper.toMapPoi(record);
+          if (!poi) continue;
+          // Drop exact name+coordinate clones so the list does not double-count.
+          const key = `${poi.name.toLocaleLowerCase("en-AU")}|${poi.lat.toFixed(5)}|${poi.lng.toFixed(5)}|${poi.category}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          mappedPois.push(poi);
+        }
         return new SpatialGridIndex(mappedPois);
       });
     }

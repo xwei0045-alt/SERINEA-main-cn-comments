@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type Current = "home" | "map" | "how";
+type Current = "home" | "map" | "how" | "compare";
 
 export function Chrome({ current }: { current: Current }) {
   const [glass, setGlass] = useState(false);
@@ -59,6 +59,13 @@ export function Chrome({ current }: { current: Current }) {
           onClick={() => setMenuOpen(false)}
         >
           Map
+        </Link>
+        <Link
+          href="/compare"
+          aria-current={current === "compare" ? "page" : undefined}
+          onClick={() => setMenuOpen(false)}
+        >
+          Compare
         </Link>
         <Link
           href="/how"

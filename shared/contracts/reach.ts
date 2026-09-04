@@ -11,8 +11,13 @@ export const POI_CATEGORY_IDS = [
   "gym",
   "grocery",
   "gp",
+  "hospital",
   "pharmacy",
   "park",
+  "school",
+  "library",
+  "community",
+  "transit",
   "museum"
 ] as const;
 

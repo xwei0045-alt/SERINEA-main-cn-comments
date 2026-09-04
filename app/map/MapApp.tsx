@@ -6,6 +6,7 @@
 // GPS only follows if you are actually near the pin, so a Melbourne laptop does not jump the map.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { IconCategory, IconLocate } from "../components/Icons";
 import { localityApiClient } from "@/frontend/api/LocalityApiClient";
 import { reachApiClient } from "@/frontend/api/ReachApiClient";
@@ -61,9 +62,21 @@ function instructionFor(legDistance: number, remainingMeters: number, steps: { i
 }
 
 export default function MapApp() {
+  const searchParams = useSearchParams();
+  const bootLat = Number(searchParams.get("lat"));
+  const bootLng = Number(searchParams.get("lng"));
+  const bootTown = searchParams.get("town");
+  const hasBootPin =
+    Number.isFinite(bootLat) &&
+    Number.isFinite(bootLng) &&
+    bootLat >= -90 &&
+    bootLat <= 90 &&
+    bootLng >= -180 &&
+    bootLng <= 180;
+
   const [pin, setPin] = useState<LatLng>({
-    lat: REGIONAL_DEFAULT.lat,
-    lng: REGIONAL_DEFAULT.lng
+    lat: hasBootPin ? bootLat : REGIONAL_DEFAULT.lat,
+    lng: hasBootPin ? bootLng : REGIONAL_DEFAULT.lng
   });
   const [denied, setDenied] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -73,9 +86,12 @@ export default function MapApp() {
   const [result, setResult] = useState<ReachResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [requestError, setRequestError] = useState<string | null>(null);
-  const [townQuery, setTownQuery] = useState<string>(REGIONAL_DEFAULT.label);
+  const [townQuery, setTownQuery] = useState<string>(
+    bootTown ? titleCase(bootTown) : REGIONAL_DEFAULT.label
+  );
   const [townMatches, setTownMatches] = useState<LocalitySummaryItem[]>([]);
   const [townOpen, setTownOpen] = useState(false);
+  const [townNotFound, setTownNotFound] = useState(false);
   const [streetRoute, setStreetRoute] = useState<WalkRouteResponse | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
@@ -136,18 +152,23 @@ export default function MapApp() {
     const query = townQuery.trim();
     if (query.length < 2) {
       setTownMatches([]);
+      setTownNotFound(false);
       return;
     }
 
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       localityApiClient
-        .search({ q: query, limit: 8 }, controller.signal)
-        .then((response) => setTownMatches(response.items))
+        .search({ q: query, limit: 25 }, controller.signal)
+        .then((response) => {
+          setTownMatches(response.items);
+          setTownNotFound(response.items.length === 0);
+        })
         .catch((error: unknown) => {
           if (controller.signal.aborted) return;
           console.error("Town search failed.", error);
           setTownMatches([]);
+          setTownNotFound(true);
         });
     }, 200);
 
@@ -169,9 +190,9 @@ export default function MapApp() {
     );
   }, [result, active]);
 
-  // Cap map dots so towns don’t look like a sticker sheet
+  // Cap map dots so the densest towns stay usable (list still shows all matches).
   const mapListed = useMemo(() => {
-    const cap = 8;
+    const cap = 80;
     const top = listed.slice(0, cap);
     if (selectedId && !top.some((row) => row.poi.id === selectedId)) {
       const picked = listed.find((row) => row.poi.id === selectedId);
@@ -650,10 +671,15 @@ export default function MapApp() {
                   ))}
                 </ul>
               )}
+              {townOpen && townNotFound && townQuery.trim().length >= 2 && (
+                <p className="town-not-found" role="status">
+                  Not found. Try another regional town or LGA name.
+                </p>
+              )}
             </label>
 
             <div className="town-chips" role="group" aria-label="Regional towns">
-              {TOWN_JUMPS.slice(0, 4).map((town) => (
+              {TOWN_JUMPS.map((town) => (
                 <button
                   key={town.label}
                   type="button"
@@ -662,6 +688,7 @@ export default function MapApp() {
                   onClick={() => {
                     movePin({ lat: town.lat, lng: town.lng });
                     setTownQuery(town.label);
+                    setTownNotFound(false);
                   }}
                 >
                   {town.label}

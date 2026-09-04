@@ -66,6 +66,39 @@ export function IconCategory({
           <path d="M4 19h16M9 19v-5h6v5" />
         </g>
       )}
+      {category === "hospital" && (
+        <g {...stroke}>
+          <path d="M5 21V8l7-5 7 5v13" />
+          <path d="M12 11v6M9 14h6" />
+        </g>
+      )}
+      {category === "school" && (
+        <g {...stroke}>
+          <path d="M4 10.5 12 5l8 5.5" />
+          <path d="M6 11v8h12v-8" />
+          <path d="M10 19v-4h4v4" />
+        </g>
+      )}
+      {category === "library" && (
+        <g {...stroke}>
+          <path d="M5 5h5.5a3 3 0 0 1 3 3v11a2.5 2.5 0 0 0-2.5-2.5H5V5Z" />
+          <path d="M19 5h-5.5a3 3 0 0 0-3 3v11a2.5 2.5 0 0 1 2.5-2.5H19V5Z" />
+        </g>
+      )}
+      {category === "community" && (
+        <g {...stroke}>
+          <circle cx="9" cy="9" r="2.4" />
+          <circle cx="16" cy="10" r="2.1" />
+          <path d="M4.5 18c.6-2.4 2.4-3.6 4.5-3.6S13 15.6 13.5 18" />
+          <path d="M13 18c.4-1.8 1.7-2.8 3.2-2.8 1.6 0 2.8 1 3.3 2.8" />
+        </g>
+      )}
+      {category === "transit" && (
+        <g {...stroke}>
+          <rect x="6" y="4" width="12" height="14" rx="2" />
+          <path d="M6 11h12M10 18l-2 2M14 18l2 2M9 7.5h.01M15 7.5h.01" />
+        </g>
+      )}
     </svg>
   );
 }

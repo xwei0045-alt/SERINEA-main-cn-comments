@@ -121,7 +121,8 @@ test("TC-F09 mapper keeps map types only", () => {
 
   assert.equal(mapper.toMapPoi({ ...base, subcategory: "park" })?.category, "park");
   assert.equal(mapper.toMapPoi({ ...base, osmId: "n2", subcategory: "doctor" })?.category, "gp");
-  assert.equal(mapper.toMapPoi({ ...base, osmId: "n3", subcategory: "school" }), null);
+  assert.equal(mapper.toMapPoi({ ...base, osmId: "n3", subcategory: "school" })?.category, "school");
+  assert.equal(mapper.toMapPoi({ ...base, osmId: "n4", subcategory: "hospital" })?.category, "hospital");
 });
 
 test("TC-F10 reject a 30 minute window", () => {

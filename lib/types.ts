@@ -18,23 +18,33 @@ export const TOWN_JUMPS = [
 ] as const;
 
 export type PoiCategory =
-  | "food"
-  | "shops"
-  | "gym"
+  | "park"
   | "grocery"
   | "gp"
+  | "hospital"
   | "pharmacy"
-  | "park"
+  | "gym"
+  | "school"
+  | "library"
+  | "community"
+  | "transit"
+  | "food"
+  | "shops"
   | "museum";
 
 export const CATEGORIES: { id: PoiCategory; label: string }[] = [
-  { id: "food", label: "Food" },
-  { id: "shops", label: "Shops" },
-  { id: "gym", label: "Gym" },
+  { id: "park", label: "Park" },
   { id: "grocery", label: "Grocery" },
   { id: "gp", label: "Doctor" },
+  { id: "hospital", label: "Hospital" },
   { id: "pharmacy", label: "Pharmacy" },
-  { id: "park", label: "Park" },
+  { id: "gym", label: "Gym" },
+  { id: "school", label: "School" },
+  { id: "library", label: "Library" },
+  { id: "community", label: "Community" },
+  { id: "transit", label: "Transit" },
+  { id: "food", label: "Food" },
+  { id: "shops", label: "Shops" },
   { id: "museum", label: "Museum" }
 ];
 
@@ -43,8 +53,59 @@ export const MAP_CATEGORIES: { id: PoiCategory; label: string }[] = [
   { id: "park", label: "Park" },
   { id: "grocery", label: "Grocery" },
   { id: "gp", label: "Doctor" },
+  { id: "hospital", label: "Hospital" },
   { id: "pharmacy", label: "Pharmacy" },
-  { id: "gym", label: "Gym" }
+  { id: "gym", label: "Gym" },
+  { id: "school", label: "School" },
+  { id: "library", label: "Library" },
+  { id: "community", label: "Community" },
+  { id: "transit", label: "Transit" }
+];
+
+/**
+ * Preference chips for Compare. Each preference pulls one or more CSV subcategories.
+ * Weights are applied when the user selects that preference.
+ */
+export const COMPARE_PREFERENCES: {
+  id: string;
+  label: string;
+  subcategories: string[];
+}[] = [
+  { id: "park", label: "Parks", subcategories: ["park", "nature_reserve", "playground", "garden"] },
+  {
+    id: "grocery",
+    label: "Grocery",
+    subcategories: ["supermarket", "convenience_store"]
+  },
+  { id: "gp", label: "Doctor / clinic", subcategories: ["doctor", "clinic", "dentist"] },
+  { id: "hospital", label: "Hospital", subcategories: ["hospital"] },
+  { id: "pharmacy", label: "Pharmacy", subcategories: ["pharmacy"] },
+  {
+    id: "school",
+    label: "Schools",
+    subcategories: ["school", "kindergarten", "college", "childcare"]
+  },
+  { id: "gym", label: "Gym / sports", subcategories: ["sports_centre"] },
+  { id: "library", label: "Library", subcategories: ["library"] },
+  {
+    id: "community",
+    label: "Community",
+    subcategories: ["community_centre", "town_hall", "social_facility"]
+  },
+  {
+    id: "transit",
+    label: "Transit",
+    subcategories: [
+      "bus_stop",
+      "stop_position",
+      "platform",
+      "railway_station",
+      "station",
+      "bus_station",
+      "railway_halt",
+      "tram_stop"
+    ]
+  }
 ];
 
 export type Mode = "walk" | "tram" | "train" | "bus";
