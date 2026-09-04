@@ -70,27 +70,72 @@ export const COMPARE_PREFERENCES: {
   id: string;
   label: string;
   subcategories: string[];
+  /** Extra words people type when searching this dataset. */
+  searchTerms: string[];
 }[] = [
-  { id: "park", label: "Parks", subcategories: ["park", "nature_reserve", "playground", "garden"] },
+  {
+    id: "park",
+    label: "Parks",
+    subcategories: ["park", "nature_reserve", "playground", "garden"],
+    searchTerms: ["park", "parks", "nature", "reserve", "playground", "garden"]
+  },
   {
     id: "grocery",
     label: "Grocery",
-    subcategories: ["supermarket", "convenience_store"]
+    subcategories: ["supermarket", "convenience_store"],
+    searchTerms: ["grocery", "supermarket", "shop", "shops", "food store", "convenience"]
   },
-  { id: "gp", label: "Doctor / clinic", subcategories: ["doctor", "clinic", "dentist"] },
-  { id: "hospital", label: "Hospital", subcategories: ["hospital"] },
-  { id: "pharmacy", label: "Pharmacy", subcategories: ["pharmacy"] },
+  {
+    id: "gp",
+    label: "Doctor / clinic",
+    subcategories: ["doctor", "clinic", "dentist"],
+    searchTerms: [
+      "doctor",
+      "doctors",
+      "gp",
+      "clinic",
+      "dentist",
+      "medical",
+      "psychologist",
+      "psychology",
+      "mental health"
+    ]
+  },
+  {
+    id: "hospital",
+    label: "Hospital",
+    subcategories: ["hospital"],
+    searchTerms: ["hospital", "hospitals", "emergency"]
+  },
+  {
+    id: "pharmacy",
+    label: "Pharmacy",
+    subcategories: ["pharmacy"],
+    searchTerms: ["pharmacy", "pharmacies", "chemist", "chemists"]
+  },
   {
     id: "school",
     label: "Schools",
-    subcategories: ["school", "kindergarten", "college", "childcare"]
+    subcategories: ["school", "kindergarten", "college", "childcare"],
+    searchTerms: ["school", "schools", "kindergarten", "college", "childcare", "education"]
   },
-  { id: "gym", label: "Gym / sports", subcategories: ["sports_centre"] },
-  { id: "library", label: "Library", subcategories: ["library"] },
+  {
+    id: "gym",
+    label: "Gym / sports",
+    subcategories: ["sports_centre"],
+    searchTerms: ["gym", "gyms", "sport", "sports", "fitness", "sports centre"]
+  },
+  {
+    id: "library",
+    label: "Library",
+    subcategories: ["library"],
+    searchTerms: ["library", "libraries"]
+  },
   {
     id: "community",
     label: "Community",
-    subcategories: ["community_centre", "town_hall", "social_facility"]
+    subcategories: ["community_centre", "town_hall", "social_facility"],
+    searchTerms: ["community", "town hall", "social", "community centre"]
   },
   {
     id: "transit",
@@ -104,6 +149,22 @@ export const COMPARE_PREFERENCES: {
       "bus_station",
       "railway_halt",
       "tram_stop"
+    ],
+    searchTerms: [
+      "transit",
+      "transport",
+      "bus",
+      "buses",
+      "bus stop",
+      "bus stops",
+      "train",
+      "trains",
+      "railway",
+      "station",
+      "stations",
+      "tram",
+      "trams",
+      "platform"
     ]
   }
 ];
