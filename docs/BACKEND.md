@@ -20,7 +20,7 @@ REACH_DATA_SOURCE=database
 DATABASE_URL=postgresql://USER:PASSWORD@RDS_ENDPOINT:5432/serinea?sslmode=require&uselibpqcompat=true
 ```
 
-Set the same `REACH_DATA_SOURCE` and `DATABASE_URL` values in the Vercel project environment (Production and Preview). CSV files remain only for import/validation tooling — they are not bundled into the deployed app.
+Set the same `REACH_DATA_SOURCE` and `DATABASE_URL` values in the host environment for any deployed instance (for example EC2 systemd env, or your process manager). CSV files remain only for import/validation tooling — they are not the runtime data source.
 
 To create and import a PostgreSQL database (maintainers with write access):
 

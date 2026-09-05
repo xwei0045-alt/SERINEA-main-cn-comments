@@ -8,7 +8,7 @@ function failure(code: string, message: string, status: number) {
 }
 
 export async function POST(request: Request) {
-  // A Vercel server cannot reach the model running on your laptop.
+  // Hosted serverless runtimes cannot reach a model process on a developer laptop.
   if (process.env.NODE_ENV !== "development") {
     return failure("LOCAL_ONLY", "This AI experiment is available in local development only.", 503);
   }
