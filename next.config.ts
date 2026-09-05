@@ -17,8 +17,10 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "connect-src 'self'",
   "worker-src 'self' blob:",
-  "upgrade-insecure-requests"
-].join("; ");
+  ...(process.env.NODE_ENV === "production"
+    ? ["upgrade-insecure-requests"]
+    : [])
+  ].join("; ");
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
@@ -36,6 +38,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+
   reactStrictMode: true,
   outputFileTracingRoot: path.join(__dirname),
   // Vercel functions need the CSVs on disk for /api/reach and /api/localities.
@@ -52,6 +55,7 @@ const nextConfig: NextConfig = {
       }
     ];
   }
+
 };
 
 export default nextConfig;
