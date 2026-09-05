@@ -53,7 +53,7 @@ const categoryListSchema = z
 
 /**
  * Validation rules for /api/reach query parameters.
- * The current product uses a fixed 15-minute round trip, so other values are rejected.
+ * The current product uses a fixed 15-minute walk from the pin, so other values are rejected.
  */
 export const reachQuerySchema = z
   .object({
@@ -87,6 +87,7 @@ const poiSchema = z.object({
   id: z.string(),
   name: z.string(),
   category: poiCategorySchema,
+  subcategory: z.string().optional(),
   lat: z.number().finite().min(-90).max(90),
   lng: z.number().finite().min(-180).max(180),
   suburb: z.string()

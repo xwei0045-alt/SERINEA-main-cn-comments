@@ -3,8 +3,8 @@ import { LandingExperience } from "./components/landing/LandingExperience";
 
 export default function HomePage() {
   return (
-    <div className="home">
-      <Chrome current="home" />
+    <div className="home home--stage">
+      <Chrome current="home" floating />
       <main id="content">
         <LandingExperience />
       </main>

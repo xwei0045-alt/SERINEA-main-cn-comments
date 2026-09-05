@@ -35,10 +35,8 @@ export class CsvReachRepository implements ReachRepository {
 
     for (const poi of candidates) {
       const journey = this.journeyCalculator.createWalkingJourney(criteria.pin, poi);
-      if (journey.roundTripMinutes <= criteria.windowMinutes) {
+      if (journey.outboundMinutes <= criteria.windowMinutes) {
         reachable.push({ poi, journey });
-      } else if (journey.outboundMinutes <= criteria.windowMinutes) {
-        outboundOnlyCount += 1;
       }
     }
 
@@ -46,7 +44,7 @@ export class CsvReachRepository implements ReachRepository {
       reachable,
       outboundOnlyCount,
       water: null,
-      hull: this.journeyCalculator.createRoundTripHull(
+      hull: this.journeyCalculator.createReachHull(
         criteria.pin,
         criteria.windowMinutes
       ),

@@ -57,6 +57,7 @@ export class RegionalPoiMapper {
       id: record.osmId,
       name: record.name || record.displayName || this.readableName(record.subcategory),
       category,
+      subcategory: record.subcategory,
       lat: record.latitude,
       lng: record.longitude,
       suburb: record.locality

@@ -14,7 +14,7 @@ test("TC-F04 returns a mapped real POI near a supplied coordinate", async () => 
   assert.equal(result.dataSource, "csv");
   assert.equal(result.hull.length, 48);
   assert.ok(result.reachable.some((row) => row.poi.id === "a33069469"));
-  assert.ok(result.reachable.every((row) => row.journey.roundTripMinutes <= 15));
+  assert.ok(result.reachable.every((row) => row.journey.outboundMinutes <= 15));
   assert.match(result.sources.transit.name, /no GTFS/i);
 });
 

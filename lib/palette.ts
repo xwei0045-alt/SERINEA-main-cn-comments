@@ -1,9 +1,9 @@
-/** Street-directory tokens shared with Leaflet (which cannot read CSS variables). */
+/** Tokens shared with Leaflet (cannot read CSS variables). */
 export const COLOR = {
-  ink: "#1c211c",
-  paper: "#eef1ea",
-  overlay: "#d4782a",
-  arterial: "#c4452a",
-  park: "#7d9a5c",
-  water: "#5a9aab"
+  ink: "#1a2a24",
+  paper: "#f3efe6",
+  overlay: "#b8975a",
+  arterial: "#1f4a3c",
+  park: "#4a6b55",
+  water: "#7f96a8"
 } as const;

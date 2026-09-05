@@ -2,7 +2,7 @@ import type { ReachRepository } from "@/backend/repositories/ReachRepository";
 import type { ReachQuery, ReachResponse } from "@/shared/contracts/reach";
 
 // Product rules sit here, not in the HTTP layer.
-// A place has to be reachable both ways inside the 15 minute window or it stays off the list.
+// A place appears if the walk from the pin fits inside the fixed 15-minute window.
 export class ReachService {
   constructor(private readonly repository: ReachRepository) {}
 
@@ -18,18 +18,17 @@ export class ReachService {
     const reachable = calculation.reachable
       .filter((row) => {
         const journey = row.journey;
-        const hasBothDirections =
-          journey.outboundMinutes > 0 && journey.inboundMinutes > 0;
-        const fitsRoundTrip =
-          journey.roundTripMinutes <= query.windowMinutes + Number.EPSILON;
+        const fitsWalk =
+          journey.outboundMinutes > 0 &&
+          journey.outboundMinutes <= query.windowMinutes + Number.EPSILON;
         const categoryMatches =
           !allowedCategories || allowedCategories.has(row.poi.category);
 
-        return hasBothDirections && fitsRoundTrip && categoryMatches;
+        return fitsWalk && categoryMatches;
       })
       .sort(
         (first, second) =>
-          first.journey.roundTripMinutes - second.journey.roundTripMinutes
+          first.journey.outboundMinutes - second.journey.outboundMinutes
       );
 
     return {

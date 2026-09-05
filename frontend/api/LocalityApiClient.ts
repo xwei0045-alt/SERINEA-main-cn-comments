@@ -23,7 +23,7 @@ export class LocalityApiClient {
   ): Promise<LocalitySummaryResponse> {
     const parameters = new URLSearchParams({
       q: query.q,
-      limit: String(query.limit ?? 8)
+      limit: String(query.limit ?? 5000)
     });
     const response = await fetch(
       `${this.baseUrl}/api/localities?${parameters.toString()}`,

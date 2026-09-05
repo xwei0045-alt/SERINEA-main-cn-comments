@@ -42,13 +42,17 @@ export class EstimatedJourneyCalculator {
     };
   }
 
-  /** Builds a circular estimate for the maximum half-window walking distance. */
-  createRoundTripHull(origin: LatLng, windowMinutes: number): LatLng[] {
-    const oneWayMinutes = windowMinutes / 2;
-    const radiusKm = (oneWayMinutes / 60) * this.walkingSpeedKmPerHour;
+  /** Circular estimate for the maximum one-way walking distance in the window. */
+  createReachHull(origin: LatLng, windowMinutes: number): LatLng[] {
+    const radiusKm = (windowMinutes / 60) * this.walkingSpeedKmPerHour;
     return Array.from({ length: 48 }, (_, index) =>
       destination(origin, index * (360 / 48), radiusKm)
     );
+  }
+
+  /** @deprecated Prefer createReachHull — same full-window radius. */
+  createRoundTripHull(origin: LatLng, windowMinutes: number): LatLng[] {
+    return this.createReachHull(origin, windowMinutes);
   }
 
   maximumOutboundDistanceKm(windowMinutes: number): number {

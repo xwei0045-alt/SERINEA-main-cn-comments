@@ -48,7 +48,7 @@ export const CATEGORIES: { id: PoiCategory; label: string }[] = [
   { id: "museum", label: "Museum" }
 ];
 
-/** Categories present in the Iteration 1 extract after CSV mapping. */
+/** Categories present in the Iteration 1 extract after CSV mapping (map legend / marks). */
 export const MAP_CATEGORIES: { id: PoiCategory; label: string }[] = [
   { id: "park", label: "Park" },
   { id: "grocery", label: "Grocery" },
@@ -63,111 +63,258 @@ export const MAP_CATEGORIES: { id: PoiCategory; label: string }[] = [
 ];
 
 /**
- * Preference chips for Compare. Each preference pulls one or more CSV subcategories.
- * Weights are applied when the user selects that preference.
+ * Every facility type in the regional extract (CSV subcategory + display name).
+ * Compare, home, and map filters use this list so people can search the real data.
  */
-export const COMPARE_PREFERENCES: {
+export const DATASET_FACILITIES: {
   id: string;
   label: string;
-  subcategories: string[];
-  /** Extra words people type when searching this dataset. */
+  subcategory: string;
+  group: string;
+  mapCategory: PoiCategory;
   searchTerms: string[];
 }[] = [
   {
     id: "park",
-    label: "Parks",
-    subcategories: ["park", "nature_reserve", "playground", "garden"],
-    searchTerms: ["park", "parks", "nature", "reserve", "playground", "garden"]
+    label: "Park",
+    subcategory: "park",
+    group: "Recreation",
+    mapCategory: "park",
+    searchTerms: ["park", "parks"]
   },
   {
-    id: "grocery",
-    label: "Grocery",
-    subcategories: ["supermarket", "convenience_store"],
-    searchTerms: ["grocery", "supermarket", "shop", "shops", "food store", "convenience"]
+    id: "nature_reserve",
+    label: "Nature reserve",
+    subcategory: "nature_reserve",
+    group: "Recreation",
+    mapCategory: "park",
+    searchTerms: ["nature", "reserve", "nature reserve", "bush"]
   },
   {
-    id: "gp",
-    label: "Doctor / clinic",
-    subcategories: ["doctor", "clinic", "dentist"],
-    searchTerms: [
-      "doctor",
-      "doctors",
-      "gp",
-      "clinic",
-      "dentist",
-      "medical",
-      "psychologist",
-      "psychology",
-      "mental health"
-    ]
+    id: "playground",
+    label: "Playground",
+    subcategory: "playground",
+    group: "Recreation",
+    mapCategory: "park",
+    searchTerms: ["playground", "play"]
+  },
+  {
+    id: "garden",
+    label: "Garden",
+    subcategory: "garden",
+    group: "Recreation",
+    mapCategory: "park",
+    searchTerms: ["garden", "gardens"]
+  },
+  {
+    id: "sports_centre",
+    label: "Sports centre",
+    subcategory: "sports_centre",
+    group: "Recreation",
+    mapCategory: "gym",
+    searchTerms: ["sports", "sport", "gym", "fitness", "sports centre", "pool"]
+  },
+  {
+    id: "supermarket",
+    label: "Supermarket",
+    subcategory: "supermarket",
+    group: "Shopping",
+    mapCategory: "grocery",
+    searchTerms: ["supermarket", "grocery", "iga", "coles", "woolworths"]
+  },
+  {
+    id: "convenience_store",
+    label: "Convenience store",
+    subcategory: "convenience_store",
+    group: "Shopping",
+    mapCategory: "grocery",
+    searchTerms: ["convenience", "store", "shop", "shops"]
+  },
+  {
+    id: "doctor",
+    label: "Doctor",
+    subcategory: "doctor",
+    group: "Healthcare",
+    mapCategory: "gp",
+    searchTerms: ["doctor", "doctors", "gp", "medical"]
+  },
+  {
+    id: "clinic",
+    label: "Clinic",
+    subcategory: "clinic",
+    group: "Healthcare",
+    mapCategory: "gp",
+    searchTerms: ["clinic", "clinics", "medical centre"]
+  },
+  {
+    id: "dentist",
+    label: "Dentist",
+    subcategory: "dentist",
+    group: "Healthcare",
+    mapCategory: "gp",
+    searchTerms: ["dentist", "dental"]
   },
   {
     id: "hospital",
     label: "Hospital",
-    subcategories: ["hospital"],
+    subcategory: "hospital",
+    group: "Healthcare",
+    mapCategory: "hospital",
     searchTerms: ["hospital", "hospitals", "emergency"]
   },
   {
     id: "pharmacy",
     label: "Pharmacy",
-    subcategories: ["pharmacy"],
-    searchTerms: ["pharmacy", "pharmacies", "chemist", "chemists"]
+    subcategory: "pharmacy",
+    group: "Healthcare",
+    mapCategory: "pharmacy",
+    searchTerms: ["pharmacy", "chemist", "chemists"]
   },
   {
     id: "school",
-    label: "Schools",
-    subcategories: ["school", "kindergarten", "college", "childcare"],
-    searchTerms: ["school", "schools", "kindergarten", "college", "childcare", "education"]
+    label: "School",
+    subcategory: "school",
+    group: "Education",
+    mapCategory: "school",
+    searchTerms: ["school", "schools", "education"]
   },
   {
-    id: "gym",
-    label: "Gym / sports",
-    subcategories: ["sports_centre"],
-    searchTerms: ["gym", "gyms", "sport", "sports", "fitness", "sports centre"]
+    id: "kindergarten",
+    label: "Kindergarten",
+    subcategory: "kindergarten",
+    group: "Education",
+    mapCategory: "school",
+    searchTerms: ["kindergarten", "kinder", "preschool"]
+  },
+  {
+    id: "college",
+    label: "College",
+    subcategory: "college",
+    group: "Education",
+    mapCategory: "school",
+    searchTerms: ["college", "tafe", "uni", "university"]
+  },
+  {
+    id: "childcare",
+    label: "Childcare",
+    subcategory: "childcare",
+    group: "Education",
+    mapCategory: "school",
+    searchTerms: ["childcare", "child care", "daycare", "day care"]
   },
   {
     id: "library",
     label: "Library",
-    subcategories: ["library"],
+    subcategory: "library",
+    group: "Community",
+    mapCategory: "library",
     searchTerms: ["library", "libraries"]
   },
   {
-    id: "community",
-    label: "Community",
-    subcategories: ["community_centre", "town_hall", "social_facility"],
-    searchTerms: ["community", "town hall", "social", "community centre"]
+    id: "community_centre",
+    label: "Community centre",
+    subcategory: "community_centre",
+    group: "Community",
+    mapCategory: "community",
+    searchTerms: ["community", "community centre", "hall"]
   },
   {
-    id: "transit",
-    label: "Transit",
-    subcategories: [
-      "bus_stop",
-      "stop_position",
-      "platform",
-      "railway_station",
-      "station",
-      "bus_station",
-      "railway_halt",
-      "tram_stop"
-    ],
-    searchTerms: [
-      "transit",
-      "transport",
-      "bus",
-      "buses",
-      "bus stop",
-      "bus stops",
-      "train",
-      "trains",
-      "railway",
-      "station",
-      "stations",
-      "tram",
-      "trams",
-      "platform"
-    ]
+    id: "town_hall",
+    label: "Town hall",
+    subcategory: "town_hall",
+    group: "Community",
+    mapCategory: "community",
+    searchTerms: ["town hall", "council"]
+  },
+  {
+    id: "social_facility",
+    label: "Social facility",
+    subcategory: "social_facility",
+    group: "Community",
+    mapCategory: "community",
+    searchTerms: ["social", "social facility", "aged care"]
+  },
+  {
+    id: "bus_stop",
+    label: "Bus stop",
+    subcategory: "bus_stop",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["bus", "buses", "bus stop", "bus stops", "transit", "transport"]
+  },
+  {
+    id: "bus_station",
+    label: "Bus station",
+    subcategory: "bus_station",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["bus station", "bus stations", "coach"]
+  },
+  {
+    id: "railway_station",
+    label: "Railway station",
+    subcategory: "railway_station",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["train", "trains", "railway", "railway station", "station"]
+  },
+  {
+    id: "railway_halt",
+    label: "Railway halt",
+    subcategory: "railway_halt",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["halt", "railway halt"]
+  },
+  {
+    id: "tram_stop",
+    label: "Tram stop",
+    subcategory: "tram_stop",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["tram", "trams", "tram stop"]
+  },
+  {
+    id: "platform",
+    label: "Public transport platform",
+    subcategory: "platform",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["platform", "platforms"]
+  },
+  {
+    id: "station",
+    label: "Public transport station",
+    subcategory: "station",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["station", "stations", "pt station"]
+  },
+  {
+    id: "stop_position",
+    label: "Public transport stop",
+    subcategory: "stop_position",
+    group: "Public transport",
+    mapCategory: "transit",
+    searchTerms: ["stop", "stops", "stop position"]
   }
 ];
+
+/**
+ * Preference chips for Compare / home. One entry per extract subcategory
+ * so people can rank on bus stations, parks, pharmacies, etc. separately.
+ */
+export const COMPARE_PREFERENCES: {
+  id: string;
+  label: string;
+  subcategories: string[];
+  searchTerms: string[];
+}[] = DATASET_FACILITIES.map((facility) => ({
+  id: facility.id,
+  label: facility.label,
+  subcategories: [facility.subcategory],
+  searchTerms: [...facility.searchTerms, facility.group.toLocaleLowerCase("en-AU")]
+}));
 
 export type Mode = "walk" | "tram" | "train" | "bus";
 
@@ -188,6 +335,8 @@ export type Poi = {
   id: string;
   name: string;
   category: PoiCategory;
+  /** Exact extract subcategory (bus_stop, railway_station, …). */
+  subcategory?: string;
   lat: number;
   lng: number;
   suburb: string;

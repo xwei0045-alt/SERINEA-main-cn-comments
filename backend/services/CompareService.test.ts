@@ -50,12 +50,12 @@ test("compare ranking uses weights aligned with the selected preference order", 
   // Null detail loader keeps the injected summary counts for this unit test.
   const service = new CompareService(localities, null);
 
-  const equal = await service.rank({ prefs: ["grocery", "school"], q: "", limit: 2 });
+  const equal = await service.rank({ prefs: ["supermarket", "school"], q: "", limit: 2 });
   assert.equal(equal.items[0].locality, "Grocery Town");
 
   // Higher school weight must change the backend result, not only the UI preview.
   const weighted = await service.rank({
-    prefs: ["grocery", "school"],
+    prefs: ["supermarket", "school"],
     weights: [0.1, 0.9],
     q: "",
     limit: 2
@@ -67,7 +67,7 @@ test("compare ranking uses weights aligned with the selected preference order", 
   assert.equal(weighted.items[0].breakdown.find((item) => item.preferenceId === "school")?.weighted, 0.9);
 });
 
-test("a large park count cannot outweigh a higher-priority grocery preference", async () => {
+test("a large park count cannot outweigh a higher-priority supermarket preference", async () => {
   const service = new CompareService({
     listAll: async () => ({
       items: [townWithParks("Grocery Town", 10, 1), townWithParks("Park Town", 1, 510)],
@@ -76,6 +76,6 @@ test("a large park count cannot outweigh a higher-priority grocery preference", 
     })
   } as unknown as LocalitySummaryService);
 
-  const result = await service.rank({ prefs: ["grocery", "park"], weights: [0.9, 0.1], q: "", limit: 2 });
+  const result = await service.rank({ prefs: ["supermarket", "park"], weights: [0.9, 0.1], q: "", limit: 2 });
   assert.equal(result.items[0].locality, "Grocery Town");
 });

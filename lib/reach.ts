@@ -146,18 +146,19 @@ export function journeyBetween(from: LatLng, poi: Poi): Journey {
   };
 }
 
-/** True only if outbound AND return fit the same 15-minute budget. */
+/** True if the walk from the pin fits the fixed window. */
+export function fitsWalk(journey: Journey, window = WINDOW_MINUTES): boolean {
+  return journey.outboundMinutes > 0 && journey.outboundMinutes <= window + 1e-6;
+}
+
+/** @deprecated Use fitsWalk — product is outbound reach, not round trip. */
 export function fitsRoundTrip(journey: Journey, window = WINDOW_MINUTES): boolean {
-  return (
-    journey.outboundMinutes > 0 &&
-    journey.inboundMinutes > 0 &&
-    journey.roundTripMinutes <= window + 1e-6
-  );
+  return fitsWalk(journey, window);
 }
 
 export type ReachResult = {
   reachable: ReachablePoi[];
-  /** Outbound ≤ 15 but outbound + return > 15 — hidden by the round-trip filter. */
+  /** Kept for API shape; always 0 under outbound-only filtering. */
   outboundOnlyCount: number;
   water: ReturnType<typeof waterAt>;
 };
@@ -169,38 +170,28 @@ export function reachFrom(pin: LatLng, window = WINDOW_MINUTES): ReachResult {
   }
 
   const reachable: ReachablePoi[] = [];
-  let outboundOnlyCount = 0;
 
   for (const poi of POIS) {
     const journey = journeyBetween(pin, poi);
-    if (fitsRoundTrip(journey, window)) {
+    if (fitsWalk(journey, window)) {
       reachable.push({ poi, journey });
-    } else if (journey.outboundMinutes <= window && journey.roundTripMinutes > window) {
-      outboundOnlyCount += 1;
     }
   }
 
-  reachable.sort((a, b) => a.journey.roundTripMinutes - b.journey.roundTripMinutes);
-  return { reachable, outboundOnlyCount, water };
+  reachable.sort((a, b) => a.journey.outboundMinutes - b.journey.outboundMinutes);
+  return { reachable, outboundOnlyCount: 0, water };
 }
 
-/** Outbound fits the window, return does not — omitted from the index. */
+/** Previously: outbound fits but return does not. Empty under outbound-only product. */
 export function omittedFrom(pin: LatLng, window = WINDOW_MINUTES): ReachablePoi[] {
-  if (waterAt(pin)) return [];
-  const rows: ReachablePoi[] = [];
-  for (const poi of POIS) {
-    const journey = journeyBetween(pin, poi);
-    if (journey.outboundMinutes <= window && journey.roundTripMinutes > window) {
-      rows.push({ poi, journey });
-    }
-  }
-  rows.sort((a, b) => a.journey.roundTripMinutes - b.journey.roundTripMinutes);
-  return rows;
+  void pin;
+  void window;
+  return [];
 }
 
 export type Isochrone = { lat: number; lng: number }[];
 
-/** Polar hull of points whose round-trip PT approximation is within the window. */
+/** Polar hull of points whose one-way walk estimate is within the window. */
 export function isochroneFrom(pin: LatLng, window = WINDOW_MINUTES): Isochrone {
   if (waterAt(pin)) return [];
   const rays = 48;
@@ -225,7 +216,7 @@ export function isochroneFrom(pin: LatLng, window = WINDOW_MINUTES): Isochrone {
         suburb: ""
       };
       const j = journeyBetween(pin, probe);
-      if (fitsRoundTrip(j, window)) lo = mid;
+      if (fitsWalk(j, window)) lo = mid;
       else hi = mid;
     }
     hull.push(destination(pin, bearing, lo));

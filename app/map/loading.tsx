@@ -7,7 +7,7 @@ export default function MapLoading() {
           <div className="panel-head">
             <h1>Looking up places</h1>
             <p className="window-fixed">
-              <span>Places you can walk to and back in 15 minutes.</span>
+              <span>Places you can walk to in 15 minutes.</span>
             </p>
           </div>
         </aside>

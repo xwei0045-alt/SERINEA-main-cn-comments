@@ -1,0 +1,472 @@
+/* Compare — dreamy sage / mist editorial flow */
+
+.shell {
+  position: relative;
+  min-height: 100svh;
+  color: var(--ink);
+  background: var(--dream-cream);
+  overflow-x: clip;
+}
+
+.shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% -10%, color-mix(in oklab, var(--dream-mist) 55%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 100% 40%, color-mix(in oklab, var(--sage) 80%, transparent), transparent 70%);
+  opacity: 0.9;
+}
+
+.main {
+  position: relative;
+  z-index: 1;
+  width: min(48rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.25rem 0 6rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+
+.step,
+.stepOn {
+  appearance: none;
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 28%, transparent);
+  border-radius: 2px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.step {
+  background: color-mix(in oklab, #fff 72%, var(--sage));
+  color: var(--forest);
+}
+
+.stepOn {
+  background: color-mix(in oklab, var(--forest) 88%, var(--dream-mist));
+  color: var(--enamel);
+  border-color: transparent;
+}
+
+.step span,
+.stepOn span {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.pane {
+  display: grid;
+  gap: 0.15rem;
+  max-width: 36rem;
+}
+
+.pane h1 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  max-width: 14ch;
+  color: var(--forest);
+}
+
+.lead {
+  margin: 0.65rem 0 1rem;
+  color: var(--sage-ink);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-style: italic;
+  line-height: 1.45;
+  max-width: 40rem;
+}
+
+.search {
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 22%, transparent);
+  background: color-mix(in oklab, #fff 82%, var(--sage));
+  color: var(--ink);
+  font: inherit;
+  padding: 0.7rem 1rem;
+  border-radius: 2px;
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--forest);
+}
+
+.selectedRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--sage-ink);
+  font-weight: 500;
+}
+
+.pillOn {
+  appearance: none;
+  min-height: 40px;
+  border: 1px solid color-mix(in oklab, var(--forest) 40%, transparent);
+  background: color-mix(in oklab, var(--dream-mist) 55%, #fff);
+  color: var(--forest);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.45rem;
+  max-height: min(50svh, 420px);
+  overflow: auto;
+  padding: 0.15rem;
+}
+
+.tile {
+  appearance: none;
+  min-height: 52px;
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 18%, transparent);
+  background: color-mix(in oklab, #fff 78%, var(--sage));
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.tile:hover {
+  background: color-mix(in oklab, var(--dream-mist) 35%, #fff);
+  border-color: color-mix(in oklab, var(--sage-ink) 35%, transparent);
+}
+
+.tileOn {
+  appearance: none;
+  min-height: 52px;
+  border: 1px solid transparent;
+  background: color-mix(in oklab, var(--forest) 88%, var(--dream-mist));
+  color: var(--enamel);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.next,
+.back {
+  appearance: none;
+  min-height: 52px;
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 28%, transparent);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.55rem 1.2rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 2px;
+}
+
+.next {
+  background: color-mix(in oklab, var(--forest) 90%, var(--dream-mist));
+  color: var(--enamel);
+  border-color: transparent;
+}
+
+.next:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.back {
+  background: color-mix(in oklab, #fff 70%, var(--sage));
+  color: var(--sage-ink);
+}
+
+.weight {
+  margin: 1.1rem 0 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.weightLabel {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--forest);
+}
+
+.weightSeg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  padding: 0.35rem;
+  background: color-mix(in oklab, var(--sage) 70%, #fff);
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 16%, transparent);
+  border-radius: 2px;
+}
+
+.weightOn,
+.weightOff {
+  appearance: none;
+  min-height: 48px;
+  border: 0;
+  border-radius: 2px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  padding: 0.45rem 0.65rem;
+}
+
+.weightOn {
+  background: color-mix(in oklab, var(--forest) 90%, var(--dream-mist));
+  color: var(--enamel);
+}
+
+.weightOff {
+  background: transparent;
+  color: var(--sage-ink);
+}
+
+.weightOff:hover {
+  color: var(--forest);
+  background: color-mix(in oklab, #fff 55%, transparent);
+}
+
+.areaField {
+  margin-top: 0.25rem;
+}
+
+.areaField :global(label) {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--sage-ink);
+}
+
+.areaField :global(input) {
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 22%, transparent);
+  background: color-mix(in oklab, #fff 88%, var(--sage));
+  border-radius: 2px;
+}
+
+.areaField :global(input:focus),
+.areaField :global(input:focus-visible) {
+  border-color: var(--forest);
+  background: #fff;
+  outline: none;
+}
+
+.areaField :global(ul) {
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 22%, transparent);
+  border-radius: 2px;
+  box-shadow: 0 12px 28px color-mix(in oklab, var(--sage-ink) 12%, transparent);
+}
+
+.areaChip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.75rem 0 0;
+}
+
+.areaChip button {
+  appearance: none;
+  min-height: 40px;
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 22%, transparent);
+  background: color-mix(in oklab, #fff 80%, var(--sage));
+  color: var(--sage-ink);
+  cursor: pointer;
+  padding: 0.3rem 0.7rem;
+  border-radius: 2px;
+}
+
+.winner {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.35rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--forest) 92%, var(--dream-mist)),
+      color-mix(in oklab, var(--forest) 78%, #2a4a40)
+    );
+  color: var(--enamel);
+  border: 0;
+  border-radius: 2px;
+  box-shadow: 0 16px 36px color-mix(in oklab, var(--forest) 22%, transparent);
+}
+
+.winner p:first-child {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--gold) 80%, #fff);
+}
+
+.winner h2 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 0.95;
+}
+
+.winner .next {
+  justify-self: start;
+  margin-top: 0.5rem;
+  background: color-mix(in oklab, #fff 88%, var(--sage));
+  color: var(--forest);
+}
+
+.ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rung {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.9rem 0.85rem;
+  background: color-mix(in oklab, #fff 78%, var(--sage));
+  border: 1px solid color-mix(in oklab, var(--sage-ink) 14%, transparent);
+  border-radius: 2px;
+  backdrop-filter: blur(6px);
+}
+
+.rank {
+  font-family: var(--font-brand);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: color-mix(in oklab, var(--gold) 70%, var(--forest));
+}
+
+.rungBody h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--forest);
+}
+
+.rungBody p {
+  margin: 0.25rem 0 0;
+  color: var(--sage-ink);
+  font-size: 0.92rem;
+}
+
+.counts {
+  font-size: 0.86rem !important;
+}
+
+.rungScore {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+}
+
+.rungScore strong {
+  font-family: var(--font-brand);
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--forest);
+}
+
+.rungScore a {
+  color: var(--sage-ink);
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.note {
+  margin: 0.5rem 0;
+  color: var(--sage-ink);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+@media (max-width: 560px) {
+  .main {
+    width: calc(100% - 1.5rem);
+    padding-top: 1rem;
+  }
+
+  .step,
+  .stepOn {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    min-height: 44px;
+    padding: 0.35rem 0.25rem;
+  }
+
+  .rung {
+    grid-template-columns: 2.2rem minmax(0, 1fr);
+  }
+
+  .rungScore {
+    grid-column: 2;
+    justify-items: start;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+}

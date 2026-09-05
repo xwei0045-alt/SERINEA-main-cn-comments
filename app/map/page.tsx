@@ -6,7 +6,7 @@ import MapApp from "./MapApp";
 export const metadata: Metadata = {
   title: "Map - SERINEA 15 minute map",
   description:
-    "Drop a pin in regional Victoria. See parks, groceries, doctors, hospitals, schools and more within a 15-minute walk there and back."
+    "Drop a pin in regional Victoria. See parks, groceries, doctors, hospitals, schools and more within a 15-minute walk."
 };
 
 export default function MapPage() {

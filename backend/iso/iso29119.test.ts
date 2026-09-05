@@ -60,15 +60,15 @@ class FakeReachRepository implements ReachRepository {
   }
 }
 
-test("TC-F01 round trip both ways or the place stays off the list", async () => {
+test("TC-F01 walk from pin within 15 minutes or the place stays off the list", async () => {
   const service = new ReachService(
     new FakeReachRepository({
       reachable: [
         row("keep", 6, 6),
-        row("one-way", 8, 0),
-        row("too-far", 12, 12)
+        row("edge", 14, 14),
+        row("too-far", 16, 16)
       ],
-      outboundOnlyCount: 1,
+      outboundOnlyCount: 0,
       water: null,
       hull: [],
       sources: { poi: stamp, transit: stamp }
@@ -83,7 +83,7 @@ test("TC-F01 round trip both ways or the place stays off the list", async () => 
 
   assert.deepEqual(
     result.reachable.map((item) => item.poi.id),
-    ["keep"]
+    ["keep", "edge"]
   );
 });
 

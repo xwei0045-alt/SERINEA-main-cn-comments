@@ -1,75 +1,56 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type FormEvent } from "react";
-import { localityApiClient } from "@/frontend/api/LocalityApiClient";
-import { COMPARE_PREFERENCES } from "@/lib/types";
-import { FACTS, PHASES } from "@/lib/landingStory";
+import { useMemo, useState } from "react";
+import { TownSearchField } from "@/app/components/TownSearchField";
+import { COMPARE_PREFERENCES, TOWN_JUMPS } from "@/lib/types";
+import { findPreferences } from "@/lib/preferenceSearch";
 import styles from "./homeDesk.module.css";
 
-type Mode = "town" | "priority";
+type Mode = "town" | "need";
 
-const QUICK_PREFS = ["school", "grocery", "gp", "transit"] as const;
+const TOWNS = [
+  {
+    name: "Shepparton",
+    blurb: "Our default pin — dense enough to show a full fifteen-minute walk.",
+    lat: -36.378248,
+    lng: 145.40295
+  },
+  {
+    name: "Bendigo",
+    blurb: "Goldfields centre with parks, schools and clinics in walking range.",
+    lat: -36.75787,
+    lng: 144.281138
+  },
+  {
+    name: "Mildura",
+    blurb: "River town — prove the window still holds when the grid thins out.",
+    lat: -34.195496,
+    lng: 142.146155
+  },
+  {
+    name: "Wodonga",
+    blurb: "Border regional city — compare what fits a fifteen-minute walk.",
+    lat: -36.131367,
+    lng: 146.883574
+  }
+] as const;
 
-const MENTOR_RULES = [
-  "Round-trip is the filter, not a caption.",
-  "Fifteen minutes is fixed. No 30. No 60.",
-  "Regional Victoria first. Not Melbourne CBD.",
-  "Walking estimates only. Not live bus times.",
-  "Show the working: journey + source + date."
-];
-
-/** Clean home: one promise, two clear paths, then proof. Features unchanged. */
+/** Editorial pastoral home — SERINGA-style scroll, SERINEA product truth. */
 export function LandingExperience() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("town");
   const [town, setTown] = useState("");
-  const [prefs, setPrefs] = useState<string[]>(["grocery", "school", "gp"]);
-  const [busy, setBusy] = useState(false);
+  const [prefs, setPrefs] = useState<string[]>([]);
+  const [prefQuery, setPrefQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const prefLabels = useMemo(
-    () =>
-      COMPARE_PREFERENCES.filter((pref) =>
-        QUICK_PREFS.includes(pref.id as (typeof QUICK_PREFS)[number])
-      ),
-    []
+  const prefHits = useMemo(
+    () => findPreferences(prefQuery, prefs),
+    [prefQuery, prefs]
   );
-
-  async function onTownSubmit(event: FormEvent) {
-    event.preventDefault();
-    const query = town.trim();
-    if (query.length < 2) {
-      setError("Type a regional town name.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await localityApiClient.search({ q: query, limit: 8 });
-      const match =
-        result.items.find(
-          (item) =>
-            item.locality.toLocaleLowerCase("en-AU") === query.toLocaleLowerCase("en-AU")
-        ) ?? result.items[0];
-      if (!match?.latitude || !match?.longitude) {
-        setError("That town was not found in the regional extract.");
-        return;
-      }
-      router.push(
-        `/map?${new URLSearchParams({
-          lat: String(match.latitude),
-          lng: String(match.longitude),
-          town: match.locality
-        })}`
-      );
-    } catch {
-      setError("Town search failed. Try again in a moment.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   function togglePref(id: string) {
     setPrefs((current) =>
@@ -79,100 +60,228 @@ export function LandingExperience() {
 
   function onPriorityGo() {
     if (prefs.length === 0) {
-      setError("Pick at least one need.");
+      setError("Pick at least one facility.");
       return;
     }
     router.push(`/compare?${new URLSearchParams({ prefs: prefs.join(",") })}`);
   }
 
   return (
-    <div className={styles.shell}>
-      <section className={styles.hero}>
-        <p className={styles.badge}>Regional Victoria · 15 min there and back</p>
-        <h1 className={styles.title}>Know what you can actually reach</h1>
-        <p className={styles.lead}>
-          SERINEA only lists places you can walk to and get home from in fifteen
-          minutes. One-way “nearby” does not count.
-        </p>
+    <div className={styles.journal}>
+      <section className={styles.hero} aria-label="SERINEA">
+        {/* User assets: Images/desk1.webp (laptop) · Images/mobile1.webp (phone) */}
+        <Image
+          src="/images/mobile1.webp"
+          alt=""
+          fill
+          priority
+          className={`${styles.heroImg} ${styles.heroImgMobile}`}
+          sizes="100vw"
+        />
+        <Image
+          src="/images/desk1.webp"
+          alt=""
+          fill
+          priority
+          className={`${styles.heroImg} ${styles.heroImgDesktop}`}
+          sizes="100vw"
+        />
+        <div className={styles.heroWash} aria-hidden="true" />
+        <div className={styles.heroPlate}>
+          <p className={styles.heroBrand}>SERINEA</p>
+          <p className={styles.heroTag}>Life beyond the city limits</p>
+        </div>
+        <a className={styles.pill} href="#begin">
+          Explore
+        </a>
+      </section>
 
-        <div className={styles.pathGrid} aria-label="Choose how to start">
-          <Link className={styles.pathPrimary} href="/map">
-            <span className={styles.pathStep}>1</span>
-            <span className={styles.pathBody}>
-              <strong>Try the map</strong>
-              <em>Drop a pin. See parks, shops, doctors and more in range.</em>
-            </span>
-          </Link>
-          <Link className={styles.pathSecondary} href="/compare">
-            <span className={styles.pathStep}>2</span>
-            <span className={styles.pathBody}>
-              <strong>Compare towns</strong>
-              <em>Rank localities by schools, groceries, GPs and more. AI can help.</em>
-            </span>
-          </Link>
+      <section className={styles.mist} aria-label="The fifteen-minute promise">
+        <p className={styles.mistQuote}>
+          Drop a pin and see what you can walk to from there — parks, shops,
+          clinics and more inside a fixed fifteen-minute walk.
+        </p>
+        <figure className={styles.mistMat}>
+          <div className={styles.mistFrame}>
+            <Image
+              src="/editorial/victoria.png"
+              alt="Regional Victoria harbour town"
+              width={900}
+              height={720}
+              className={styles.mistPhoto}
+            />
+            <figcaption className={styles.mistCaption}>Fifteen minutes.</figcaption>
+          </div>
+        </figure>
+        <Link className={styles.mistBar} href="/map">
+          What can you reach on foot?
+        </Link>
+      </section>
+
+      <section className={styles.breath} aria-label="Slower living">
+        <div className={styles.breathWash} aria-hidden="true" />
+        <p className={styles.breathLine}>
+          Less time commuting, more time living. Less noise, more headspace.
+        </p>
+        <a className={styles.breathBar} href="#begin">
+          Could slower be better?
+        </a>
+      </section>
+
+      <section className={styles.forest}>
+        <p className={styles.forestEyeline}>Regional Victoria</p>
+        <h2 className={styles.forestTitle}>The pastoral frontier, measured</h2>
+        <figure className={styles.engraving}>
+          <Image
+            src="/editorial/victoria.png"
+            alt="Archival-style view of a Victorian regional harbour town"
+            width={1200}
+            height={675}
+            className={styles.engravingImg}
+          />
+          <figcaption>
+            <span>Come explore regional Victoria</span>
+          </figcaption>
+        </figure>
+        <div className={styles.townGrid}>
+          {TOWNS.map((item) => (
+            <article key={item.name}>
+              <h3>{item.name}</h3>
+              <p>{item.blurb}</p>
+              <Link
+                href={`/map?lat=${item.lat}&lng=${item.lng}&town=${encodeURIComponent(item.name)}`}
+              >
+                Open map
+              </Link>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className={styles.workspace} aria-labelledby="start-heading">
-        <div className={styles.workspaceHead}>
-          <h2 id="start-heading">Or jump straight in</h2>
-          <p>Search a town for the map, or pick needs to rank places to live.</p>
+      <section className={styles.tableSec}>
+        <h2>Two honest differences</h2>
+        <div className={styles.table} role="table" aria-label="Nearby apps versus SERINEA">
+          <div className={styles.tr} role="row">
+            <span role="columnheader" />
+            <span role="columnheader">Typical nearby map</span>
+            <span role="columnheader">SERINEA</span>
+          </div>
+          <div className={styles.tr} role="row">
+            <span role="rowheader">Travel window</span>
+            <span>Often 5–60 minutes, adjustable</span>
+            <span>Fixed fifteen-minute walk from your pin</span>
+          </div>
+          <div className={styles.tr} role="row">
+            <span role="rowheader">Focus</span>
+            <span>Often CBD-first or vague “nearby”</span>
+            <span>What you can walk to from here</span>
+          </div>
+          <div className={styles.tr} role="row">
+            <span role="rowheader">Coverage</span>
+            <span>Often CBD-first</span>
+            <span>Regional Victoria extract</span>
+          </div>
+          <div className={styles.tr} role="row">
+            <span role="rowheader">Times</span>
+            <span>May imply live transit</span>
+            <span>Walking estimates, labelled clearly</span>
+          </div>
         </div>
+      </section>
 
-        <div className={styles.tabs} role="tablist" aria-label="How to start">
+      <section className={styles.begin} id="begin">
+        <h2>Begin</h2>
+        <p className={styles.beginLead}>
+          Name a town, or choose what must be nearby — then we take you to the map
+          or the town ladder.
+        </p>
+        <div className={styles.switch} role="tablist" aria-label="Begin">
           <button
             type="button"
             role="tab"
             aria-selected={mode === "town"}
-            className={mode === "town" ? styles.tabOn : styles.tab}
+            className={mode === "town" ? styles.switchOn : styles.switchOff}
             onClick={() => {
               setMode("town");
               setError(null);
             }}
           >
-            Find a town
+            I know the town
           </button>
           <button
             type="button"
             role="tab"
-            aria-selected={mode === "priority"}
-            className={mode === "priority" ? styles.tabOn : styles.tab}
+            aria-selected={mode === "need"}
+            className={mode === "need" ? styles.switchOn : styles.switchOff}
             onClick={() => {
-              setMode("priority");
+              setMode("need");
               setError(null);
             }}
           >
-            Set my priorities
+            I know what I need
           </button>
         </div>
 
         {mode === "town" ? (
-          <form className={styles.form} onSubmit={onTownSubmit}>
-            <label htmlFor="home-town">Town in regional Victoria</label>
-            <div className={styles.formRow}>
-              <input
-                id="home-town"
-                value={town}
-                onChange={(event) => setTown(event.target.value)}
-                placeholder="e.g. Shepparton"
-                autoComplete="off"
-              />
-              <button type="submit" disabled={busy}>
-                {busy ? "Finding…" : "Open map"}
-              </button>
+          <div className={styles.beginForm}>
+            <TownSearchField
+              id="home-town"
+              label="Town or LGA"
+              value={town}
+              onValueChange={(value) => {
+                setTown(value);
+                setError(null);
+              }}
+              placeholder="Shepparton, Mildura, Bendigo…"
+              onSelect={(item) => {
+                if (item.latitude == null || item.longitude == null) {
+                  setError("That town has no map pin in the extract.");
+                  return;
+                }
+                setTown(item.locality);
+                router.push(
+                  `/map?${new URLSearchParams({
+                    lat: String(item.latitude),
+                    lng: String(item.longitude),
+                    town: item.locality
+                  })}`
+                );
+              }}
+            />
+            <div className={styles.quickTowns}>
+              {TOWN_JUMPS.map((t) => (
+                <button
+                  key={t.label}
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/map?lat=${t.lat}&lng=${t.lng}&town=${encodeURIComponent(t.label)}`
+                    )
+                  }
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
-          </form>
+          </div>
         ) : (
-          <div className={styles.form}>
-            <p className={styles.formLabel}>Tap what matters most</p>
-            <div className={styles.chips} role="group" aria-label="Priorities">
-              {prefLabels.map((pref) => {
+          <div className={styles.beginForm}>
+            <input
+              className={styles.prefSearch}
+              value={prefQuery}
+              onChange={(event) => setPrefQuery(event.target.value)}
+              placeholder="Filter facilities: bus, school, pharmacy…"
+              aria-label="Filter facilities"
+              autoComplete="off"
+            />
+            <div className={styles.mosaic} role="group" aria-label="Facilities">
+              {(prefQuery.trim() ? prefHits : COMPARE_PREFERENCES).map((pref) => {
                 const on = prefs.includes(pref.id);
                 return (
                   <button
                     key={pref.id}
                     type="button"
-                    className={on ? styles.chipOn : styles.chip}
+                    className={on ? styles.tileOn : styles.tile}
                     aria-pressed={on}
                     onClick={() => togglePref(pref.id)}
                   >
@@ -181,17 +290,16 @@ export function LandingExperience() {
                 );
               })}
             </div>
-            <div className={styles.formRow}>
-              <button type="button" onClick={onPriorityGo}>
-                Show ranked towns
+            <div className={styles.beginActions}>
+              <span>
+                {prefs.length === 0 ? "Nothing selected" : `${prefs.length} selected`}
+              </span>
+              <button type="button" className={styles.pillDark} onClick={onPriorityGo}>
+                Rank towns
               </button>
-              <Link className={styles.quietLink} href="/compare">
-                Open Compare + AI
-              </Link>
             </div>
           </div>
         )}
-
         {error && (
           <p className={styles.error} role="alert">
             {error}
@@ -199,42 +307,19 @@ export function LandingExperience() {
         )}
       </section>
 
-      <section className={styles.section} aria-labelledby="problem-heading">
-        <h2 id="problem-heading">Why this exists</h2>
-        <div className={styles.cards}>
-          {PHASES.map((phase) => (
-            <article key={phase.id}>
-              <h3>{phase.title}</h3>
-              <p>{phase.body}</p>
-            </article>
-          ))}
+      <footer className={styles.foot}>
+        <div>
+          <p className={styles.footBrand}>SERINEA</p>
+          <p>
+            Team SERINEA · TA06 · FIT5120. Regional reach without the marketing fluff.
+          </p>
         </div>
-      </section>
-
-      <section className={styles.section} aria-labelledby="rules-heading">
-        <h2 id="rules-heading">What stays true in this demo</h2>
-        <ul className={styles.rules}>
-          {MENTOR_RULES.map((rule) => (
-            <li key={rule}>{rule}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={styles.section} aria-labelledby="live-heading">
-        <h2 id="live-heading">Already built</h2>
-        <ul className={styles.live}>
-          {FACTS.map((fact) => (
-            <li key={fact.id}>
-              <strong>{fact.kicker}</strong>
-              <span>{fact.line}</span>
-            </li>
-          ))}
-        </ul>
-        <div className={styles.more}>
-          <Link href="/how">How to read the map</Link>
-          <Link href="/story">Previous story home</Link>
+        <div className={styles.footLinks}>
+          <Link href="/map">Map</Link>
+          <Link href="/compare">Compare</Link>
+          <Link href="/story">Previous home</Link>
         </div>
-      </section>
+      </footer>
     </div>
   );
 }

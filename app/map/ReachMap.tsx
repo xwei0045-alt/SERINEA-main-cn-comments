@@ -4,7 +4,8 @@
 // We tell the map to resize when the panel changes so phones do not get a grey strip.
 
 import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMap, Marker, Polygon, Polyline } from "leaflet";
+import type { Circle, Map as LeafletMap, Marker, Polyline } from "leaflet";
+import { haversineKm } from "@/lib/geo";
 import type { Isochrone } from "@/lib/reach";
 import { poiMarkHtml } from "@/lib/mapMarks";
 import { COLOR } from "@/lib/palette";
@@ -41,7 +42,7 @@ export default function ReachMap({
   const mapRef = useRef<LeafletMap | null>(null);
   const pinRef = useRef<Marker | null>(null);
   const youRef = useRef<Marker | null>(null);
-  const hullRef = useRef<Polygon | null>(null);
+  const hullRef = useRef<Circle | null>(null);
   const routeCasingRef = useRef<Polyline | null>(null);
   const routeLineRef = useRef<Polyline | null>(null);
   const dotsRef = useRef<Map<string, Marker>>(new Map());
@@ -69,8 +70,13 @@ export default function ReachMap({
       map = L.map(el, {
         zoomControl: true,
         attributionControl: true,
-        minZoom: 6,
-        maxZoom: 17
+        minZoom: 7,
+        maxZoom: 17,
+        maxBounds: [
+          [-39.3, 140.8],
+          [-33.8, 150.2]
+        ],
+        maxBoundsViscosity: 0.85
       }).setView([pin.lat, pin.lng], 14);
 
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -126,6 +132,9 @@ export default function ReachMap({
       setReady(true);
       requestAnimationFrame(() => {
         map?.invalidateSize({ animate: false });
+        map?.setView([pinPosRef.current.lat, pinPosRef.current.lng], 14, {
+          animate: false
+        });
       });
     })();
 
@@ -160,9 +169,15 @@ export default function ReachMap({
 
   useEffect(() => {
     const marker = pinRef.current;
+    const map = mapRef.current;
     if (!marker || !ready) return;
     marker.dragging?.[navigating ? "disable" : "enable"]?.();
     marker.setLatLng([pin.lat, pin.lng]);
+    if (!navigating && map) {
+      map.setView([pin.lat, pin.lng], Math.max(map.getZoom(), 13), {
+        animate: true
+      });
+    }
   }, [pin, ready, navigating]);
 
   useEffect(() => {
@@ -193,18 +208,20 @@ export default function ReachMap({
         }
         return;
       }
-      const poly = L.polygon(
-        hull.map((p) => [p.lat, p.lng] as [number, number]),
-        {
-          color: COLOR.overlay,
-          weight: 1,
-          fillColor: COLOR.overlay,
-          fillOpacity: 0.18
-        }
-      ).addTo(map);
-      hullRef.current = poly;
+      // Smooth orange circle people expect for a 15-minute reach — radius from the hull extents.
+      const radiusMeters =
+        (hull.reduce((sum, point) => sum + haversineKm(pin, point), 0) / hull.length) *
+        1000;
+      const circle = L.circle([pin.lat, pin.lng], {
+        radius: Math.max(120, radiusMeters),
+        color: COLOR.overlay,
+        weight: 2,
+        fillColor: COLOR.overlay,
+        fillOpacity: 0.18
+      }).addTo(map);
+      hullRef.current = circle;
       if (!hasRoute) {
-        map.fitBounds(poly.getBounds().pad(0.2), { animate: true, maxZoom: 14 });
+        map.fitBounds(circle.getBounds().pad(0.2), { animate: true, maxZoom: 14 });
       }
     })();
     return () => {
@@ -273,7 +290,7 @@ export default function ReachMap({
         : reachable;
       for (const row of rows) {
         const on = row.poi.id === selectedId;
-        const label = `${row.poi.name} · ${row.journey.roundTripMinutes} min`;
+        const label = `${row.poi.name} · ${row.journey.outboundMinutes} min`;
         const wide = row.poi.category === "pharmacy";
         const size = on ? (wide ? 30 : 26) : wide ? 24 : 20;
         const mark = L.marker([row.poi.lat, row.poi.lng], {

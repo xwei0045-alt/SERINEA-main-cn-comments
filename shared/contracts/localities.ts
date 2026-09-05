@@ -3,7 +3,8 @@ import { z } from "zod";
 /** Query accepted by the locality summary endpoint. */
 export const localitySummaryQuerySchema = z.object({
   q: z.string().trim().max(100).optional().default(""),
-  limit: z.coerce.number().int().min(1).max(100).default(50)
+  /** Cap how many matches to return. Default covers the full regional extract. */
+  limit: z.coerce.number().int().min(1).max(5000).default(5000)
 });
 
 export type LocalitySummaryQuery = z.infer<typeof localitySummaryQuerySchema>;

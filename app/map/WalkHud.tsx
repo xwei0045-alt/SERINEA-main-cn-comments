@@ -42,7 +42,7 @@ export function WalkHud({
         {` · ${placeName}`}
       </p>
       {overBudget && !arrived && (
-        <p className="walk-hud-warn">Along streets this round trip may take more than 15 minutes.</p>
+        <p className="walk-hud-warn">Along streets this walk may take more than 15 minutes.</p>
       )}
       <div className="walk-hud-actions">
         {arrived && canWalkBack && (

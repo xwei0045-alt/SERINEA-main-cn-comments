@@ -80,10 +80,8 @@ export class PostgresReachRepository implements ReachRepository {
       const poi = this.mapper.toMapPoi(row);
       if (!poi) continue;
       const journey = this.journeyCalculator.createWalkingJourney(criteria.pin, poi);
-      if (journey.roundTripMinutes <= criteria.windowMinutes) {
+      if (journey.outboundMinutes <= criteria.windowMinutes) {
         reachable.push({ poi, journey });
-      } else if (journey.outboundMinutes <= criteria.windowMinutes) {
-        outboundOnlyCount += 1;
       }
     }
 
@@ -91,7 +89,7 @@ export class PostgresReachRepository implements ReachRepository {
       reachable,
       outboundOnlyCount,
       water: null,
-      hull: this.journeyCalculator.createRoundTripHull(
+      hull: this.journeyCalculator.createReachHull(
         criteria.pin,
         criteria.windowMinutes
       ),

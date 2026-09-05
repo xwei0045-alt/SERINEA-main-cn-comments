@@ -220,7 +220,7 @@ export function LandingScroll() {
       <div className={styles.sticky} onPointerMove={onMove}>
         <div className={styles.stage} aria-label="Scroll-driven SERINEA experience">
           <h1 className={styles.srOnly}>
-            SERINEA: fifteen-minute round-trip reach for regional Victoria
+            SERINEA: fifteen-minute walk reach for regional Victoria
           </h1>
           <div className={styles.noise} aria-hidden="true" />
           <div className={styles.gridDrift} aria-hidden="true" />
@@ -278,7 +278,7 @@ export function LandingScroll() {
             <p className={styles.fifteen} aria-live="polite">
               {fifteenCount}
             </p>
-            <p className={styles.fifteenUnit}>min round-trip</p>
+            <p className={styles.fifteenUnit}>min walk</p>
             <div className={styles.ring} />
             <div className={styles.ringInner} />
           </div>
@@ -478,9 +478,6 @@ export function LandingScroll() {
               <div className={styles.actions}>
                 <Link className={styles.cta} href="/map">
                   Open the map
-                </Link>
-                <Link className={styles.ctaGhost} href="/how">
-                  How it works
                 </Link>
               </div>
               <p className={styles.goNote}>

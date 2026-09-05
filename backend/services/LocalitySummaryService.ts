@@ -8,6 +8,7 @@ import type {
   LocalitySummaryQuery,
   LocalitySummaryResponse
 } from "@/shared/contracts/localities";
+import { rankLocalityMatches } from "@/lib/localitySearch";
 
 function localityKey(locality: string, lgaName: string, regionalGroup: string) {
   return `${locality}\u0000${lgaName}\u0000${regionalGroup}`;
@@ -47,13 +48,15 @@ export class LocalitySummaryService {
     const data = await this.getData();
     const summaries = await this.getSummaries(data);
     const searchText = query.q.toLocaleLowerCase("en-AU");
-    const matches = searchText
+    const filtered = searchText
       ? summaries.filter((item) =>
           [item.locality, item.lgaName, item.regionalGroup].some((value) =>
             value.toLocaleLowerCase("en-AU").includes(searchText)
           )
         )
       : summaries;
+    // Exact / prefix town names rise first so every regional name can be found quickly.
+    const matches = searchText ? rankLocalityMatches(filtered, searchText) : filtered;
 
     return {
       items: matches.slice(0, query.limit),

@@ -8,14 +8,14 @@
   place-items: center;
   width: 52px;
   height: 52px;
-  border: 1px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 0;
-  background: var(--arterial);
+  background: var(--overlay);
   color: var(--enamel);
   cursor: pointer;
 }
 .launcher:hover { background: var(--ink); border-color: var(--ink); }
-.launcher:focus-visible, .header button:focus-visible { outline: var(--focus); outline-offset: 3px; }
+.launcher:focus-visible, .header button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .drawer {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));

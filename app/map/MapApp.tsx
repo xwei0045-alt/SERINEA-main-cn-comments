@@ -16,12 +16,13 @@ import { MAP_MARK, categoryLabel, poiMarkClass } from "@/lib/mapMarks";
 import { remainingAlongPath } from "@/lib/routeProgress";
 import { walkingSecondsFromMeters } from "@/lib/walkCopy";
 import {
-  MAP_CATEGORIES,
+  DATASET_FACILITIES,
   REGIONAL_DEFAULT,
   TOWN_JUMPS,
   WINDOW_MINUTES
 } from "@/lib/types";
-import type { LatLng, PoiCategory, ReachablePoi, WaterKind } from "@/lib/types";
+import type { LatLng, ReachablePoi, WaterKind } from "@/lib/types";
+import { findPreferences } from "@/lib/preferenceSearch";
 import type { Isochrone } from "@/lib/reach";
 import type { LocalitySummaryItem } from "@/shared/contracts/localities";
 import type { ReachResponse } from "@/shared/contracts/reach";
@@ -82,7 +83,8 @@ export default function MapApp() {
   const [failed, setFailed] = useState(false);
   const [locating, setLocating] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [active, setActive] = useState<PoiCategory[] | "all">("all");
+  const [active, setActive] = useState<string[] | "all">("all");
+  const [filterQuery, setFilterQuery] = useState("");
   const [result, setResult] = useState<ReachResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -147,10 +149,10 @@ export default function MapApp() {
     };
   }, [pin]);
 
-  // Wait a beat so we are not hitting town search on every letter.
+  // Filter towns from the first character; return every match in the extract.
   useEffect(() => {
     const query = townQuery.trim();
-    if (query.length < 2) {
+    if (!query) {
       setTownMatches([]);
       setTownNotFound(false);
       return;
@@ -159,7 +161,7 @@ export default function MapApp() {
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       localityApiClient
-        .search({ q: query, limit: 25 }, controller.signal)
+        .search({ q: query, limit: 5000 }, controller.signal)
         .then((response) => {
           setTownMatches(response.items);
           setTownNotFound(response.items.length === 0);
@@ -170,7 +172,7 @@ export default function MapApp() {
           setTownMatches([]);
           setTownNotFound(true);
         });
-    }, 200);
+    }, 80);
 
     return () => {
       window.clearTimeout(timer);
@@ -183,12 +185,20 @@ export default function MapApp() {
     const filtered =
       active === "all"
         ? reachable
-        : reachable.filter((row) => active.includes(row.poi.category));
+        : reachable.filter((row) => {
+            const sub = row.poi.subcategory;
+            return sub ? active.includes(sub) : active.includes(row.poi.category);
+          });
     // Closest first — keeps the panel and map readable
     return [...filtered].sort(
-      (a, b) => a.journey.roundTripMinutes - b.journey.roundTripMinutes
+      (a, b) => a.journey.outboundMinutes - b.journey.outboundMinutes
     );
   }, [result, active]);
+
+  const filterOptions = useMemo(
+    () => findPreferences(filterQuery),
+    [filterQuery]
+  );
 
   // Cap map dots so the densest towns stay usable (list still shows all matches).
   const mapListed = useMemo(() => {
@@ -244,7 +254,7 @@ export default function MapApp() {
         {
           from: pin,
           to: { lat: selected.poi.lat, lng: selected.poi.lng },
-          roundtrip: true
+          roundtrip: false
         },
         controller.signal
       )
@@ -423,13 +433,8 @@ export default function MapApp() {
       if (prev === id) return null;
       return id;
     });
-    // Mobile: keep the map clear and show the Start card (Google Maps style).
-    // Desktop: open the side list so the journey details stay visible.
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) {
-      setPanelOpen(false);
-    } else {
-      setPanelOpen(true);
-    }
+    // Keep the map clear — Start lives on the place card; list opens only via Places.
+    setPanelOpen(false);
   }
 
   function closePanel() {
@@ -465,20 +470,24 @@ export default function MapApp() {
     );
   }
 
-  function toggleCat(id: PoiCategory) {
+  function toggleFacility(id: string) {
     setActive((prev) => {
       if (prev === "all") return [id];
-      const next = prev.includes(id) ? prev.filter((cat) => cat !== id) : [...prev, id];
-      return next.length === 0 || next.length === MAP_CATEGORIES.length ? "all" : next;
+      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+      return next.length === 0 || next.length === DATASET_FACILITIES.length ? "all" : next;
     });
+  }
+
+  function facilityLabel(subcategory: string | undefined, category: string) {
+    if (subcategory) {
+      const hit = DATASET_FACILITIES.find((item) => item.subcategory === subcategory);
+      if (hit) return hit.label;
+    }
+    return categoryLabel(category as Parameters<typeof categoryLabel>[0]);
   }
 
   return (
     <>
-      <p className="banner banner--desktop">
-        <strong>Regional Victoria.</strong> Tap the map to drop your pin, tap a place, then
-        press Start.
-      </p>
       <div className={`map-shell${panelOpen ? " map-shell--panel-open" : ""}`}>
         <div className="map-stage">
           <ReachMap
@@ -497,6 +506,108 @@ export default function MapApp() {
             }}
             onSelect={(id) => pickPlace(id)}
           />
+
+          <div className="map-dock">
+            <div className="map-dock-panel">
+              <label className="town-search">
+                <span className="sr-only">Search a town</span>
+                <input
+                  type="search"
+                  value={townQuery}
+                  placeholder="Jump to any regional town…"
+                  autoComplete="off"
+                  aria-autocomplete="list"
+                  aria-expanded={townOpen && townMatches.length > 0}
+                  aria-controls="town-results"
+                  onChange={(event) => {
+                    setTownQuery(event.target.value);
+                    setTownOpen(true);
+                  }}
+                  onFocus={() => setTownOpen(true)}
+                  onBlur={() => {
+                    window.setTimeout(() => setTownOpen(false), 150);
+                  }}
+                />
+                {townOpen && townMatches.length > 0 && (
+                  <ul id="town-results" className="town-results" role="listbox">
+                    {townMatches.map((item) => (
+                      <li key={`${item.locality}-${item.lgaName}`}>
+                        <button
+                          type="button"
+                          role="option"
+                          disabled={item.latitude == null || item.longitude == null}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => jumpToTown(item)}
+                        >
+                          <strong>{titleCase(item.locality)}</strong>
+                          <span>{titleCase(item.lgaName)}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {townOpen && townNotFound && townQuery.trim().length > 0 && (
+                  <p className="town-not-found" role="status">
+                    Not found — “{townQuery.trim()}” is not in our regional towns.
+                  </p>
+                )}
+              </label>
+              <div className="town-chips" role="group" aria-label="Regional towns">
+                {TOWN_JUMPS.map((town) => (
+                  <button
+                    key={town.label}
+                    type="button"
+                    aria-pressed={samePin(pin, town)}
+                    disabled={walkStarted}
+                    onClick={() => {
+                      movePin({ lat: town.lat, lng: town.lng });
+                      setTownQuery(town.label);
+                      setTownNotFound(false);
+                    }}
+                  >
+                    {town.label}
+                  </button>
+                ))}
+              </div>
+              <label className="town-search filter-search">
+                <span className="sr-only">Search place types</span>
+                <input
+                  type="search"
+                  value={filterQuery}
+                  placeholder="Filter: bus stop, school, pharmacy…"
+                  autoComplete="off"
+                  onChange={(event) => setFilterQuery(event.target.value)}
+                />
+              </label>
+              {filterQuery.trim() && filterOptions.length === 0 && (
+                <p className="town-not-found" role="status">
+                  Not found — “{filterQuery.trim()}” is not in our place types.
+                </p>
+              )}
+              <div className="filters" role="group" aria-label="Place type">
+                <button type="button" aria-pressed={active === "all"} onClick={() => setActive("all")}>
+                  All
+                </button>
+                {filterOptions.map((facility) => {
+                  const mapCat =
+                    DATASET_FACILITIES.find((item) => item.id === facility.id)?.mapCategory ??
+                    "community";
+                  return (
+                    <button
+                      key={facility.id}
+                      type="button"
+                      aria-pressed={active !== "all" && active.includes(facility.id)}
+                      onClick={() => toggleFacility(facility.id)}
+                    >
+                      <IconCategory category={mapCat} size={14} />
+                      <span>{facility.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {walkStarted && selected && (
             <WalkHud
               placeName={selected.poi.name}
@@ -516,7 +627,8 @@ export default function MapApp() {
             <div className="place-card" role="dialog" aria-label="Selected place">
               <div className="place-card-copy">
                 <p className="place-card-kicker">
-                  {categoryLabel(selected.poi.category)} · {selected.journey.roundTripMinutes} min round trip
+                  {facilityLabel(selected.poi.subcategory, selected.poi.category)} ·{" "}
+                  {selected.journey.outboundMinutes} min walk
                 </p>
                 <h2 className="place-card-title">{selected.poi.name}</h2>
                 <p className="place-card-meta">{titleCase(selected.poi.suburb)}</p>
@@ -564,7 +676,6 @@ export default function MapApp() {
               aria-label={panelOpen ? "Close places list" : "Open places list"}
               onClick={() => setPanelOpen((v) => !v)}
             >
-              <span className="map-fab-ham" aria-hidden="true" />
               Places
               <span className="map-fab-count">{listed.length}</span>
             </button>
@@ -578,20 +689,6 @@ export default function MapApp() {
               <IconLocate />
             </button>
           </div>
-          <ul className="map-legend map-legend--compact" aria-label="Map key">
-            <li>
-              <span className="pin-marker" aria-hidden="true" />
-              You
-            </li>
-            {MAP_CATEGORIES.map((cat) => (
-              <li key={cat.id}>
-                <span className={poiMarkClass(cat.id)} aria-hidden="true">
-                  {MAP_MARK[cat.id].letter}
-                </span>
-                {cat.label}
-              </li>
-            ))}
-          </ul>
         </div>
 
         {panelOpen ? (
@@ -618,100 +715,12 @@ export default function MapApp() {
           <div className="panel-head">
             <div className="panel-title-row">
               <h1>Within 15 minutes</h1>
-              <button
-                className="locate locate--compact"
-                type="button"
-                onClick={locate}
-                disabled={locating || walkStarted}
-              >
-                <IconLocate />
-                {locating ? "…" : "My location"}
-              </button>
             </div>
             <p className="window-fixed" aria-live="polite">
               {loading && !result
                 ? "Looking up places…"
                 : `${listed.length} ${placeWord}. Tap one, then press Start`}
             </p>
-
-            <label className="town-search">
-              <span className="sr-only">Search a town</span>
-              <input
-                type="search"
-                value={townQuery}
-                placeholder="Search town…"
-                autoComplete="off"
-                aria-autocomplete="list"
-                aria-expanded={townOpen && townMatches.length > 0}
-                aria-controls="town-results"
-                onChange={(event) => {
-                  setTownQuery(event.target.value);
-                  setTownOpen(true);
-                }}
-                onFocus={() => setTownOpen(true)}
-                onBlur={() => {
-                  window.setTimeout(() => setTownOpen(false), 150);
-                }}
-              />
-              {townOpen && townMatches.length > 0 && (
-                <ul id="town-results" className="town-results" role="listbox">
-                  {townMatches.map((item) => (
-                    <li key={`${item.locality}-${item.lgaName}`}>
-                      <button
-                        type="button"
-                        role="option"
-                        disabled={item.latitude == null || item.longitude == null}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => jumpToTown(item)}
-                      >
-                        <strong>{titleCase(item.locality)}</strong>
-                        <span>{titleCase(item.lgaName)}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {townOpen && townNotFound && townQuery.trim().length >= 2 && (
-                <p className="town-not-found" role="status">
-                  Not found. Try another regional town or LGA name.
-                </p>
-              )}
-            </label>
-
-            <div className="town-chips" role="group" aria-label="Regional towns">
-              {TOWN_JUMPS.map((town) => (
-                <button
-                  key={town.label}
-                  type="button"
-                  aria-pressed={samePin(pin, town)}
-                  disabled={walkStarted}
-                  onClick={() => {
-                    movePin({ lat: town.lat, lng: town.lng });
-                    setTownQuery(town.label);
-                    setTownNotFound(false);
-                  }}
-                >
-                  {town.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="filters" role="group" aria-label="Place type">
-              <button type="button" aria-pressed={active === "all"} onClick={() => setActive("all")}>
-                All
-              </button>
-              {MAP_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  aria-pressed={active !== "all" && active.includes(cat.id)}
-                  onClick={() => toggleCat(cat.id)}
-                >
-                  <IconCategory category={cat.id} size={14} />
-                  <span>{cat.label}</span>
-                </button>
-              ))}
-            </div>
           </div>
 
           {denied && (
@@ -732,19 +741,13 @@ export default function MapApp() {
             )}
             {!loading && !requestError && !waterMessage && listed.length === 0 && (
               <div className="empty">
-                <h2>Nothing in 15 minutes there and back</h2>
+                <h2>Nothing within a 15-minute walk</h2>
                 <p>Try Bendigo, Shepparton, or another town.</p>
               </div>
             )}
             {listed.map((row) => {
               const isSelected = selectedId === row.poi.id;
               const mark = MAP_MARK[row.poi.category];
-              const there = isSelected
-                ? streetRoute?.legs.find((leg) => leg.id === "there")
-                : null;
-              const back = isSelected
-                ? streetRoute?.legs.find((leg) => leg.id === "back")
-                : null;
               return (
                 <article
                   key={row.poi.id}
@@ -765,59 +768,16 @@ export default function MapApp() {
                       <div>
                         <h2>{row.poi.name}</h2>
                         <p className="meta">
-                          {titleCase(row.poi.suburb)} · {categoryLabel(row.poi.category)}
+                          {titleCase(row.poi.suburb)} ·{" "}
+                          {facilityLabel(row.poi.subcategory, row.poi.category)}
                         </p>
                       </div>
                       <span className="mins">
-                        {row.journey.roundTripMinutes}
+                        {row.journey.outboundMinutes}
                         <small> min</small>
                       </span>
                     </div>
                   </button>
-                  {isSelected && (
-                    <div className="journey">
-                      <div className="trip-split">
-                        <div>
-                          <p className="trip-label">There</p>
-                          <p className="trip-min">
-                            {routeLoading
-                              ? "…"
-                              : there
-                                ? `${Math.max(1, Math.round(there.durationSeconds / 60))} min`
-                                : `${row.journey.outboundMinutes} min`}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="trip-label">Back</p>
-                          <p className="trip-min">
-                            {routeLoading
-                              ? "…"
-                              : back
-                                ? `${Math.max(1, Math.round(back.durationSeconds / 60))} min`
-                                : `${row.journey.inboundMinutes} min`}
-                          </p>
-                        </div>
-                      </div>
-                      {routeError && <p className="status note">{routeError}</p>}
-                      {overBudget && there && (
-                        <p className="status note">
-                          Street path is about {Math.round(streetRoundTripSeconds / 60)} min
-                          round-trip (over 15).
-                        </p>
-                      )}
-                      <button
-                        type="button"
-                        className="walk-primary walk-primary--block"
-                        disabled={!there || routeLoading || walkStarted}
-                        onClick={() => {
-                          startWalk();
-                          closePanel();
-                        }}
-                      >
-                        {routeLoading ? "Finding path…" : walkStarted ? "Walking…" : "Start"}
-                      </button>
-                    </div>
-                  )}
                 </article>
               );
             })}

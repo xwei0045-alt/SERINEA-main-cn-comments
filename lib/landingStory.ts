@@ -53,31 +53,31 @@ export const PHASES: Phase[] = [
     id: "i2",
     n: "02",
     title: "People need the essentials",
-    body: "A GP, pharmacy, grocery, park or gym only counts if you can walk there and home again inside a hard fifteen minutes."
+    body: "A GP, pharmacy, grocery, park or gym only counts if you can walk there from your pin inside a hard fifteen minutes."
   },
   {
     id: "i3",
     n: "03",
     title: "We show what actually fits",
-    body: "SERINEA keeps only places that work round-trip. If the return blows the window, it stays off the list, so the map stays honest."
+    body: "SERINEA keeps only places within a fifteen-minute walk from where you are. If it takes longer on foot, it stays off the list."
   }
 ];
 
 export const FACTS: FunFact[] = [
   {
     id: "f1",
-    kicker: "Regional Victoria",
-    line: "32,569 OpenStreetMap places across 1,778 localities, not the Melbourne CBD."
+    kicker: "Coverage",
+    line: "Regional Victoria only — 32,569 OpenStreetMap places across 1,778 localities. Melbourne CBD is out of scope."
   },
   {
     id: "f2",
-    kicker: "Hard window",
-    line: "No 30. No 60. Fifteen is the product: there and back."
+    kicker: "Reach window",
+    line: "Every place on the list is within a 15-minute walk from your pin. Longer windows are not offered."
   },
   {
     id: "f3",
-    kicker: "Team SERINEA",
-    line: "Six of us · TA06 · FIT5120: rural reach without the marketing fluff."
+    kicker: "Estimates",
+    line: "Times are walking estimates from mapped streets, labelled clearly. Live buses are not included yet."
   }
 ];
 

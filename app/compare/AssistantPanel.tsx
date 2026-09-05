@@ -142,7 +142,6 @@ export default function AssistantPanel({ selected, onApply }: Props) {
           setError(null);
           setDraft({ preferences: [], baseKey: currentKey, note: "Review this empty selection before clearing all preferences." });
         }}>Clear preferences</button>
-        <a href="/how">How it works</a>
       </div>
 
       {draft && (

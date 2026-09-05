@@ -1,20 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Chrome } from "../components/Chrome";
+import { TownSearchField } from "../components/TownSearchField";
 import { compareApiClient } from "@/frontend/api/CompareApiClient";
 import { applyPreferenceSelection, preferenceWeights } from "@/lib/comparePriorities";
 import { COMPARE_PREFERENCES } from "@/lib/types";
+import { findPreferences } from "@/lib/preferenceSearch";
 import type { CompareRankItem, CompareResponse } from "@/shared/contracts/compare";
-import ComparePriorities from "./ComparePriorities";
 import FloatingAssistant from "./FloatingAssistant";
-import styles from "./CompareClient.module.css";
+import styles from "./compareFlow.module.css";
 
-// Format display text only: 85.37 stays 85.37, and 100 stays 100.
 const scoreFormat = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 2 });
 const knownPrefs = new Set(COMPARE_PREFERENCES.map((pref) => pref.id));
+
+type Step = 1 | 2 | 3;
 
 function titleCase(value: string): string {
   return value
@@ -38,29 +40,39 @@ function prefsFromQuery(raw: string | null): string[] | null {
   return values.length ? values : null;
 }
 
+/** Three-step compare flow: facilities → area → ranked ladder. */
 export default function CompareClient() {
   const searchParams = useSearchParams();
   const bootPrefs = prefsFromQuery(searchParams.get("prefs"));
-  const [selected, setSelected] = useState<string[]>(
-    bootPrefs ?? ["grocery", "school", "gp", "park"]
-  );
+  const [step, setStep] = useState<Step>(bootPrefs?.length ? 3 : 1);
+  const [selected, setSelected] = useState<string[]>(bootPrefs ?? []);
   const [priority, setPriority] = useState(false);
   const [chatArea, setChatArea] = useState("");
+  const [areaDraft, setAreaDraft] = useState("");
+  const [prefQuery, setPrefQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CompareResponse | null>(null);
 
+  const available = useMemo(
+    () => findPreferences(prefQuery, selected),
+    [prefQuery, selected]
+  );
+
   useEffect(() => {
     const next = prefsFromQuery(searchParams.get("prefs"));
-    if (next) setSelected(next);
+    if (next) {
+      setSelected(next);
+      setStep(3);
+    }
   }, [searchParams]);
 
   useEffect(() => {
-    // Clear old matches so they cannot be mistaken for the new selection's results.
+    if (step !== 3) return;
     setResult(null);
     if (selected.length === 0) {
       setLoading(false);
-      setError("Choose at least one preference.");
+      setError("Choose at least one facility.");
       return;
     }
 
@@ -79,7 +91,6 @@ export default function CompareClient() {
           controller.signal
         )
         .then((next) => {
-          // A slower, cancelled request must not replace the latest results.
           if (!controller.signal.aborted) setResult(next);
         })
         .catch((err: unknown) => {
@@ -95,145 +106,270 @@ export default function CompareClient() {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [selected, priority, chatArea]);
+  }, [selected, priority, chatArea, step]);
 
-  // Keep a frontend limit too, even if the API returns extra items.
   const matches = result?.items.slice(0, 10) ?? [];
 
+  function toggle(id: string) {
+    setSelected((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+  }
+
   return (
-    <div className={`how compare-page ${styles.page}`}>
+    <div className={styles.shell}>
       <Chrome current="compare" />
-      <main id="content" className="compare-main">
-        <h1>Find where to live</h1>
-        <p className="lead">
-          1) Choose what matters. 2) See the top towns from our data. 3) Open a
-          town on the map, or ask the assistant. Counts are town-wide; the map
-          shows a 15-minute walk from a pin near your needs.
-        </p>
-
-        <section className="compare-panel" aria-label="Preferences">
-          {/* Manual selection controls the same weights used by the API. */}
-          <ComparePriorities
-            selected={selected}
-            onChange={setSelected}
-            priority={priority}
-            onPriorityChange={setPriority}
-          />
-        </section>
-
-        {chatArea && (
-          <p className="compare-area-chip">
-            Comparing within <strong>{chatArea}</strong>
-            <button type="button" onClick={() => setChatArea("")}>
-              All regions
-            </button>
-          </p>
-        )}
-
-        {loading && (
-          <p className="status note" role="status">
-            Ranking regional localities…
-          </p>
-        )}
-        {error && (
-          <p className="status halt" role="alert">
-            {error}
-          </p>
-        )}
-
-        {result?.recommendation && (
-          <section className="compare-reco" aria-live="polite">
-            <p className="compare-reco-kicker">Most suitable</p>
-            <h2>
-              {titleCase(result.recommendation.locality)}
-              <span> · score {scoreFormat.format(result.recommendation.score)}</span>
-            </h2>
-            <p>{result.recommendation.summary}</p>
-            {matches[0]?.latitude != null && matches[0]?.longitude != null && (
-              <Link
-                className="cta"
-                href={`/map?lat=${matches[0].latitude}&lng=${matches[0].longitude}&town=${encodeURIComponent(result.recommendation.locality)}`}
+      <main id="content" className={styles.main}>
+        <ol className={styles.steps} aria-label="Compare steps">
+          {[
+            { n: 1 as const, label: "Facilities" },
+            { n: 2 as const, label: "Area" },
+            { n: 3 as const, label: "Rankings" }
+          ].map((item) => (
+            <li key={item.n}>
+              <button
+                type="button"
+                className={step === item.n ? styles.stepOn : styles.step}
+                aria-current={step === item.n ? "step" : undefined}
+                onClick={() => setStep(item.n)}
               >
-                Open on map
-              </Link>
+                <span>{item.n}</span>
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ol>
+
+        {step === 1 && (
+          <section className={styles.pane} aria-labelledby="step1">
+            <h1 id="step1">What has to be in town?</h1>
+            <p className={styles.lead}>
+              Pick from the full extract — bus stations, schools, parks, clinics…
+            </p>
+            <input
+              className={styles.search}
+              value={prefQuery}
+              onChange={(event) => setPrefQuery(event.target.value)}
+              placeholder="Filter facilities…"
+              aria-label="Filter facilities"
+              autoComplete="off"
+            />
+            <div className={styles.selectedRow}>
+              {selected.length === 0 ? (
+                <span>None selected</span>
+              ) : (
+                selected.map((id) => {
+                  const label =
+                    COMPARE_PREFERENCES.find((item) => item.id === id)?.label ?? id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={styles.pillOn}
+                      onClick={() => toggle(id)}
+                    >
+                      {label} ×
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            <div className={styles.grid} role="group" aria-label="Facilities">
+              {(prefQuery.trim() ? available : COMPARE_PREFERENCES.filter((p) => !selected.includes(p.id))).map(
+                (pref) => (
+                  <button
+                    key={pref.id}
+                    type="button"
+                    className={styles.tile}
+                    onClick={() => {
+                      toggle(pref.id);
+                      setPrefQuery("");
+                    }}
+                  >
+                    {pref.label}
+                  </button>
+                )
+              )}
+            </div>
+            {prefQuery.trim() && available.length === 0 && (
+              <p className={styles.note} role="status">
+                Not found — no facility matched “{prefQuery.trim()}”.
+              </p>
+            )}
+            <div className={styles.footer}>
+              <button
+                type="button"
+                className={styles.next}
+                disabled={selected.length === 0}
+                onClick={() => setStep(2)}
+              >
+                Next: area →
+              </button>
+            </div>
+          </section>
+        )}
+
+        {step === 2 && (
+          <section className={styles.pane} aria-labelledby="step2">
+            <h1 id="step2">Narrow the area?</h1>
+            <p className={styles.lead}>
+              Optional. Leave blank to rank across all regional Victoria.
+            </p>
+            <div className={styles.areaField}>
+              <TownSearchField
+                id="compare-area"
+                label="Town or LGA (optional)"
+                value={areaDraft}
+                onValueChange={setAreaDraft}
+                placeholder="Type to limit ranking…"
+                onSelect={(item) => {
+                  setAreaDraft(item.locality);
+                  setChatArea(item.locality);
+                }}
+              />
+            </div>
+            {chatArea && (
+              <p className={styles.areaChip}>
+                Limited to <strong>{titleCase(chatArea)}</strong>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChatArea("");
+                    setAreaDraft("");
+                  }}
+                >
+                  Clear
+                </button>
+              </p>
+            )}
+            <div className={styles.weight} role="group" aria-label="How to weight your picks">
+              <p className={styles.weightLabel}>How to weight your picks</p>
+              <div className={styles.weightSeg}>
+                <button
+                  type="button"
+                  className={!priority ? styles.weightOn : styles.weightOff}
+                  aria-pressed={!priority}
+                  onClick={() => setPriority(false)}
+                >
+                  Equal weight
+                </button>
+                <button
+                  type="button"
+                  className={priority ? styles.weightOn : styles.weightOff}
+                  aria-pressed={priority}
+                  onClick={() => setPriority(true)}
+                >
+                  First pick matters most
+                </button>
+              </div>
+            </div>
+            <div className={styles.footer}>
+              <button type="button" className={styles.back} onClick={() => setStep(1)}>
+                ← Facilities
+              </button>
+              <button type="button" className={styles.next} onClick={() => setStep(3)}>
+                See rankings →
+              </button>
+            </div>
+          </section>
+        )}
+
+        {step === 3 && (
+          <section className={styles.pane} aria-labelledby="step3">
+            <h1 id="step3">Town ladder</h1>
+            <p className={styles.lead}>
+              Best-fit localities from our data for{" "}
+              {selected
+                .map((id) => COMPARE_PREFERENCES.find((p) => p.id === id)?.label ?? id)
+                .join(", ")}
+              {chatArea ? ` within ${titleCase(chatArea)}` : ""}.
+            </p>
+            <div className={styles.footer} style={{ marginBottom: "1rem" }}>
+              <button type="button" className={styles.back} onClick={() => setStep(1)}>
+                Edit facilities
+              </button>
+              <button type="button" className={styles.back} onClick={() => setStep(2)}>
+                Edit area
+              </button>
+            </div>
+
+            {loading && (
+              <p className={styles.note} role="status">
+                Ranking…
+              </p>
+            )}
+            {error && (
+              <p className={styles.note} role="alert">
+                {error}
+              </p>
+            )}
+
+            {result?.recommendation && (
+              <div className={styles.winner}>
+                <p>Top fit</p>
+                <h2>{titleCase(result.recommendation.locality)}</h2>
+                <p>{result.recommendation.summary}</p>
+                {matches[0]?.latitude != null && matches[0]?.longitude != null && (
+                  <Link
+                    className={styles.next}
+                    href={`/map?lat=${matches[0].latitude}&lng=${matches[0].longitude}&town=${encodeURIComponent(result.recommendation.locality)}`}
+                  >
+                    Open on map
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {matches.length > 0 && (
+              <ol className={styles.ladder}>
+                {matches.map((item, index) => (
+                  <LadderRow key={`${item.locality}-${item.lgaName}`} item={item} rank={index + 1} />
+                ))}
+              </ol>
+            )}
+
+            {result && !loading && matches.length === 0 && !error && (
+              <p className={styles.note} role="status">
+                No locality matched those filters.
+              </p>
             )}
           </section>
-        )}
-
-        {result && matches.length > 0 && (
-          <section className="compare-results" aria-label="Ranked localities">
-            <h2>
-              Top {matches.length} matches
-              <span className="compare-count">
-                {" "}
-                · {result.totalLocalitiesScored.toLocaleString("en-AU")} scored
-              </span>
-            </h2>
-            <ol className="compare-list" role="list">
-              {matches.map((item, index) => (
-                <CompareRow
-                  key={`${item.locality}-${item.lgaName}`}
-                  item={item}
-                  rank={index + 1}
-                />
-              ))}
-            </ol>
-          </section>
-        )}
-
-        {result && !loading && matches.length === 0 && !error && (
-          <p className="status note" role="status">
-            No regional locality matched those filters.
-          </p>
         )}
       </main>
       <FloatingAssistant
         onApply={({ preferences, area }) => {
-          // Keep the user's priority order; append newly suggested criteria at the end.
           setSelected((current) => applyPreferenceSelection(current, preferences));
           setChatArea(area);
+          setAreaDraft(area);
+          setStep(3);
         }}
       />
     </div>
   );
 }
 
-function CompareRow({ item, rank }: { item: CompareRankItem; rank: number }) {
+function LadderRow({ item, rank }: { item: CompareRankItem; rank: number }) {
   const mapHref =
     item.latitude != null && item.longitude != null
       ? `/map?lat=${item.latitude}&lng=${item.longitude}&town=${encodeURIComponent(item.locality)}`
       : "/map";
 
   return (
-    <li className={`compare-row ${styles.row}`}>
-      <div className={`compare-row-top ${styles.rowTop}`}>
-        {/* Only town results receive a ranking number. */}
-        <span className={`compare-rank ${styles.rank}`} aria-label={`Rank ${rank}`}>
-          {rank}
-        </span>
-        <div className={styles.town}>
-          <h3>{titleCase(item.locality)}</h3>
-          <p>
-            {titleCase(item.lgaName)} · {item.totalPoiCount.toLocaleString("en-AU")} places
-            in extract
-          </p>
-        </div>
-        <div className={styles.score}>
-          <span>Score</span>
-          <strong>{scoreFormat.format(item.score)}</strong>
-        </div>
+    <li className={styles.rung}>
+      <span className={styles.rank}>{rank}</span>
+      <div className={styles.rungBody}>
+        <h3>{titleCase(item.locality)}</h3>
+        <p>
+          {titleCase(item.lgaName)} · {item.totalPoiCount.toLocaleString("en-AU")} places
+        </p>
+        <p className={styles.counts}>
+          {item.breakdown.map((entry) => `${entry.label} ${entry.count}`).join(" · ")}
+        </p>
       </div>
-
-      {/* These are facility counts, not another ranked list. */}
-      <dl className={styles.breakdown}>
-        {item.breakdown.map((entry) => (
-          <div key={entry.preferenceId}>
-            <dt>{entry.label}:</dt>
-            <dd>{entry.count.toLocaleString("en-AU")}</dd>
-          </div>
-        ))}
-      </dl>
-      <Link href={mapHref}>View on map</Link>
+      <div className={styles.rungScore}>
+        <strong>{scoreFormat.format(item.score)}</strong>
+        <Link href={mapHref}>Map</Link>
+      </div>
     </li>
   );
 }
