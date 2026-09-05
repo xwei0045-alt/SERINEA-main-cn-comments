@@ -32,12 +32,13 @@ export class CompareService {
   constructor(private readonly localities = new LocalitySummaryService()) {}
 
   async rank(query: CompareQuery): Promise<CompareResponse> {
-    const selected = COMPARE_PREFERENCES.filter((pref) => query.prefs.includes(pref.id));
-    const weight = 1;
-    const preferences = selected.map((pref) => ({
+    const selected = query.prefs.map((id) => COMPARE_PREFERENCES.find((pref) => pref.id === id))
+      .filter((pref): pref is typeof COMPARE_PREFERENCES[number] => Boolean(pref));
+    const weights = query.weights ?? selected.map(() => 1);
+    const preferences = selected.map((pref, index) => ({
       id: pref.id,
       label: pref.label,
-      weight
+      weight: weights[index]
     }));
 
     const catalog = await this.localities.listAll();
@@ -51,7 +52,7 @@ export class CompareService {
       : catalog.items;
 
     const scored = pool
-      .map((item) => this.scoreLocality(item, selected, weight))
+      .map((item) => this.scoreLocality(item, selected, weights))
       .filter((item) => item.rawScore > 0)
       .sort(
         (a, b) =>
@@ -66,7 +67,8 @@ export class CompareService {
       locality: row.locality,
       lgaName: row.lgaName,
       regionalGroup: row.regionalGroup,
-      score: maxRaw > 0 ? Math.round((row.rawScore / maxRaw) * 100) : 0,
+      // Keep precision here; round only when displaying the score.
+      score: maxRaw > 0 ? (row.rawScore / maxRaw) * 100 : 0,
       totalPoiCount: row.totalPoiCount,
       latitude: row.latitude,
       longitude: row.longitude,
@@ -96,10 +98,11 @@ export class CompareService {
   private scoreLocality(
     item: LocalitySummaryItem,
     selected: typeof COMPARE_PREFERENCES,
-    weight: number
+    weights: number[]
   ) {
-    const breakdown = selected.map((pref) => {
+    const breakdown = selected.map((pref, index) => {
       const count = subcategoryCount(item, pref.subcategories);
+      const weight = weights[index] ?? 1;
       return {
         preferenceId: pref.id,
         label: pref.label,

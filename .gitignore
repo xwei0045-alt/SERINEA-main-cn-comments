@@ -27,3 +27,14 @@ npm-debug.log*
 .vercel
 
 .firecrawl/
+
+# Keep local Python environments and caches out of Git.
+.venv-ai/
+__pycache__/
+
+# Keep local training runs and model weights out of Git.
+/ai/runs/
+
+# Keep environment variables and API keys out of Git.
+.env*
+!.env.example

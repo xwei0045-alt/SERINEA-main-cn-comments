@@ -7,7 +7,7 @@ const preferenceIds = COMPARE_PREFERENCES.map((item) => item.id) as [
 ];
 
 export const compareQuerySchema = z.object({
-  /** Comma-separated preference ids. Selected prefs get equal weight unless weights are passed. */
+  /** Comma-separated preference ids, in the user's chosen order. */
   prefs: z
     .string()
     .trim()
@@ -27,9 +27,34 @@ export const compareQuerySchema = z.object({
       }
       return [...new Set(values)];
     }),
+  /** Optional comma-separated ranking weights aligned to prefs. */
+  weights: z
+    .string()
+    .trim()
+    .transform((value, context) => {
+      const weights = value.split(",").map((item) => Number(item.trim()));
+      const invalid = weights.some((item) => !Number.isFinite(item) || item <= 0);
+      if (invalid) {
+        context.addIssue({
+          code: "custom",
+          message: "Weights must be positive numbers."
+        });
+        return undefined;
+      }
+      return weights;
+    })
+    .optional(),
   limit: z.coerce.number().int().min(1).max(50).default(12),
   /** Optional town name filter before ranking. */
   q: z.string().trim().max(100).optional().default("")
+}).superRefine((value, context) => {
+  if (value.weights && value.weights.length !== value.prefs.length) {
+    context.addIssue({
+      code: "custom",
+      path: ["weights"],
+      message: "Weights must match the selected preferences."
+    });
+  }
 });
 
 export type CompareQuery = z.infer<typeof compareQuerySchema>;

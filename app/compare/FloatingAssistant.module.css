@@ -1,0 +1,63 @@
+/* Reuse the site's palette; only the chat surface floats above the page. */
+.launcher {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 46;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--enamel);
+  cursor: pointer;
+}
+.launcher:hover { background: var(--arterial); border-color: var(--arterial); }
+.launcher:focus-visible, .header button:focus-visible { outline: var(--focus); outline-offset: 4px; }
+.drawer {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  /* Stay above the mobile header (40) and below the skip link (50). */
+  z-index: 45;
+  width: min(440px, calc(100vw - 32px));
+  height: min(740px, calc(100dvh - 112px - env(safe-area-inset-bottom)));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ink-soft);
+  border-radius: 12px;
+  background: var(--enamel);
+  color: var(--ink);
+  overflow: hidden;
+}
+.drawer[hidden] { display: none; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; }
+.drawer .header h2 { margin: 0; font-size: 1.25rem; font-family: var(--font-display); }
+.header button { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); cursor: pointer; }
+.header button:hover { background: var(--paper-2); }
+.drawer > section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  flex: 1;
+  margin: 0;
+  padding: 0 16px 16px;
+  border: 0;
+  border-radius: 0;
+  overflow-y: auto;
+}
+.drawer [role="log"] { flex: 1 1 200px; min-height: 100px; }
+.drawer section > :not([role="log"]) { flex-shrink: 0; }
+.drawer nav { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; width: 100%; }
+.drawer form > div { flex-wrap: nowrap; }
+.drawer form input { flex: 1 1 0; }
+.drawer form button { width: auto; }
+/* Keep the drawer inset from narrow screen edges. */
+@media (max-width: 480px) {
+  .drawer { right: 16px; }
+  .header { padding: 8px 12px; }
+  .drawer > section { padding: 0 12px 12px; }
+}

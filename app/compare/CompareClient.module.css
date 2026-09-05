@@ -1,0 +1,39 @@
+/* Override the How page's list counter only inside Compare. */
+.page.page li { counter-increment: none; }
+.page.page li::before { content: none; display: none; }
+/* Keep user messages readable above the shared paragraph color rule. */
+.page [data-chat-role="user"] { color: var(--enamel); }
+
+.page .row { padding: 18px; }
+.rowTop { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; }
+.town { min-width: 0; overflow-wrap: anywhere; }
+.rank { min-width: 1.5em; font-size: 1.5rem; line-height: 1.2; }
+
+/* Keep the score prominent and separate from the town's rank. */
+.score { display: grid; justify-items: end; gap: 2px; color: var(--ink); }
+.score span { font-size: 0.8rem; color: var(--ink-soft); }
+.score strong {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 16px 0 12px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.breakdown > div { display: flex; gap: 5px; }
+.breakdown dt, .breakdown dd { margin: 0; }
+.breakdown dd { font-weight: 700; color: var(--ink); }
+
+@media (max-width: 480px) {
+  .page .row { padding: 14px; }
+  .rowTop { gap: 8px; }
+  .rank { min-width: 1.2em; font-size: 1.25rem; }
+  .score strong { font-size: 1.7rem; }
+}

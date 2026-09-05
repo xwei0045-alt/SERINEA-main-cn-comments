@@ -17,11 +17,12 @@ export class CompareApiClient {
   constructor(private readonly baseUrl = "") {}
 
   async rank(
-    input: { prefs: string[]; limit?: number; q?: string },
+    input: { prefs: string[]; weights?: number[]; limit?: number; q?: string },
     signal?: AbortSignal
   ): Promise<CompareResponse> {
     const parameters = new URLSearchParams();
     parameters.set("prefs", input.prefs.join(","));
+    if (input.weights) parameters.set("weights", input.weights.join(","));
     if (input.limit != null) parameters.set("limit", String(input.limit));
     if (input.q) parameters.set("q", input.q);
 
