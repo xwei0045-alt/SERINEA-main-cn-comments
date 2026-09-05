@@ -59,8 +59,8 @@ export default function ComparePriorities({ selected, onChange, priority, onPrio
           : "All selected categories have equal weight. Switch to Set priority to try an order."}
       </p>
       <p className={styles.notice}>
-        <strong>Ranking method:</strong> scores use these weights with town-wide facility counts,
-        not nearby walking access.
+        <strong>Ranking method:</strong> scores normalise town-wide facility counts by category,
+        then apply these weights; they do not measure nearby walking access.
       </p>
 
       {/* Native drag works on desktop; Up/Down buttons also work with touch and keyboard. */}

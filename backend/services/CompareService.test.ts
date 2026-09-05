@@ -25,6 +25,19 @@ function town(locality: string, grocery: number, school: number): LocalitySummar
   };
 }
 
+function townWithParks(locality: string, grocery: number, parks: number): LocalitySummaryItem {
+  return {
+    locality,
+    lgaName: "Test LGA",
+    regionalGroup: "Test Region",
+    totalPoiCount: grocery + parks,
+    categories: [
+      { category: "shops", poiCount: grocery, subcategories: [{ subcategory: "supermarket", displayName: "Supermarket", poiCount: grocery }] },
+      { category: "recreation", poiCount: parks, subcategories: [{ subcategory: "park", displayName: "Park", poiCount: parks }] }
+    ]
+  };
+}
+
 const localities = {
   listAll: async () => ({
     items: [town("Grocery Town", 10, 0), town("School Town", 0, 9)],
@@ -50,5 +63,18 @@ test("compare ranking uses weights aligned with the selected preference order", 
   assert.equal(weighted.preferences[0].weight, 0.1);
   assert.equal(weighted.preferences[1].weight, 0.9);
   assert.equal(weighted.items[0].locality, "School Town");
-  assert.equal(weighted.items[0].breakdown.find((item) => item.preferenceId === "school")?.weighted, 8.1);
+  assert.equal(weighted.items[0].breakdown.find((item) => item.preferenceId === "school")?.weighted, 0.9);
+});
+
+test("a large park count cannot outweigh a higher-priority grocery preference", async () => {
+  const service = new CompareService({
+    listAll: async () => ({
+      items: [townWithParks("Grocery Town", 10, 1), townWithParks("Park Town", 1, 510)],
+      totalPois: 522,
+      dataSource: "csv" as const
+    })
+  } as unknown as LocalitySummaryService);
+
+  const result = await service.rank({ prefs: ["grocery", "park"], weights: [0.9, 0.1], q: "", limit: 2 });
+  assert.equal(result.items[0].locality, "Grocery Town");
 });

@@ -51,8 +51,11 @@ export class CompareService {
         )
       : catalog.items;
 
+    const categoryMaximums = selected.map((pref) =>
+      Math.max(0, ...pool.map((item) => subcategoryCount(item, pref.subcategories)))
+    );
     const scored = pool
-      .map((item) => this.scoreLocality(item, selected, weights))
+      .map((item) => this.scoreLocality(item, selected, weights, categoryMaximums))
       .filter((item) => item.rawScore > 0)
       .sort(
         (a, b) =>
@@ -98,16 +101,18 @@ export class CompareService {
   private scoreLocality(
     item: LocalitySummaryItem,
     selected: typeof COMPARE_PREFERENCES,
-    weights: number[]
+    weights: number[],
+    categoryMaximums: number[]
   ) {
     const breakdown = selected.map((pref, index) => {
       const count = subcategoryCount(item, pref.subcategories);
       const weight = weights[index] ?? 1;
+      const maximum = categoryMaximums[index] ?? 0;
       return {
         preferenceId: pref.id,
         label: pref.label,
         count,
-        weighted: count * weight
+        weighted: maximum > 0 ? (count / maximum) * weight : 0
       };
     });
     const rawScore = breakdown.reduce((sum, row) => sum + row.weighted, 0);
