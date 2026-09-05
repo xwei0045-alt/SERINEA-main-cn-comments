@@ -6,7 +6,7 @@ import { z } from "zod";
 import styles from "./AssistantPanel.module.css";
 import Link from "next/link";
 import { chatReplySchema } from "@/lib/chatRecommendations";
-import type { ChatReply } from "@/lib/chatRecommendations";
+import type { ChatReply, ChatSelection } from "@/lib/chatRecommendations";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -16,8 +16,9 @@ const errorSchema = z.object({
   error: z.union([z.string(), z.object({ message: z.string() })]),
 });
 
-export default function ChatPanel({ onApply }: {
-  onApply: (selection: Pick<ChatReply, "preferences" | "area">) => void;
+export default function ChatPanel({ onApply, context }: {
+  context: ChatSelection;
+  onApply: (selection: ChatSelection) => void;
 }) {
   // This page owns the history. It is not written to browser storage.
   const [messages, setMessages] = useState<Message[]>([]);
@@ -84,14 +85,14 @@ export default function ChatPanel({ onApply }: {
     setApplied(false);
     setInput("");
     setError(null);
-    const timeout = window.setTimeout(() => controller.abort(), 25000);
+    const timeout = window.setTimeout(() => controller.abort(), 35000);
 
     try {
       // Send the complete conversation, including the latest question.
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({ messages: nextMessages, context }),
         signal: controller.signal,
       });
       const body: unknown = await response.json();
@@ -158,7 +159,7 @@ export default function ChatPanel({ onApply }: {
         <div className={styles.actions} aria-label="Recommendation actions">
           {/* The user confirms before model-extracted preferences change the page. */}
           {suggestion.preferences.length > 0 && <button type="button" disabled={isSending || applied} onClick={() => {
-            onApply({ preferences: suggestion.preferences, area: suggestion.area });
+            onApply({ preferences: suggestion.preferences, priority: suggestion.priority, area: suggestion.area });
             setApplied(true);
           }}>{applied ? "Preferences applied" : "Use these preferences"}</button>}
           <nav aria-label="Recommended towns on map">

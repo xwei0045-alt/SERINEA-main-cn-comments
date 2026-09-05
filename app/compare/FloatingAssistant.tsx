@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import ChatPanel from "./ChatPanel";
-import type { ChatReply } from "@/lib/chatRecommendations";
+import type { ChatSelection } from "@/lib/chatRecommendations";
 import styles from "./FloatingAssistant.module.css";
 
-export default function FloatingAssistant({ onApply }: {
-  onApply: (selection: Pick<ChatReply, "preferences" | "area">) => void;
+export default function FloatingAssistant({ onApply, context }: {
+  context: ChatSelection;
+  onApply: (selection: ChatSelection) => void;
 }) {
   const [open, setOpen] = useState(false);
   const panel = useRef<HTMLElement>(null);
@@ -46,7 +47,7 @@ export default function FloatingAssistant({ onApply }: {
             </svg>
           </button>
         </div>
-        <ChatPanel onApply={onApply} />
+        <ChatPanel onApply={onApply} context={context} />
       </aside>
 
       <button ref={launcher} type="button" className={styles.launcher}

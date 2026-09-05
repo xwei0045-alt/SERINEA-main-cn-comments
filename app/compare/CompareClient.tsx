@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Chrome } from "../components/Chrome";
 import { TownSearchField } from "../components/TownSearchField";
 import { compareApiClient } from "@/frontend/api/CompareApiClient";
-import { applyPreferenceSelection, preferenceWeights } from "@/lib/comparePriorities";
+import { preferenceWeights } from "@/lib/comparePriorities";
 import { COMPARE_PREFERENCES } from "@/lib/types";
 import { findPreferences } from "@/lib/preferenceSearch";
 import type { CompareRankItem, CompareResponse } from "@/shared/contracts/compare";
@@ -337,8 +337,10 @@ export default function CompareClient() {
         )}
       </main>
       <FloatingAssistant
-        onApply={({ preferences, area }) => {
-          setSelected((current) => applyPreferenceSelection(current, preferences));
+        context={{ preferences: selected, priority, area: chatArea }}
+        onApply={({ preferences, priority, area }) => {
+          setSelected(preferences);
+          setPriority(priority);
           setChatArea(area);
           setAreaDraft(area);
           setStep(3);

@@ -6,7 +6,7 @@ import { LocalitySummaryService } from "./LocalitySummaryService";
 import { chatRequestSchema, planSchema, preferenceIds, preferenceNames } from "@/lib/chatRecommendations";
 import { POST } from "@/app/api/chat/route";
 
-const family = { intent: "recommend" as const, town: "", include: ["school", "grocery"], bonus: [], exclude: [], area: "", unverified: [] };
+const family = { priority: false, intent: "recommend" as const, town: "", include: ["school", "supermarket"], bonus: [], exclude: [], area: "", unverified: [] };
 
 test("request validation rejects bad history and unsupported categories", () => {
   assert.deepEqual(Object.keys(preferenceNames).sort(), [...preferenceIds].sort());
@@ -28,7 +28,7 @@ test("real CSV recommendations match Compare ranking, with source and limits", a
   const title = (value: string) => value.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
   assert.deepEqual(reply.places.map(place => place.name), expected.items.map(row => title(row.locality)));
   assert.deepEqual(reply.preferences, family.include);
-  assert.match(reply.reply, /Education \(mixed category\)/);
+  assert.match(reply.reply, /School/);
   assert.match(reply.reply, /snack range/);
   assert.match(reply.reply, /not scored/);
   assert.doesNotMatch(reply.reply, /\p{Script=Han}/u);
@@ -104,13 +104,19 @@ test("API connects extraction to data; handles failures without inventing a fall
       calls++;
       assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");
       const sent = JSON.parse(String(init?.body));
+      if (sent.messages[0].content.startsWith("Explain this authoritative")) {
+        if (mode === "explanation-network") throw new Error("offline");
+        const evidence = JSON.parse(sent.messages[0].content.split("Evidence: ")[1].split(". Ranking:")[0]);
+        return Response.json({ choices: [{ message: { content: JSON.stringify({ sentences:
+          mode === "hallucination" ? ["Atlantis is safest and cheapest."] : [evidence[0]] }) }, finish_reason: "stop" }] });
+      }
       assert.equal(sent.response_format.json_schema.strict, true);
       assert.equal(sent.messages[0].role, "system");
       assert.match(sent.messages[0].content, /Write all free-text plan fields in English/);
       assert.doesNotMatch(sent.messages[0].content, /\p{Script=Han}/u);
       if (mode === "429") return new Response("{}", { status: 429 });
       if (mode === "network") throw new Error("offline");
-      const plan = mode === "correction" ? { ...family, include: ["grocery"], exclude: ["school"] }
+      const plan = mode === "correction" ? { ...family, include: ["supermarket"], exclude: ["school"] }
         : mode === "details" ? { ...family, intent: "town_details", town: "Sheparton" }
         : mode === "invalid" ? { ...family, include: ["housing_price"] }
         : mode === "conflict" ? { ...family, exclude: ["school"] } : family;
@@ -123,13 +129,22 @@ test("API connects extraction to data; handles failures without inventing a fall
     assert.equal(first.status, 200);
     const answer = await first.json();
     assert.equal(answer.places.length, 3);
-    assert.deepEqual(answer.preferences, ["school", "grocery"]);
+    assert.deepEqual(answer.preferences, ["school", "supermarket"]);
+    assert.match(answer.reply, /Why this ranking:/);
+    for (const failure of ["explanation-network", "hallucination"]) {
+      mode = failure;
+      const fallback = await POST(request());
+      assert.equal(fallback.status, 200);
+      const safe = await fallback.json();
+      assert.deepEqual(safe.places, answer.places);
+      assert.doesNotMatch(safe.reply, /Atlantis|Why this ranking:/);
+    }
     mode = "correction";
     const next = await POST(request([
       { role: "user", content: "Schools and supermarkets" }, { role: "assistant", content: answer.reply },
       { role: "user", content: "Schools no longer matter. Only count supermarkets." },
     ]));
-    assert.deepEqual((await next.json()).preferences, ["grocery"]);
+    assert.deepEqual((await next.json()).preferences, ["supermarket"]);
     mode = "details";
     const details = await POST(request([
       { role: "user", content: "Schools and supermarkets" }, { role: "assistant", content: answer.reply },
@@ -151,4 +166,26 @@ test("API connects extraction to data; handles failures without inventing a fall
     if (originalKey === undefined) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = originalKey;
     if (originalModel === undefined) delete process.env.GROQ_MODEL; else process.env.GROQ_MODEL = originalModel;
   }
+});
+
+
+test("education dataset, priority order, area and all categories agree with Compare", async () => {
+  for (const include of [["school", "kindergarten", "college"], ["park", "supermarket"], preferenceIds]) {
+    for (const priority of [false, true]) {
+      const plan = { ...family, include, priority, area: "" };
+      const reply = await buildRecommendations(plan);
+      const { preferenceWeights } = await import("@/lib/comparePriorities");
+      const expected = await new CompareService().rank({ prefs: include,
+        weights: preferenceWeights(include.length, priority), q: plan.area, limit: 3 });
+      assert.deepEqual(reply.places.map(p => p.name.toUpperCase()), expected.items.map(p => p.locality.toUpperCase()));
+      assert.deepEqual(reply.preferences, include);
+      assert.equal(reply.priority, priority);
+      const format = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 2 });
+      for (const item of expected.items) assert.ok(reply.reply.includes(`Score ${format.format(item.score)}`));
+      assert.doesNotMatch(reply.reply, /undefined|Education \(mixed category\)/);
+    }
+  }
+  assert.equal(planSchema.safeParse({ ...family, include: ["school", "school"] }).success, false);
+  assert.equal(chatRequestSchema.safeParse({ messages: [{ role: "user", content: "recommend" }],
+    context: { preferences: ["fake"], priority: true, area: "" } }).success, false);
 });
