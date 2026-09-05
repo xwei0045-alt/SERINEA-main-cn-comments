@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+file="$1"
+tmp=$(mktemp)
+grep -v -E '^Co-authored-by:.*(Cursor|cursoragent)' "$file" | \
+  grep -v -E '^Made-with: Cursor' | \
+  grep -v -E '^Made with Cursor' > "$tmp" || true
+awk 'BEGIN{n=0} {lines[++n]=$0} END{while(n>0 && lines[n]=="") n--; for(i=1;i<=n;i++) print lines[i]}' "$tmp" > "$file"
+rm -f "$tmp"
