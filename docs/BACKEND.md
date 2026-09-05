@@ -13,20 +13,21 @@ npm run dev
 
 `npm test` runs the ISO 29119 cases in `backend/iso/iso29119.test.ts`. The written versions live in `docs/TEST_CASES.md`.
 
-CSV mode is the default and needs no secret configuration. To make the selection explicit, copy `.env.example` to `.env.local` and keep:
+Runtime POI data comes from AWS RDS (`public.regional_pois`). Copy `.env.example` to `.env.local` and set:
 
 ```env
 REACH_DATA_SOURCE=database
+DATABASE_URL=postgresql://USER:PASSWORD@RDS_ENDPOINT:5432/serinea?sslmode=require&uselibpqcompat=true
 ```
 
-To create and import a PostgreSQL database:
+Set the same `REACH_DATA_SOURCE` and `DATABASE_URL` values in the Vercel project environment (Production and Preview). CSV files remain only for import/validation tooling — they are not bundled into the deployed app.
+
+To create and import a PostgreSQL database (maintainers with write access):
 
 ```bash
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE" npm run db:migrate
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE" npm run db:import -- --version=iteration1
 ```
-
-After import, run the application with `REACH_DATA_SOURCE=database`. Database mode powers both reachability and locality summary APIs from the active dataset version.
 
 ## API routes
 
