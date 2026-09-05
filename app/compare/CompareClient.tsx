@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Chrome } from "../components/Chrome";
 import { compareApiClient } from "@/frontend/api/CompareApiClient";
 import { applyPreferenceSelection, preferenceWeights } from "@/lib/comparePriorities";
+import { COMPARE_PREFERENCES } from "@/lib/types";
 import type { CompareRankItem, CompareResponse } from "@/shared/contracts/compare";
 import ComparePriorities from "./ComparePriorities";
 import FloatingAssistant from "./FloatingAssistant";
@@ -12,6 +14,7 @@ import styles from "./CompareClient.module.css";
 
 // Format display text only: 85.37 stays 85.37, and 100 stays 100.
 const scoreFormat = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 2 });
+const knownPrefs = new Set(COMPARE_PREFERENCES.map((pref) => pref.id));
 
 function titleCase(value: string): string {
   return value
@@ -22,13 +25,35 @@ function titleCase(value: string): string {
     .join(" ");
 }
 
+function prefsFromQuery(raw: string | null): string[] | null {
+  if (!raw) return null;
+  const values = [
+    ...new Set(
+      raw
+        .split(",")
+        .map((item) => item.trim())
+        .filter((id) => knownPrefs.has(id))
+    )
+  ];
+  return values.length ? values : null;
+}
+
 export default function CompareClient() {
-  const [selected, setSelected] = useState<string[]>(["grocery", "school", "gp", "park"]);
+  const searchParams = useSearchParams();
+  const bootPrefs = prefsFromQuery(searchParams.get("prefs"));
+  const [selected, setSelected] = useState<string[]>(
+    bootPrefs ?? ["grocery", "school", "gp", "park"]
+  );
   const [priority, setPriority] = useState(false);
   const [chatArea, setChatArea] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CompareResponse | null>(null);
+
+  useEffect(() => {
+    const next = prefsFromQuery(searchParams.get("prefs"));
+    if (next) setSelected(next);
+  }, [searchParams]);
 
   useEffect(() => {
     // Clear old matches so they cannot be mistaken for the new selection's results.
@@ -44,12 +69,15 @@ export default function CompareClient() {
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       compareApiClient
-        .rank({
-          prefs: selected,
-          weights: preferenceWeights(selected.length, priority),
-          limit: 10,
-          q: chatArea || undefined
-        }, controller.signal)
+        .rank(
+          {
+            prefs: selected,
+            weights: preferenceWeights(selected.length, priority),
+            limit: 10,
+            q: chatArea || undefined
+          },
+          controller.signal
+        )
         .then((next) => {
           // A slower, cancelled request must not replace the latest results.
           if (!controller.signal.aborted) setResult(next);
@@ -78,8 +106,9 @@ export default function CompareClient() {
       <main id="content" className="compare-main">
         <h1>Find where to live</h1>
         <p className="lead">
-          Choose what matters for your move. SERINEA ranks regional Victoria
-          localities from the open data extract and points you to the strongest fit.
+          1) Choose what matters. 2) See the top towns from our data. 3) Open a
+          town on the map, or ask the assistant. Counts are town-wide; the map
+          shows a 15-minute walk from a pin near your needs.
         </p>
 
         <section className="compare-panel" aria-label="Preferences">
@@ -92,13 +121,25 @@ export default function CompareClient() {
           />
         </section>
 
-        {chatArea && <p className="compare-area-chip">
-          Comparing within <strong>{chatArea}</strong>
-          <button type="button" onClick={() => setChatArea("")}>All regions</button>
-        </p>}
+        {chatArea && (
+          <p className="compare-area-chip">
+            Comparing within <strong>{chatArea}</strong>
+            <button type="button" onClick={() => setChatArea("")}>
+              All regions
+            </button>
+          </p>
+        )}
 
-        {loading && <p className="status note" role="status">Ranking regional localities…</p>}
-        {error && <p className="status halt" role="alert">{error}</p>}
+        {loading && (
+          <p className="status note" role="status">
+            Ranking regional localities…
+          </p>
+        )}
+        {error && (
+          <p className="status halt" role="alert">
+            {error}
+          </p>
+        )}
 
         {result?.recommendation && (
           <section className="compare-reco" aria-live="polite">
@@ -109,8 +150,10 @@ export default function CompareClient() {
             </h2>
             <p>{result.recommendation.summary}</p>
             {matches[0]?.latitude != null && matches[0]?.longitude != null && (
-              <Link className="cta"
-                href={`/map?lat=${matches[0].latitude}&lng=${matches[0].longitude}&town=${encodeURIComponent(result.recommendation.locality)}`}>
+              <Link
+                className="cta"
+                href={`/map?lat=${matches[0].latitude}&lng=${matches[0].longitude}&town=${encodeURIComponent(result.recommendation.locality)}`}
+              >
                 Open on map
               </Link>
             )}
@@ -119,45 +162,61 @@ export default function CompareClient() {
 
         {result && matches.length > 0 && (
           <section className="compare-results" aria-label="Ranked localities">
-            <h2>Top {matches.length} matches
+            <h2>
+              Top {matches.length} matches
               <span className="compare-count">
-                {" "}· {result.totalLocalitiesScored.toLocaleString("en-AU")} scored
+                {" "}
+                · {result.totalLocalitiesScored.toLocaleString("en-AU")} scored
               </span>
             </h2>
             <ol className="compare-list" role="list">
               {matches.map((item, index) => (
-                <CompareRow key={`${item.locality}-${item.lgaName}`} item={item} rank={index + 1} />
+                <CompareRow
+                  key={`${item.locality}-${item.lgaName}`}
+                  item={item}
+                  rank={index + 1}
+                />
               ))}
             </ol>
           </section>
         )}
 
         {result && !loading && matches.length === 0 && !error && (
-          <p className="status note" role="status">No regional locality matched those filters.</p>
+          <p className="status note" role="status">
+            No regional locality matched those filters.
+          </p>
         )}
       </main>
-      <FloatingAssistant onApply={({ preferences, area }) => {
-        // Keep the user's priority order; append newly suggested criteria at the end.
-        setSelected((current) => applyPreferenceSelection(current, preferences));
-        setChatArea(area);
-      }} />
+      <FloatingAssistant
+        onApply={({ preferences, area }) => {
+          // Keep the user's priority order; append newly suggested criteria at the end.
+          setSelected((current) => applyPreferenceSelection(current, preferences));
+          setChatArea(area);
+        }}
+      />
     </div>
   );
 }
 
 function CompareRow({ item, rank }: { item: CompareRankItem; rank: number }) {
-  const mapHref = item.latitude != null && item.longitude != null
-    ? `/map?lat=${item.latitude}&lng=${item.longitude}&town=${encodeURIComponent(item.locality)}`
-    : "/map";
+  const mapHref =
+    item.latitude != null && item.longitude != null
+      ? `/map?lat=${item.latitude}&lng=${item.longitude}&town=${encodeURIComponent(item.locality)}`
+      : "/map";
 
   return (
     <li className={`compare-row ${styles.row}`}>
       <div className={`compare-row-top ${styles.rowTop}`}>
         {/* Only town results receive a ranking number. */}
-        <span className={`compare-rank ${styles.rank}`} aria-label={`Rank ${rank}`}>{rank}</span>
+        <span className={`compare-rank ${styles.rank}`} aria-label={`Rank ${rank}`}>
+          {rank}
+        </span>
         <div className={styles.town}>
           <h3>{titleCase(item.locality)}</h3>
-          <p>{titleCase(item.lgaName)} · {item.totalPoiCount.toLocaleString("en-AU")} places in extract</p>
+          <p>
+            {titleCase(item.lgaName)} · {item.totalPoiCount.toLocaleString("en-AU")} places
+            in extract
+          </p>
         </div>
         <div className={styles.score}>
           <span>Score</span>

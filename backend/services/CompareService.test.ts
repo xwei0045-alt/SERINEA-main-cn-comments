@@ -47,7 +47,8 @@ const localities = {
 } as unknown as LocalitySummaryService;
 
 test("compare ranking uses weights aligned with the selected preference order", async () => {
-  const service = new CompareService(localities);
+  // Null detail loader keeps the injected summary counts for this unit test.
+  const service = new CompareService(localities, null);
 
   const equal = await service.rank({ prefs: ["grocery", "school"], q: "", limit: 2 });
   assert.equal(equal.items[0].locality, "Grocery Town");

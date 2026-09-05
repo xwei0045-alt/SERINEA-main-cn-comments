@@ -13,8 +13,8 @@ export default function HowPage() {
       <main id="content">
         <h1>How to read the 15 minute map</h1>
         <p className="lead">
-          One pin. Fifteen minutes there and back on foot. Only places you can
-          reach and still get home from are listed.
+          Start with one pin. We keep only places you can walk to and get home
+          from in fifteen minutes. Follow the steps below, then open the map.
         </p>
         <ul className="read-key" aria-label="How to read the map">
           <li>

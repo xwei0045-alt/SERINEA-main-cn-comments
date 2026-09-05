@@ -1,5 +1,6 @@
 import type { Poi, ReachablePoi } from "@/lib/types";
 import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
+import { dedupeRegionalPois } from "@/backend/data/poiDedupe";
 import { RegionalPoiMapper } from "@/backend/mappers/RegionalPoiMapper";
 import { EstimatedJourneyCalculator } from "@/backend/services/EstimatedJourneyCalculator";
 import { SpatialGridIndex } from "@/backend/spatial/SpatialGridIndex";
@@ -76,16 +77,10 @@ export class CsvReachRepository implements ReachRepository {
   private getIndex(): Promise<SpatialGridIndex<IndexedPoi>> {
     if (!this.indexPromise) {
       this.indexPromise = this.loader.load().then((dataset) => {
-        const seen = new Set<string>();
         const mappedPois: Poi[] = [];
-        for (const record of dataset.pois) {
+        for (const record of dedupeRegionalPois(dataset.pois)) {
           const poi = this.mapper.toMapPoi(record);
-          if (!poi) continue;
-          // Drop exact name+coordinate clones so the list does not double-count.
-          const key = `${poi.name.toLocaleLowerCase("en-AU")}|${poi.lat.toFixed(5)}|${poi.lng.toFixed(5)}|${poi.category}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          mappedPois.push(poi);
+          if (poi) mappedPois.push(poi);
         }
         return new SpatialGridIndex(mappedPois);
       });

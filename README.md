@@ -6,6 +6,20 @@ Full-stack prototype for a **15-minute round-trip reach map**, framed for **smal
 
 POI coordinates and locality counts come from the data-team CSV handover. Journey times are still clearly labelled straight-line walking estimates because the supplied files do not contain GTFS routes or timetables.
 
+## Team branching
+
+Use **feature branches**, not dump branches:
+
+| Branch | Focus |
+| --- | --- |
+| `feature/maps` | Map, reach, walk |
+| `feature/filters` | Compare prefs & ranking |
+| `feature/ai-assistant` | Chat / Groq assistant |
+| `feature/data` | CSV extract & loaders |
+| `feature/home` | Landing / how-it-works UI |
+
+Ownership lists live in `features/<name>/README.md`. Full rules: [`docs/BRANCHING.md`](docs/BRANCHING.md).
+
 ## Quick start
 
 ```bash
