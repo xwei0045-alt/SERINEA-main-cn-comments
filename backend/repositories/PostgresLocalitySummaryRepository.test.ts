@@ -7,7 +7,7 @@ import { LocalitySummaryService } from "../services/LocalitySummaryService";
 test("TC-F11 locality API can read the active PostgreSQL dataset", async () => {
   const database = {
     async query(sql: string) {
-      if (sql.includes("summary_poi_count")) {
+      if (sql.includes('AS "totalPois"')) {
         return { rows: [{ totalPois: 32_569 }] };
       }
       if (sql.includes("AVG(")) {

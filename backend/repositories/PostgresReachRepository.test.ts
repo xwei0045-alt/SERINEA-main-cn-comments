@@ -7,18 +7,6 @@ import { ReachService } from "../services/ReachService";
 test("TC-F07 database repository keeps the existing reachability response contract", async () => {
   const database = {
     async query(sql: string) {
-      if (sql.includes("FROM dataset_versions")) {
-        return {
-          rows: [
-            {
-              version: "iteration1",
-              detailFileName: "regional_pois_detail_optimized_iteration1.csv",
-              sourceDate: "2026-09-02",
-              poiCount: 32_569
-            }
-          ]
-        };
-      }
       return {
         rows: [
           {
@@ -44,5 +32,5 @@ test("TC-F07 database repository keeps the existing reachability response contra
 
   assert.equal(result.dataSource, "database");
   assert.equal(result.reachable[0]?.poi.id, "a33069469");
-  assert.match(result.sources.poi.note, /iteration1/);
+  assert.match(result.sources.poi.name, /public\.regional_pois/);
 });

@@ -22,14 +22,7 @@ type DatabasePoiRow = QueryResultRow & {
   locality: string;
 };
 
-type ActiveDatasetRow = QueryResultRow & {
-  version: string;
-  detailFileName: string;
-  sourceDate: string;
-  poiCount: number;
-};
-
-/** Reads the active imported dataset from PostgreSQL without changing the API shape. */
+/** Reads POIs directly from Lucian's deployed RDS table without changing the API shape. */
 export class PostgresReachRepository implements ReachRepository {
   readonly dataSource = "database" as const;
 
@@ -40,7 +33,6 @@ export class PostgresReachRepository implements ReachRepository {
   ) {}
 
   async findReachable(criteria: ReachSearchCriteria): Promise<ReachComputation> {
-    const dataset = await this.getActiveDataset();
     const searchRadiusKm = this.journeyCalculator.maximumOutboundDistanceKm(
       criteria.windowMinutes
     );
@@ -50,6 +42,8 @@ export class PostgresReachRepository implements ReachRepository {
       Math.cos((criteria.pin.lat * Math.PI) / 180)
     );
     const longitudeDelta = searchRadiusKm / (111.32 * longitudeScale);
+    // The bounding box lets PostgreSQL reduce the candidate set before the
+    // existing walking-time calculation applies the product distance rule.
     const result = await this.database.query<DatabasePoiRow>(
       `SELECT
          osm_id AS "osmId",
@@ -59,13 +53,11 @@ export class PostgresReachRepository implements ReachRepository {
          latitude,
          longitude,
          locality
-       FROM regional_pois
-       WHERE dataset_version = $1
-         AND latitude BETWEEN $2 AND $3
-         AND longitude BETWEEN $4 AND $5
-         AND subcategory = ANY($6::text[])`,
+       FROM public.regional_pois
+       WHERE latitude BETWEEN $1 AND $2
+         AND longitude BETWEEN $3 AND $4
+         AND subcategory = ANY($5::text[])`,
       [
-        dataset.version,
         criteria.pin.lat - latitudeDelta,
         criteria.pin.lat + latitudeDelta,
         criteria.pin.lng - longitudeDelta,
@@ -95,14 +87,14 @@ export class PostgresReachRepository implements ReachRepository {
       ),
       sources: {
         poi: {
-          name: `PostgreSQL: ${dataset.detailFileName}`,
-          date: dataset.sourceDate,
-          note: `${Number(dataset.poiCount).toLocaleString("en-AU")} records in active dataset ${dataset.version}.`
+          name: "AWS RDS: public.regional_pois",
+          date: "Live database query",
+          note: "POIs are read directly from the deployed PostgreSQL and PostGIS dataset."
         },
         transit: {
           name: "Walking estimate (no GTFS supplied)",
-          date: dataset.sourceDate,
-          note: "Straight-line distance at 4.8 km/h. The supplied files do not contain routes, timetables, or observed travel times."
+          date: "Live database query",
+          note: "Straight-line distance at 4.8 km/h. The database does not contain routes, timetables, or observed travel times."
         }
       }
     };
@@ -110,26 +102,11 @@ export class PostgresReachRepository implements ReachRepository {
 
   async isHealthy(): Promise<boolean> {
     try {
-      await this.getActiveDataset();
+      await this.database.query("SELECT 1 FROM public.regional_pois LIMIT 1");
       return true;
     } catch {
       return false;
     }
   }
 
-  private async getActiveDataset(): Promise<ActiveDatasetRow> {
-    const result = await this.database.query<ActiveDatasetRow>(
-      `SELECT
-         version,
-         detail_file_name AS "detailFileName",
-         source_date::text AS "sourceDate",
-         poi_count AS "poiCount"
-       FROM dataset_versions
-       WHERE active = TRUE AND status = 'ready'
-       LIMIT 1`
-    );
-    const dataset = result.rows[0];
-    if (!dataset) throw new Error("No ready database dataset is active.");
-    return dataset;
-  }
 }

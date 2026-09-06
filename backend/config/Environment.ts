@@ -1,14 +1,14 @@
 import { z } from "zod";
 import type { ReachResponse } from "@/shared/contracts/reach";
 
-// Env for the backend. CSV is the default because that is what Iteration 1 actually ships.
+// The deployed RDS database is the single runtime source of POI data.
 const environmentSchema = z
   .object({
-    REACH_DATA_SOURCE: z.enum(["demo", "csv", "database"]).default("csv"),
+    REACH_DATA_SOURCE: z.literal("database").default("database"),
     DATABASE_URL: z.string().trim().min(1).optional()
   })
   .superRefine((values, context) => {
-    if (values.REACH_DATA_SOURCE === "database" && !values.DATABASE_URL) {
+    if (!values.DATABASE_URL) {
       context.addIssue({
         code: "custom",
         path: ["DATABASE_URL"],

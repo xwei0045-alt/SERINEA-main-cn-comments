@@ -43,8 +43,8 @@ MapApp
 
 ## Current data flow
 
-`REACH_DATA_SOURCE` defaults to `csv`. The detailed file powers `/api/reach`; the locality summary file powers `/api/localities`. The loader rejects malformed coordinates, duplicate OSM IDs, invalid counts, or a mismatch between detailed and summary totals.
+`REACH_DATA_SOURCE` defaults to `database`. `/api/reach` queries `public.regional_pois` directly; `/api/localities` aggregates that same table for town search. CSV loaders remain only as historical import tooling and are not a runtime data source.
 
 ## AWS database mode
 
-`database/schema.sql` stores complete dataset versions. The importer writes a version transactionally, validates row totals, and changes the active pointer only when reconciliation succeeds. Both `/api/reach` and `/api/localities` switch to PostgreSQL when `REACH_DATA_SOURCE=database`; the frontend API client does not change.
+The externally deployed database exposes `public.regional_pois` with POI attributes and PostGIS geography. Both `/api/reach` and `/api/localities` use it whenever the application runs; the frontend API client does not change.

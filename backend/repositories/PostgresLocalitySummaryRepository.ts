@@ -16,7 +16,7 @@ type CentroidRow = QueryResultRow & {
   longitude: number;
 };
 
-/** Reads locality summaries from the currently active database dataset. */
+/** Builds locality summaries directly from the deployed POI table. */
 export class PostgresLocalitySummaryRepository
   implements LocalitySummaryRepository
 {
@@ -25,27 +25,25 @@ export class PostgresLocalitySummaryRepository
   constructor(private readonly database: PostgresDatabase) {}
 
   async load(): Promise<LocalitySummaryData> {
+    // RDS supplies detailed POIs only, so these read-only aggregates replace
+    // the retired CSV and dataset-version summary tables at request startup.
     const [rowsResult, countResult, centroidResult] = await Promise.all([
       this.database.query<SummaryRow>(
         `SELECT
-           summary.locality,
-           summary.lga_name AS "lgaName",
-           summary.abs_lga_code AS "absLgaCode",
-           summary.regional_group AS "regionalGroup",
-           summary.category,
-           summary.subcategory,
-           summary.display_name AS "displayName",
-           summary.poi_count AS "poiCount"
-         FROM locality_poi_summaries summary
-         INNER JOIN dataset_versions dataset
-           ON dataset.version = summary.dataset_version
-         WHERE dataset.active = TRUE AND dataset.status = 'ready'`
+           locality,
+           COALESCE(lga_name, '') AS "lgaName",
+           COALESCE(abs_lga_code, '') AS "absLgaCode",
+           COALESCE(regional_group, '') AS "regionalGroup",
+           COALESCE(category, 'unknown') AS category,
+           COALESCE(subcategory, 'unknown') AS subcategory,
+           COALESCE(NULLIF(display_name, ''), subcategory, 'Unknown') AS "displayName",
+           COUNT(*)::int AS "poiCount"
+         FROM public.regional_pois
+         WHERE NULLIF(TRIM(locality), '') IS NOT NULL
+         GROUP BY locality, lga_name, abs_lga_code, regional_group, category, subcategory, display_name`
       ),
       this.database.query<DatasetCountRow>(
-        `SELECT summary_poi_count AS "totalPois"
-         FROM dataset_versions
-         WHERE active = TRUE AND status = 'ready'
-         LIMIT 1`
+        `SELECT COUNT(*)::int AS "totalPois" FROM public.regional_pois`
       ),
       this.database.query<CentroidRow>(
         `SELECT
@@ -54,15 +52,13 @@ export class PostgresLocalitySummaryRepository
            poi.regional_group AS "regionalGroup",
            AVG(poi.latitude) AS latitude,
            AVG(poi.longitude) AS longitude
-         FROM regional_pois poi
-         INNER JOIN dataset_versions dataset
-           ON dataset.version = poi.dataset_version
-         WHERE dataset.active = TRUE AND dataset.status = 'ready'
+         FROM public.regional_pois poi
+         WHERE NULLIF(TRIM(poi.locality), '') IS NOT NULL
          GROUP BY poi.locality, poi.lga_name, poi.regional_group`
       )
     ]);
     const count = countResult.rows[0];
-    if (!count) throw new Error("No ready database dataset is active.");
+    if (!count) throw new Error("The regional POI count is unavailable.");
 
     return {
       rows: rowsResult.rows.map((row) => ({

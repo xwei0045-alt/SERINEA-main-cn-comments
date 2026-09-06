@@ -16,7 +16,7 @@ npm run dev
 CSV mode is the default and needs no secret configuration. To make the selection explicit, copy `.env.example` to `.env.local` and keep:
 
 ```env
-REACH_DATA_SOURCE=csv
+REACH_DATA_SOURCE=database
 ```
 
 To create and import a PostgreSQL database:
