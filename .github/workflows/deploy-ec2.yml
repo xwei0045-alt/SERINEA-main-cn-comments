@@ -34,19 +34,17 @@ jobs:
 
   deploy:
     needs: verify
-    # Keep the workflow harmless until all dedicated deployment secrets exist.
-    if: \${{ secrets.EC2_DEPLOY_SSH_KEY != '' && secrets.EC2_DEPLOY_HOST != '' && secrets.EC2_DEPLOY_KNOWN_HOSTS != '' }}
     runs-on: ubuntu-latest
     env:
-      EC2_DEPLOY_HOST: \${{ secrets.EC2_DEPLOY_HOST }}
-      EC2_DEPLOY_USER: \${{ secrets.EC2_DEPLOY_USER }}
-      EC2_DEPLOY_KNOWN_HOSTS: \${{ secrets.EC2_DEPLOY_KNOWN_HOSTS }}
+      EC2_DEPLOY_HOST: ${{ secrets.EC2_DEPLOY_HOST }}
+      EC2_DEPLOY_USER: ${{ secrets.EC2_DEPLOY_USER }}
+      EC2_DEPLOY_KNOWN_HOSTS: ${{ secrets.EC2_DEPLOY_KNOWN_HOSTS }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Create source package without credentials or legacy runtime data
         run: |
-          tar -czf serinea-main-\${GITHUB_SHA::7}.tar.gz \
+          tar -czf serinea-main-${GITHUB_SHA::7}.tar.gz \
             --exclude=.git \
             --exclude=node_modules \
             --exclude=.next \
@@ -58,7 +56,7 @@ jobs:
 
       - name: Configure dedicated SSH deployment access
         env:
-          EC2_DEPLOY_SSH_KEY: \${{ secrets.EC2_DEPLOY_SSH_KEY }}
+          EC2_DEPLOY_SSH_KEY: ${{ secrets.EC2_DEPLOY_SSH_KEY }}
         run: |
           install -d -m 700 ~/.ssh
           printf '%s\n' "$EC2_DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
@@ -67,7 +65,7 @@ jobs:
 
       - name: Upload and activate the verified main revision
         run: |
-          archive="serinea-main-\${GITHUB_SHA::7}.tar.gz"
+          archive="serinea-main-${GITHUB_SHA::7}.tar.gz"
           scp "$archive" "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST:/home/$EC2_DEPLOY_USER/"
           ssh "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST" "set -e; \
             sudo tar -xzf /home/$EC2_DEPLOY_USER/$archive -C /opt/serinea; \
