@@ -36,14 +36,9 @@ export class PostgresReachRepository implements ReachRepository {
     const searchRadiusKm = this.journeyCalculator.maximumOutboundDistanceKm(
       criteria.windowMinutes
     );
-    const latitudeDelta = searchRadiusKm / 110.574;
-    const longitudeScale = Math.max(
-      0.01,
-      Math.cos((criteria.pin.lat * Math.PI) / 180)
-    );
-    const longitudeDelta = searchRadiusKm / (111.32 * longitudeScale);
-    // The bounding box lets PostgreSQL reduce the candidate set before the
-    // existing walking-time calculation applies the product distance rule.
+    const searchRadiusMetres = searchRadiusKm * 1_000;
+    // ST_DWithin on the generated GEOGRAPHY(Point, 4326) location column lets
+    // PostgreSQL use Lucian's GiST index before the product walk-time filter.
     const result = await this.database.query<DatabasePoiRow>(
       `SELECT
          osm_id AS "osmId",
@@ -54,14 +49,16 @@ export class PostgresReachRepository implements ReachRepository {
          longitude,
          locality
        FROM public.regional_pois
-       WHERE latitude BETWEEN $1 AND $2
-         AND longitude BETWEEN $3 AND $4
-         AND subcategory = ANY($5::text[])`,
+       WHERE ST_DWithin(
+         location,
+         ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+         $3
+       )
+         AND subcategory = ANY($4::text[])`,
       [
-        criteria.pin.lat - latitudeDelta,
-        criteria.pin.lat + latitudeDelta,
-        criteria.pin.lng - longitudeDelta,
-        criteria.pin.lng + longitudeDelta,
+        criteria.pin.lng,
+        criteria.pin.lat,
+        searchRadiusMetres,
         SUPPORTED_SUBCATEGORIES
       ]
     );

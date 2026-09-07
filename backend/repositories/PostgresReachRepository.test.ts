@@ -5,8 +5,12 @@ import { PostgresReachRepository } from "./PostgresReachRepository";
 import { ReachService } from "../services/ReachService";
 
 test("TC-F07 database repository keeps the existing reachability response contract", async () => {
+  let capturedSql = "";
+  let capturedValues: readonly unknown[] = [];
   const database = {
-    async query(sql: string) {
+    async query(sql: string, values: readonly unknown[] = []) {
+      capturedSql = sql;
+      capturedValues = values;
       return {
         rows: [
           {
@@ -33,4 +37,7 @@ test("TC-F07 database repository keeps the existing reachability response contra
   assert.equal(result.dataSource, "database");
   assert.equal(result.reachable[0]?.poi.id, "a33069469");
   assert.match(result.sources.poi.name, /public\.regional_pois/);
+  assert.match(capturedSql, /ST_DWithin\(/);
+  assert.match(capturedSql, /location/);
+  assert.deepEqual(capturedValues.slice(0, 3), [146.695987, -37.024456, 1_200]);
 });
