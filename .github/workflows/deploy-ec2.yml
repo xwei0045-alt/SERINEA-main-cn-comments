@@ -44,7 +44,7 @@ jobs:
 
       - name: Create source package without credentials or legacy runtime data
         run: |
-          tar -czf serinea-main-${GITHUB_SHA::7}.tar.gz \
+          tar -czf /tmp/serinea-main-${GITHUB_SHA::7}.tar.gz \
             --exclude=.git \
             --exclude=node_modules \
             --exclude=.next \
@@ -65,10 +65,11 @@ jobs:
 
       - name: Upload and activate the verified main revision
         run: |
-          archive="serinea-main-${GITHUB_SHA::7}.tar.gz"
-          scp "$archive" "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST:/home/$EC2_DEPLOY_USER/"
+          archive="/tmp/serinea-main-${GITHUB_SHA::7}.tar.gz"
+          remote_archive="serinea-main-${GITHUB_SHA::7}.tar.gz"
+          scp "$archive" "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST:/home/$EC2_DEPLOY_USER/$remote_archive"
           ssh "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST" "set -e; \
-            sudo tar -xzf /home/$EC2_DEPLOY_USER/$archive -C /opt/serinea; \
+            sudo tar -xzf /home/$EC2_DEPLOY_USER/$remote_archive -C /opt/serinea; \
             sudo chown -R $EC2_DEPLOY_USER:$EC2_DEPLOY_USER /opt/serinea; \
             cd /opt/serinea; npm ci; npm run build; \
             sudo systemctl restart serinea; \
