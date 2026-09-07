@@ -17,7 +17,9 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "connect-src 'self'",
   "worker-src 'self' blob:",
-  ...(process.env.NODE_ENV === "production"
+  // Only after Nginx terminates TLS on :443. On plain HTTP this forces the
+  // browser to fetch /_next CSS+JS over HTTPS and the UI renders unstyled.
+  ...(process.env.ENABLE_CSP_HTTPS_UPGRADE === "1"
     ? ["upgrade-insecure-requests"]
     : [])
   ].join("; ");
