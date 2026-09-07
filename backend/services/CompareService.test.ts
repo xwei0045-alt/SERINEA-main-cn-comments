@@ -79,3 +79,28 @@ test("a large park count cannot outweigh a higher-priority supermarket preferenc
   const result = await service.rank({ prefs: ["supermarket", "park"], weights: [0.9, 0.1], q: "", limit: 2 });
   assert.equal(result.items[0].locality, "Grocery Town");
 });
+
+test("scores retain missing preference weights instead of scaling the winner to 100", async () => {
+  const service = new CompareService({
+    listAll: async () => ({
+      items: [town("Best Town", 10, 10), town("Other Town", 5, 5)],
+      totalPois: 30, dataSource: "csv" as const
+    })
+  } as unknown as LocalitySummaryService, null);
+  // No town has parks: its weight must still count in the denominator.
+  const query = { prefs: ["supermarket", "park", "school"], q: "", limit: 2 };
+  const equal = await service.rank(query);
+  assert.ok(Math.abs(equal.items[0].score - 200 / 3) < 1e-10);
+  assert.ok(Math.abs(equal.items[1].score - 100 / 3) < 1e-10);
+  assert.equal(equal.recommendation?.score, equal.items[0].score);
+  for (const weights of [[0.5, 0.3, 0.2], [5, 3, 2]]) {
+    const weighted = await service.rank({ ...query, weights });
+    assert.ok(Math.abs(weighted.items[0].score - 70) < 1e-10);
+    assert.ok(Math.abs(weighted.items[1].score - 35) < 1e-10);
+    assert.equal(weighted.items[0].breakdown[1].weighted, 0);
+  }
+  const complete = await service.rank({ ...query, prefs: ["supermarket", "school"] });
+  assert.equal(complete.items[0].score, 100);
+  const none = await service.rank({ ...query, prefs: ["park"] });
+  assert.deepEqual(none.items, []);
+});

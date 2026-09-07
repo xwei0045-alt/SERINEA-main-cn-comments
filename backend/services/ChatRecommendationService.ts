@@ -1,3 +1,4 @@
+import { LocalitySummaryServiceFactory } from "@/backend/factories/LocalitySummaryServiceFactory";
 import { preferenceWeights } from "@/lib/comparePriorities";
 import type { CompareResponse } from "@/shared/contracts/compare";
 import { CompareService } from "./CompareService";
@@ -5,6 +6,8 @@ import { LocalitySummaryService } from "./LocalitySummaryService";
 import { chatReplySchema, planSchema, preferenceIds, preferenceNames } from "@/lib/chatRecommendations";
 import type { RecommendationPlan } from "@/lib/chatRecommendations";
 
+const sourceLabel = (source: CompareResponse["dataSource"]) => source === "database"
+  ? "AWS RDS: public.regional_pois" : "locality_poi_summary_iteration1.csv (current CSV snapshot, not live)";
 const scoreFormat = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 2 });
 const title = (value: string) => value.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
 const key = (row: { locality: string; lgaName: string; regionalGroup: string }) =>
@@ -90,7 +93,7 @@ async function townDetails(plan: RecommendationPlan, localities: LocalitySummary
   if (relevant.length && extras.length) lines.push(`\nOther options, if they matter to you: ${extras.map(item => `${preferenceNames[item.preferenceId]} ${item.count}`).join("; ")}. These are not added to your preferences.`);
   lines.push("\nLimits: these are town-wide records, not proof of nearby access or service quality. Education categories are separate; school level and catchments are unverified. Grocery records do not verify snack products. Transport records may describe parts of the same stop and do not establish timetables or reliability. Housing costs, safety and employment are not covered.");
   if (plan.unverified.length) lines.push(`Unverified requirements: ${plan.unverified.join("; ")}.`);
-  lines.push("Source: locality_poi_summary_iteration1.csv (current CSV snapshot, not live). This is a town overview, not a new shortlist. Your filters have not changed.");
+  lines.push(`Source: ${sourceLabel(all.dataSource)}. This is a town overview, not a new shortlist. Your filters have not changed.`);
   // Details are read-only: offer a map link, not a button that changes preferences.
   return chatReplySchema.parse({ reply: lines.join("\n"), preferences: [], priority: plan.priority, area: plan.area,
     places: [{ name: title(town.locality), latitude: town.latitude, longitude: town.longitude }] });
@@ -98,7 +101,7 @@ async function townDetails(plan: RecommendationPlan, localities: LocalitySummary
 
 // Facts and explanations come from application data, not generated numbers.
 export async function buildRecommendations(input: RecommendationPlan,
-  localities = new LocalitySummaryService(),
+  localities = LocalitySummaryServiceFactory.create(),
   explain?: (result: CompareResponse) => Promise<string>) {
   const plan = planSchema.parse(input);
   const name = (id: string) => preferenceNames[id];
@@ -124,7 +127,7 @@ export async function buildRecommendations(input: RecommendationPlan,
   const result = await compare.rank({ prefs: include, weights: preferenceWeights(include.length, plan.priority), q: plan.area, limit: 3 });
   if (!result.items.length) {
     return chatReplySchema.parse({
-      reply: `No CSV matches for these preferences${plan.area ? ` in "${plan.area}"` : ""}. Try a supported regional Victorian town or different facilities. Missing records do not prove that a facility does not exist.`,
+      reply: `No dataset matches for these preferences${plan.area ? ` in "${plan.area}"` : ""}. Try a supported regional Victorian town or different facilities. Missing records do not prove that a facility does not exist.`,
       preferences: [], priority: plan.priority, area: plan.area, places: [],
     });
   }
@@ -158,13 +161,13 @@ export async function buildRecommendations(input: RecommendationPlan,
   const top = result.items[0];
   const tied = result.items[1]?.score === top.score;
   lines.push(`\nInspect first: ${title(top.locality)}. ${tied ? "The count score is tied; the website breaks ties by total records and name, not personal suitability." : "It leads the current weighted, category-normalised count score, so it is a starting point, not proof of the best overall fit."}`);
-  const cautions = ["Scores are relative counts: 100 does not mean every need is met. Zero records do not prove absence. Address-level distance, hours and quality are unverified."];
+  const cautions = ["Scores weight each category against its highest count in the search area. Missing categories earn zero for their weight; first place is not automatically 100. Scores do not measure service quality or personal suitability. Zero records do not prove absence. Address-level distance, hours and quality are unverified."];
   if (include.includes("school")) cautions.push("School records do not establish school level, quality, enrolment or catchments.");
   if (include.some(id => ["supermarket", "convenience_store"].includes(id))) cautions.push("Grocery records are supermarkets/convenience stores; snack range, prices and shop quality are unknown.");
   if ([...include, ...visibleExtras].some(id => /^(bus_|railway_|tram_|platform$|station$|stop_position$)/.test(id))) cautions.push("Transit records are not necessarily distinct stops; frequency, commute time and reliability are unknown.");
   if (plan.unverified.length) cautions.push(`Unverified requirements: ${plan.unverified.join("; ")}.`);
   lines.push(`\nLimits: ${cautions.join(" ")}`);
-  lines.push("Source: locality_poi_summary_iteration1.csv (current CSV snapshot, not live). Tell me which preferences to add or remove.");
+  lines.push(`Source: ${sourceLabel(result.dataSource)}. Tell me which preferences to add or remove.`);
 
   if (explain) {
     // Provider failure leaves the authoritative, locally formatted answer intact.

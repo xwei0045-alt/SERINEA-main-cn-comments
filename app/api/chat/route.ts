@@ -128,6 +128,6 @@ export async function POST(request: Request) {
     }));
   } catch {
     // Never substitute invented towns when the dataset or ranking service fails.
-    return respond({ error: "The local recommendation data could not be read. Check the data files and retry." }, 503);
+    return respond({ error: "The recommendation data could not be read. Please try again later." }, 503);
   }
 }
