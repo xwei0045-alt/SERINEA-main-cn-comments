@@ -1,0 +1,78 @@
+name: Deploy main to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A main deployment replaces application code only. Server-side .env.local
+# remains the sole location for database and Groq credentials.
+permissions:
+  contents: read
+
+concurrency:
+  group: serinea-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install, test, type-check, and build
+        run: |
+          npm ci
+          npm test
+          npx tsc --noEmit
+          npm run build
+
+  deploy:
+    needs: verify
+    # Keep the workflow harmless until all dedicated deployment secrets exist.
+    if: \${{ secrets.EC2_DEPLOY_SSH_KEY != '' && secrets.EC2_DEPLOY_HOST != '' && secrets.EC2_DEPLOY_KNOWN_HOSTS != '' }}
+    runs-on: ubuntu-latest
+    env:
+      EC2_DEPLOY_HOST: \${{ secrets.EC2_DEPLOY_HOST }}
+      EC2_DEPLOY_USER: \${{ secrets.EC2_DEPLOY_USER }}
+      EC2_DEPLOY_KNOWN_HOSTS: \${{ secrets.EC2_DEPLOY_KNOWN_HOSTS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create source package without credentials or legacy runtime data
+        run: |
+          tar -czf serinea-main-\${GITHUB_SHA::7}.tar.gz \
+            --exclude=.git \
+            --exclude=node_modules \
+            --exclude=.next \
+            --exclude=.env \
+            --exclude=.env.local \
+            --exclude='data/*.csv' \
+            --exclude='docs/SERINEA_FRONTEND_BACKEND_ARCHITECTURE.drawio' \
+            .
+
+      - name: Configure dedicated SSH deployment access
+        env:
+          EC2_DEPLOY_SSH_KEY: \${{ secrets.EC2_DEPLOY_SSH_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$EC2_DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$EC2_DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload and activate the verified main revision
+        run: |
+          archive="serinea-main-\${GITHUB_SHA::7}.tar.gz"
+          scp "$archive" "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST:/home/$EC2_DEPLOY_USER/"
+          ssh "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST" "set -e; \
+            sudo tar -xzf /home/$EC2_DEPLOY_USER/$archive -C /opt/serinea; \
+            sudo chown -R $EC2_DEPLOY_USER:$EC2_DEPLOY_USER /opt/serinea; \
+            cd /opt/serinea; npm ci; npm run build; \
+            sudo systemctl restart serinea; \
+            for attempt in {1..20}; do curl -fsS http://127.0.0.1:5173/api/health && exit 0; sleep 2; done; \
+            sudo systemctl status serinea --no-pager; exit 1"
