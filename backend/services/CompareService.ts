@@ -131,7 +131,16 @@ export class CompareService {
 
     const loader = this.detailLoader ?? (dataSource === "database"
       ? new PostgresComparePoiLoader() : new CsvDatasetLoader());
-    const dataset = await loader.load();
+
+    let dataset: { pois: ComparePoi[] };
+    try {
+      dataset = await loader.load();
+    } catch (error) {
+      // Keep ranking available from locality summaries if detail POIs fail.
+      console.error("Compare detail load failed; using summary counts.", error);
+      return items;
+    }
+
     const deduped = dedupeRegionalPois(dataset.pois);
     const byLocality = new Map<string, ComparePoi[]>();
     for (const poi of deduped) {

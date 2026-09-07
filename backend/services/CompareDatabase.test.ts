@@ -42,7 +42,36 @@ test("Compare and AI default to database without reading CSV, preserving dedupe 
   assert.deepEqual((await empty.json()).items, []);
 });
 
-test("database detail loader rejects invalid coordinates", async () => {
-  const database = { query: async () => ({ rows: [{ latitude: null, longitude: 144 }] }) } as unknown as PostgresDatabase;
-  await assert.rejects(new PostgresComparePoiLoader(database).load(), /invalid POI coordinates/);
+test("database detail loader skips invalid coordinates", async () => {
+  const database = {
+    query: async () => ({
+      rows: [
+        {
+          osmId: "1",
+          name: "Park",
+          locality: "A",
+          lgaName: "B",
+          regionalGroup: "C",
+          subcategory: "park",
+          displayName: "Park",
+          latitude: null,
+          longitude: 144
+        },
+        {
+          osmId: "2",
+          name: "Park 2",
+          locality: "A",
+          lgaName: "B",
+          regionalGroup: "C",
+          subcategory: "park",
+          displayName: "Park",
+          latitude: -37,
+          longitude: 144
+        }
+      ]
+    })
+  } as unknown as PostgresDatabase;
+  const { pois } = await new PostgresComparePoiLoader(database).load();
+  assert.equal(pois.length, 1);
+  assert.equal(pois[0].osmId, "2");
 });

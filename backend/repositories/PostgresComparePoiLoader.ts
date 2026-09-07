@@ -21,16 +21,22 @@ export class PostgresComparePoiLoader {
       COALESCE(NULLIF(display_name, ''), subcategory, 'Unknown') AS "displayName",
       latitude, longitude
       FROM public.regional_pois
-      WHERE NULLIF(TRIM(locality), '') IS NOT NULL`);
-    return { pois: result.rows.map(row => {
+      WHERE NULLIF(TRIM(locality), '') IS NOT NULL
+        AND latitude IS NOT NULL
+        AND longitude IS NOT NULL
+        AND latitude BETWEEN -90 AND 90
+        AND longitude BETWEEN -180 AND 180`);
+
+    const pois: ComparePoi[] = [];
+    for (const row of result.rows) {
+      if (row.latitude == null || row.longitude == null) continue;
       const latitude = Number(row.latitude);
       const longitude = Number(row.longitude);
-      if (row.latitude == null || row.longitude == null ||
-          !Number.isFinite(latitude) || !Number.isFinite(longitude) ||
-          Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
-        throw new Error("The ranking dataset contains invalid POI coordinates.");
-      }
-      return { ...row, latitude, longitude };
-    }) };
+      // Skip bad rows instead of failing the whole Compare ladder.
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+      if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) continue;
+      pois.push({ ...row, latitude, longitude });
+    }
+    return { pois };
   }
 }
