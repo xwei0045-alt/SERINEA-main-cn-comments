@@ -28,9 +28,9 @@ jobs:
       - name: Install, test, type-check, and build
         run: |
           npm ci
-          npm test
+          npx tsx --test $(find backend lib -name '*.test.ts' -print)
           npx tsc --noEmit
-          npm run build
+          DATABASE_URL='postgresql://placeholder:placeholder@localhost:5432/placeholder' REACH_DATA_SOURCE=database npm run build
 
   deploy:
     needs: verify
