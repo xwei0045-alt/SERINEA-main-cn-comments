@@ -1,7 +1,8 @@
 import { COMPARE_PREFERENCES } from "@/lib/types";
+import { LocalitySummaryServiceFactory } from "@/backend/factories/LocalitySummaryServiceFactory";
+import { PostgresComparePoiLoader, type ComparePoi } from "@/backend/repositories/PostgresComparePoiLoader";
 import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
 import { dedupeRegionalPois } from "@/backend/data/poiDedupe";
-import { LocalitySummaryService } from "@/backend/services/LocalitySummaryService";
 import { haversineKm } from "@/lib/geo";
 import type {
   CompareQuery,
@@ -9,7 +10,6 @@ import type {
   CompareResponse
 } from "@/shared/contracts/compare";
 import type { LocalitySummaryItem } from "@/shared/contracts/localities";
-import type { RegionalPoiRecord } from "@/backend/data/RegionalDataset";
 
 function localityKey(item: Pick<LocalitySummaryItem, "locality" | "lgaName" | "regionalGroup">) {
   return `${item.locality}\u0000${item.lgaName}\u0000${item.regionalGroup}`;
@@ -38,9 +38,9 @@ function titleCase(value: string): string {
 /** Ranks regional localities by weighted preference coverage from the regional extract. */
 export class CompareService {
   constructor(
-    private readonly localities = new LocalitySummaryService(),
+    private readonly localities = LocalitySummaryServiceFactory.create(),
     /** Pass null in unit tests to keep counts on the injected locality summary. */
-    private readonly detailLoader: CsvDatasetLoader | null = new CsvDatasetLoader()
+    private readonly detailLoader?: { load(): Promise<{ pois: ComparePoi[] }> } | null
   ) {}
 
   async rank(query: CompareQuery): Promise<CompareResponse> {
@@ -57,7 +57,8 @@ export class CompareService {
     const catalog = await this.localities.listAll();
     const items = await this.withDedupedCounts(
       catalog.items,
-      selected.flatMap((pref) => pref.subcategories)
+      selected.flatMap((pref) => pref.subcategories),
+      catalog.dataSource
     );
     const searchText = query.q.toLocaleLowerCase("en-AU");
     const pool = searchText
@@ -81,14 +82,15 @@ export class CompareService {
           a.locality.localeCompare(b.locality, "en-AU")
       );
 
-    const maxRaw = scored[0]?.rawScore ?? 0;
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
     const ranked: CompareRankItem[] = scored.slice(0, query.limit).map((row, index) => ({
       rank: index + 1,
       locality: row.locality,
       lgaName: row.lgaName,
       regionalGroup: row.regionalGroup,
+      // Missing categories retain their weight; the winner is not rescaled to 100.
       // Keep precision here; round only when displaying the score.
-      score: maxRaw > 0 ? (row.rawScore / maxRaw) * 100 : 0,
+      score: totalWeight > 0 ? Math.min(100, (row.rawScore / totalWeight) * 100) : 0,
       totalPoiCount: row.totalPoiCount,
       latitude: row.latitude,
       longitude: row.longitude,
@@ -122,13 +124,16 @@ export class CompareService {
    */
   private async withDedupedCounts(
     items: LocalitySummaryItem[],
-    preferredSubcategories: string[]
+    preferredSubcategories: string[],
+    dataSource: "csv" | "database"
   ): Promise<LocalitySummaryItem[]> {
-    if (!this.detailLoader) return items;
+    if (this.detailLoader === null) return items;
 
-    const dataset = await this.detailLoader.load();
+    const loader = this.detailLoader ?? (dataSource === "database"
+      ? new PostgresComparePoiLoader() : new CsvDatasetLoader());
+    const dataset = await loader.load();
     const deduped = dedupeRegionalPois(dataset.pois);
-    const byLocality = new Map<string, RegionalPoiRecord[]>();
+    const byLocality = new Map<string, ComparePoi[]>();
     for (const poi of deduped) {
       const key = `${poi.locality}\u0000${poi.lgaName}\u0000${poi.regionalGroup}`;
       const bucket = byLocality.get(key);
@@ -214,7 +219,7 @@ export class CompareService {
 
 /** Prefer a real facility pin so "View on map" lands inside walk range of that place. */
 function mapPinForLocality(
-  pois: RegionalPoiRecord[],
+  pois: ComparePoi[],
   item: LocalitySummaryItem,
   preferredSubcategories: string[]
 ): { lat: number; lng: number } | null {

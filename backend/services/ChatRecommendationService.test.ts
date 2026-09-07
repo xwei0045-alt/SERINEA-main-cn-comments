@@ -1,3 +1,4 @@
+import { LocalitySummaryServiceFactory } from "@/backend/factories/LocalitySummaryServiceFactory";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildRecommendations, findTownNames } from "./ChatRecommendationService";
@@ -88,7 +89,7 @@ test("town details answer the named town without a new shortlist or preference u
   assert.match(noTown.reply, /could not identify/);
 });
 
-test("API connects extraction to data; handles failures without inventing a fallback", async () => {
+test("API connects extraction to data; handles failures without inventing a fallback", async (t) => {
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.GROQ_API_KEY;
   const originalModel = process.env.GROQ_MODEL;
@@ -99,7 +100,8 @@ test("API connects extraction to data; handles failures without inventing a fall
   const request = (messages = [{ role: "user", content: "My child goes to primary school and enjoys snacks. Which towns would you recommend?" }]) =>
     new Request("http://localhost/api/chat", { method: "POST", body: JSON.stringify({ messages }) });
   try {
-    // Mock the provider only. Local ranking and CSV loading remain real.
+    // Use the CSV fixture for this offline provider test.
+    t.mock.method(LocalitySummaryServiceFactory, "create", () => new LocalitySummaryService());
     globalThis.fetch = async (url, init) => {
       calls++;
       assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");
@@ -173,9 +175,10 @@ test("education dataset, priority order, area and all categories agree with Comp
   for (const include of [["school", "kindergarten", "college"], ["park", "supermarket"], preferenceIds]) {
     for (const priority of [false, true]) {
       const plan = { ...family, include, priority, area: "" };
-      const reply = await buildRecommendations(plan);
+      const localities = new LocalitySummaryService();
+      const reply = await buildRecommendations(plan, localities);
       const { preferenceWeights } = await import("@/lib/comparePriorities");
-      const expected = await new CompareService().rank({ prefs: include,
+      const expected = await new CompareService(localities).rank({ prefs: include,
         weights: preferenceWeights(include.length, priority), q: plan.area, limit: 3 });
       assert.deepEqual(reply.places.map(p => p.name.toUpperCase()), expected.items.map(p => p.locality.toUpperCase()));
       assert.deepEqual(reply.preferences, include);
