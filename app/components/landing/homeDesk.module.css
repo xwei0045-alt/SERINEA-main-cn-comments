@@ -159,8 +159,16 @@
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: 0.02em;
-  color: color-mix(in oklab, var(--forest) 55%, #fff);
+  color: var(--forest);
   text-wrap: balance;
+  background: none;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.mistQuote::selection {
+  background: color-mix(in oklab, var(--forest) 22%, transparent);
+  color: var(--forest);
 }
 
 .mistMat {
@@ -220,6 +228,108 @@
 .breathBar:hover {
   background: #fff;
   color: var(--forest);
+}
+
+.case {
+  padding: clamp(3.5rem, 8vw, 5.5rem) clamp(1.25rem, 4vw, 2rem);
+  background: var(--paper);
+  text-align: center;
+}
+
+.case h2 {
+  margin: 0 auto 1.25rem;
+  max-width: 22ch;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4.5vw, 2.6rem);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--forest);
+  text-wrap: balance;
+}
+
+.caseLead {
+  margin: 0 auto 2.25rem;
+  max-width: 40rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+  line-height: 1.55;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.caseSub {
+  margin: 0 auto 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.caseList {
+  list-style: none;
+  margin: 0 auto 2.5rem;
+  padding: 0;
+  max-width: 38rem;
+  text-align: left;
+  display: grid;
+  gap: 1.15rem;
+}
+
+.caseList li {
+  margin: 0;
+  padding: 0 0 1.15rem;
+  border-bottom: 1px solid var(--paper-3);
+  font-family: var(--font-display);
+  font-size: clamp(1.02rem, 2vw, 1.15rem);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.caseList li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.caseList strong {
+  font-weight: 600;
+  color: var(--forest);
+}
+
+.caseFigure {
+  margin: 0 auto 1rem;
+  max-width: 34rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+  line-height: 1.45;
+  color: var(--forest);
+  text-wrap: balance;
+}
+
+.caseFigure strong {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.caseSdg {
+  margin: 0 auto 1.25rem;
+  max-width: 34rem;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.caseSource {
+  margin: 0 auto;
+  max-width: 36rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 .breath {

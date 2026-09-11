@@ -118,6 +118,47 @@ export function LandingExperience() {
         </Link>
       </section>
 
+      <section className={styles.case} aria-labelledby="case-heading">
+        <h2 id="case-heading">Why regional liveability needs better evidence</h2>
+        <p className={styles.caseLead}>
+          Choosing a regional town involves more than comparing property prices.
+          Housing, healthcare, shops, parks and other everyday services vary between
+          locations, while the information needed to compare them is often scattered.
+          A service’s presence also doesn’t guarantee it’s conveniently accessible
+          from where a person lives.
+        </p>
+
+        <h3 className={styles.caseSub}>What SERINEA does</h3>
+        <ul className={styles.caseList}>
+          <li>
+            <strong>Bring data together.</strong> Open location data on parks, shops
+            and clinics — in one place for regional Victoria.
+          </li>
+          <li>
+            <strong>Relate it to a 15-minute walk.</strong> Show what may be
+            reachable from a chosen point on foot, with the window fixed.
+          </li>
+          <li>
+            <strong>Support comparison.</strong> Help weigh trade-offs across
+            localities when the same budget buys a different everyday life.
+          </li>
+        </ul>
+
+        <p className={styles.caseFigure}>
+          Regional Victoria’s median house price is{" "}
+          <strong>A$636,500</strong> — but what that budget buys varies
+          significantly between towns.
+        </p>
+        <p className={styles.caseSdg}>
+          Connects to UN SDG 11 — sustainable cities: housing, services and public
+          space made easier to understand.
+        </p>
+        <p className={styles.caseSource}>
+          Sources: ABC News (REIV figures, reported Nov 2025) · Victorian Government
+          Planning · United Nations Sustainable Development Goal 11
+        </p>
+      </section>
+
       <section className={styles.breath} aria-label="Slower living">
         <div className={styles.breathWash} aria-hidden="true" />
         <p className={styles.breathLine}>
@@ -130,7 +171,7 @@ export function LandingExperience() {
 
       <section className={styles.forest}>
         <p className={styles.forestEyeline}>Regional Victoria</p>
-        <h2 className={styles.forestTitle}>The pastoral frontier, measured</h2>
+        <h2 className={styles.forestTitle}>See what a pin can reach</h2>
         <figure className={styles.engraving}>
           <Image
             src="/editorial/victoria.png"
@@ -159,7 +200,7 @@ export function LandingExperience() {
       </section>
 
       <section className={styles.tableSec}>
-        <h2>Two honest differences</h2>
+        <h2>Why this is different</h2>
         <div className={styles.table} role="table" aria-label="Nearby apps versus SERINEA">
           <div className={styles.tr} role="row">
             <span role="columnheader" />
@@ -182,9 +223,9 @@ export function LandingExperience() {
             <span>Regional Victoria extract</span>
           </div>
           <div className={styles.tr} role="row">
-            <span role="rowheader">Times</span>
-            <span>May imply live transit</span>
-            <span>Walking estimates, labelled clearly</span>
+            <span role="rowheader">Evidence</span>
+            <span>Scattered listings, hard to compare</span>
+            <span>Places, walk reach and town ranking together</span>
           </div>
         </div>
       </section>
@@ -192,8 +233,8 @@ export function LandingExperience() {
       <section className={styles.begin} id="begin">
         <h2>Begin</h2>
         <p className={styles.beginLead}>
-          Name a town, or choose what must be nearby — then we take you to the map
-          or the town ladder.
+          Start with a town on the map, or choose the facilities that matter — then
+          compare how localities differ when the same walk window is held fixed.
         </p>
         <div className={styles.switch} role="tablist" aria-label="Begin">
           <button
