@@ -1,40 +1,28 @@
 "use client";
 
 // Map screen. Pin starts in Shepparton because that town has places in the extract.
-// The list is a straight line walk both ways at 4.8 km/h.
-// After you pick a place we ask OSM streets for the orange path.
-// GPS only follows if you are actually near the pin, so a Melbourne laptop does not jump the map.
+// The list is a straight-line walk estimate at 4.8 km/h. Pins stay; no street path overlay.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { IconCategory, IconLocate } from "../components/Icons";
 import { localityApiClient } from "@/frontend/api/LocalityApiClient";
 import { reachApiClient } from "@/frontend/api/ReachApiClient";
-import { walkRouteApiClient } from "@/frontend/api/WalkRouteClient";
-import { haversineKm } from "@/lib/geo";
 import { MAP_MARK, categoryLabel, poiMarkClass } from "@/lib/mapMarks";
-import { remainingAlongPath } from "@/lib/routeProgress";
-import { walkingSecondsFromMeters } from "@/lib/walkCopy";
 import {
   DATASET_FACILITIES,
   REGIONAL_DEFAULT,
   TOWN_JUMPS,
   WINDOW_MINUTES
 } from "@/lib/types";
-import type { LatLng, ReachablePoi, WaterKind } from "@/lib/types";
+import type { LatLng, WaterKind } from "@/lib/types";
 import { findPreferences } from "@/lib/preferenceSearch";
 import type { Isochrone } from "@/lib/reach";
 import type { LocalitySummaryItem } from "@/shared/contracts/localities";
 import type { ReachResponse } from "@/shared/contracts/reach";
-import type { WalkRouteResponse } from "@/shared/contracts/walkRoute";
 import ReachMap from "./ReachMap";
-import { WalkHud } from "./WalkHud";
 
 const NO_HULL: Isochrone = [];
-const GPS_NEAR_PIN_M = 400;
-const ARRIVE_M = 40;
-const OFF_PATH_M = 80;
-const REROUTE_MS = 12000;
 
 function titleCase(value: string) {
   return value
@@ -49,17 +37,6 @@ function waterCopy(kind: WaterKind) {
 
 function samePin(a: LatLng, b: LatLng) {
   return Math.abs(a.lat - b.lat) < 1e-5 && Math.abs(a.lng - b.lng) < 1e-5;
-}
-
-function instructionFor(legDistance: number, remainingMeters: number, steps: { instruction: string; distanceMeters: number }[]) {
-  if (!steps.length) return "Follow the orange path";
-  const walked = Math.max(0, legDistance - remainingMeters);
-  let covered = 0;
-  for (const step of steps) {
-    if (walked <= covered + step.distanceMeters * 0.9) return step.instruction;
-    covered += step.distanceMeters;
-  }
-  return steps[steps.length - 1]?.instruction ?? "Follow the orange path";
 }
 
 export default function MapApp() {
@@ -94,25 +71,7 @@ export default function MapApp() {
   const [townMatches, setTownMatches] = useState<LocalitySummaryItem[]>([]);
   const [townOpen, setTownOpen] = useState(false);
   const [townNotFound, setTownNotFound] = useState(false);
-  const [streetRoute, setStreetRoute] = useState<WalkRouteResponse | null>(null);
-  const [routeLoading, setRouteLoading] = useState(false);
-  const [routeError, setRouteError] = useState<string | null>(null);
-  const [walkStarted, setWalkStarted] = useState(false);
-  const [walkLeg, setWalkLeg] = useState<"there" | "back">("there");
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const [remainingMeters, setRemainingMeters] = useState(0);
-  const [remainingPath, setRemainingPath] = useState<LatLng[] | null>(null);
-  const [you, setYou] = useState<LatLng | null>(null);
-  const [followGps, setFollowGps] = useState(false);
-  const [arrived, setArrived] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
-  const followGpsRef = useRef(false);
-  const lastRerouteRef = useRef(0);
-  const pinRef = useRef(pin);
-  const streetRouteRef = useRef(streetRoute);
-  const selectedRef = useRef<ReachablePoi | null>(null);
-  pinRef.current = pin;
-  streetRouteRef.current = streetRoute;
 
   // Drop the last reach call if the pin moves again before it comes back.
   useEffect(() => {
@@ -223,217 +182,18 @@ export default function MapApp() {
   }, [listed, selectedId]);
 
   const selected = listed.find((row) => row.poi.id === selectedId) ?? null;
-  selectedRef.current = selected;
-
-  useEffect(() => {
-    setWalkStarted(false);
-    setFollowGps(false);
-    followGpsRef.current = false;
-    setYou(null);
-    setArrived(false);
-    setWalkLeg("there");
-    setRemainingPath(null);
-  }, [selectedId, pin.lat, pin.lng]);
-
-  // Path only after the user picks a place — never on pin drop alone
-  useEffect(() => {
-    if (!selected) {
-      setStreetRoute(null);
-      setRouteError(null);
-      setRouteLoading(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    let current = true;
-    setRouteLoading(true);
-    setRouteError(null);
-
-    walkRouteApiClient
-      .fetchRoute(
-        {
-          from: pin,
-          to: { lat: selected.poi.lat, lng: selected.poi.lng },
-          roundtrip: false
-        },
-        controller.signal
-      )
-      .then((route) => {
-        if (current) setStreetRoute(route);
-      })
-      .catch((error: unknown) => {
-        if (!current || controller.signal.aborted) return;
-        console.error("Walking route failed.", error);
-        setStreetRoute(null);
-        setRouteError("A street path could not be found for this place.");
-      })
-      .finally(() => {
-        if (current) setRouteLoading(false);
-      });
-
-    return () => {
-      current = false;
-      controller.abort();
-    };
-  }, [selected?.poi.id, selected?.poi.lat, selected?.poi.lng, pin.lat, pin.lng]);
-
-  const currentLeg = streetRoute?.legs.find((leg) => leg.id === walkLeg) ?? streetRoute?.legs[0] ?? null;
-
-  const displayPath = useMemo(() => {
-    if (walkStarted && remainingPath && remainingPath.length >= 2) return remainingPath;
-    const leg =
-      streetRoute?.legs.find((item) => item.id === walkLeg) ?? streetRoute?.legs[0] ?? null;
-    return leg?.path ?? null;
-  }, [walkStarted, remainingPath, streetRoute, walkLeg]);
-
-  useEffect(() => {
-    if (!walkStarted || arrived || followGps) return;
-    const timer = window.setInterval(() => {
-      const leg =
-        streetRouteRef.current?.legs.find((item) => item.id === walkLeg) ??
-        streetRouteRef.current?.legs[0];
-      setRemainingSeconds((value) => {
-        if (value <= 1) {
-          setArrived(true);
-          return 0;
-        }
-        return value - 1;
-      });
-      setRemainingMeters((value) => {
-        if (!leg || leg.durationSeconds <= 0) return value;
-        const metersPerSecond = leg.distanceMeters / leg.durationSeconds;
-        return Math.max(0, value - metersPerSecond);
-      });
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [walkStarted, arrived, followGps, walkLeg]);
-
-  // Real GPS only if you are close to the pin. Otherwise the remaining clock just counts down.
-  useEffect(() => {
-    if (!walkStarted) return;
-    if (!navigator.geolocation) return;
-
-    const watch = navigator.geolocation.watchPosition(
-      (pos) => {
-        const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        const fromPin = haversineKm(here, pinRef.current) * 1000;
-        if (!followGpsRef.current && fromPin > GPS_NEAR_PIN_M) return;
-
-        const route = streetRouteRef.current;
-        const leg = route?.legs.find((item) => item.id === walkLeg) ?? route?.legs[0];
-        if (!leg) return;
-
-        followGpsRef.current = true;
-        setFollowGps(true);
-        setYou(here);
-
-        const poi = selectedRef.current?.poi;
-        const dest =
-          walkLeg === "there" && poi ? { lat: poi.lat, lng: poi.lng } : pinRef.current;
-        const progress = remainingAlongPath(leg.path, here);
-        setRemainingPath(progress.remainingPath);
-        setRemainingMeters(progress.remainingMeters);
-        const seconds =
-          leg.distanceMeters > 0
-            ? (progress.remainingMeters / leg.distanceMeters) * leg.durationSeconds
-            : walkingSecondsFromMeters(progress.remainingMeters);
-        setRemainingSeconds(Math.max(0, Math.round(seconds)));
-
-        if (progress.remainingMeters <= ARRIVE_M) {
-          setArrived(true);
-          return;
-        }
-
-        const now = Date.now();
-        if (progress.offPathMeters > OFF_PATH_M && now - lastRerouteRef.current > REROUTE_MS) {
-          lastRerouteRef.current = now;
-          walkRouteApiClient
-            .fetchRoute({ from: here, to: dest, roundtrip: false })
-            .then((fresh) => {
-              const nextLeg = fresh.legs[0];
-              if (!nextLeg) return;
-              setStreetRoute((prev) => {
-                if (!prev) return fresh;
-                const nextLegs = prev.legs.map((item) =>
-                  item.id === walkLeg ? { ...nextLeg, id: walkLeg } : item
-                );
-                return { ...prev, legs: nextLegs, path: fresh.path };
-              });
-              setRemainingPath(nextLeg.path);
-              setRemainingMeters(nextLeg.distanceMeters);
-              setRemainingSeconds(Math.round(nextLeg.durationSeconds));
-            })
-            .catch(() => {
-              /* keep the last path if the router is busy */
-            });
-        }
-      },
-      () => {
-        /* countdown still runs from the pin if GPS is blocked */
-      },
-      { enableHighAccuracy: true, maximumAge: 2000, timeout: 8000 }
-    );
-
-    return () => navigator.geolocation.clearWatch(watch);
-  }, [walkStarted, walkLeg]);
 
   const waterMessage = waterCopy(result?.water ?? null);
   const placeWord = listed.length === 1 ? "place" : "places";
-  const streetRoundTripSeconds = streetRoute?.durationSeconds ?? 0;
-  const overBudget = streetRoundTripSeconds > WINDOW_MINUTES * 60;
-  const thereLegPreview = streetRoute?.legs.find((leg) => leg.id === "there") ?? null;
-  const nextInstruction = currentLeg
-    ? instructionFor(currentLeg.distanceMeters, remainingMeters, currentLeg.steps)
-    : "Follow the orange path";
-
-  function endWalk() {
-    setWalkStarted(false);
-    setFollowGps(false);
-    followGpsRef.current = false;
-    setYou(null);
-    setArrived(false);
-    setWalkLeg("there");
-    setRemainingPath(null);
-  }
-
-  function startWalk() {
-    if (!currentLeg) return;
-    setWalkLeg("there");
-    setWalkStarted(true);
-    setArrived(false);
-    setYou(pin);
-    setRemainingPath(currentLeg.path);
-    setRemainingMeters(currentLeg.distanceMeters);
-    setRemainingSeconds(Math.max(1, Math.round(currentLeg.durationSeconds)));
-    followGpsRef.current = false;
-    setFollowGps(false);
-  }
-
-  function startWalkBack() {
-    const back = streetRoute?.legs.find((leg) => leg.id === "back");
-    if (!back) return;
-    setWalkLeg("back");
-    setArrived(false);
-    setRemainingPath(back.path);
-    setRemainingMeters(back.distanceMeters);
-    setRemainingSeconds(Math.max(1, Math.round(back.durationSeconds)));
-  }
 
   function movePin(next: LatLng) {
     setPin(next);
     setTownOpen(false);
     setSelectedId(null);
-    setStreetRoute(null);
-    setRouteError(null);
-    setWalkStarted(false);
   }
 
   function pickPlace(id: string) {
-    setSelectedId((prev) => {
-      if (prev === id) return null;
-      return id;
-    });
-    // Keep the map clear — Start lives on the place card; list opens only via Places.
+    setSelectedId((prev) => (prev === id ? null : id));
     setPanelOpen(false);
   }
 
@@ -495,11 +255,11 @@ export default function MapApp() {
             hull={result?.hull ?? NO_HULL}
             reachable={mapListed}
             selectedId={selectedId}
-            routePath={displayPath}
-            you={walkStarted ? you ?? pin : null}
-            navigating={walkStarted}
-            showHull={!walkStarted}
-            hasRoute={Boolean(displayPath && displayPath.length >= 2)}
+            routePath={null}
+            you={null}
+            navigating={false}
+            showHull
+            hasRoute={false}
             onPin={(pt) => {
               movePin(pt);
               setTownQuery("");
@@ -558,7 +318,6 @@ export default function MapApp() {
                     key={town.label}
                     type="button"
                     aria-pressed={samePin(pin, town)}
-                    disabled={walkStarted}
                     onClick={() => {
                       movePin({ lat: town.lat, lng: town.lng });
                       setTownQuery(town.label);
@@ -608,58 +367,20 @@ export default function MapApp() {
             </div>
           </div>
 
-          {walkStarted && selected && (
-            <WalkHud
-              placeName={selected.poi.name}
-              legLabel={walkLeg === "there" ? "Walking there" : "Walking back"}
-              remainingSeconds={remainingSeconds}
-              remainingMeters={remainingMeters}
-              instruction={nextInstruction}
-              arrived={arrived}
-              canWalkBack={walkLeg === "there" && Boolean(streetRoute?.legs.some((leg) => leg.id === "back"))}
-              overBudget={overBudget}
-              onEnd={endWalk}
-              onWalkBack={startWalkBack}
-            />
-          )}
-
-          {!walkStarted && selected && (
+          {selected && (
             <div className="place-card" role="dialog" aria-label="Selected place">
               <div className="place-card-copy">
                 <p className="place-card-kicker">
-                  {facilityLabel(selected.poi.subcategory, selected.poi.category)} ·{" "}
-                  {selected.journey.outboundMinutes} min walk
+                  {facilityLabel(selected.poi.subcategory, selected.poi.category)}
                 </p>
                 <h2 className="place-card-title">{selected.poi.name}</h2>
                 <p className="place-card-meta">{titleCase(selected.poi.suburb)}</p>
-                {routeError && <p className="status note">{routeError}</p>}
-                {routeLoading && <p className="place-card-hint">Finding the walking path…</p>}
-                {!routeLoading && !routeError && thereLegPreview && (
-                  <p className="place-card-hint">
-                    Walk about {Math.max(1, Math.round(thereLegPreview.durationSeconds / 60))} min there
-                  </p>
-                )}
               </div>
               <div className="place-card-actions">
                 <button
                   type="button"
-                  className="walk-primary place-card-start"
-                  disabled={!thereLegPreview || routeLoading}
-                  onClick={() => {
-                    startWalk();
-                    closePanel();
-                  }}
-                >
-                  {routeLoading ? "Finding path…" : "Start"}
-                </button>
-                <button
-                  type="button"
                   className="walk-secondary place-card-clear"
-                  onClick={() => {
-                    setSelectedId(null);
-                    setStreetRoute(null);
-                    setRouteError(null);
-                  }}
+                  onClick={() => setSelectedId(null)}
                 >
                   Clear
                 </button>
@@ -683,7 +404,7 @@ export default function MapApp() {
               type="button"
               className="map-fab map-fab--locate"
               onClick={locate}
-              disabled={locating || walkStarted}
+              disabled={locating}
               aria-label="Use my location"
             >
               <IconLocate />
@@ -719,7 +440,7 @@ export default function MapApp() {
             <p className="window-fixed" aria-live="polite">
               {loading && !result
                 ? "Looking up places…"
-                : `${listed.length} ${placeWord}. Tap one, then press Start`}
+                : `${listed.length} ${placeWord}. Tap one to select it on the map`}
             </p>
           </div>
 
@@ -772,9 +493,8 @@ export default function MapApp() {
                           {facilityLabel(row.poi.subcategory, row.poi.category)}
                         </p>
                       </div>
-                      <span className="mins">
-                        {row.journey.outboundMinutes}
-                        <small> min</small>
+                      <span className="mins" aria-label={`${row.journey.outboundMinutes} minute walk`}>
+                        ({row.journey.outboundMinutes} min)
                       </span>
                     </div>
                   </button>

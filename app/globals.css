@@ -1401,6 +1401,14 @@ svg {
   white-space: nowrap;
   text-align: right;
   line-height: 1.1;
+  color: var(--ink-soft);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.result-hit:hover .mins,
+.result-hit:focus-visible .mins,
+.result-hit[aria-current="true"] .mins {
+  opacity: 1;
 }
 .mins small {
   display: inline;

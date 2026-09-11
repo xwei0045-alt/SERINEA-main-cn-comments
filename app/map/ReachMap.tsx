@@ -290,7 +290,7 @@ export default function ReachMap({
         : reachable;
       for (const row of rows) {
         const on = row.poi.id === selectedId;
-        const label = `${row.poi.name} · ${row.journey.outboundMinutes} min`;
+        const label = row.poi.name;
         const wide = row.poi.category === "pharmacy";
         const size = on ? (wide ? 30 : 26) : wide ? 24 : 20;
         const mark = L.marker([row.poi.lat, row.poi.lng], {
