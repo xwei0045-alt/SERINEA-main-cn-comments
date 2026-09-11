@@ -119,43 +119,18 @@ export function LandingExperience() {
       </section>
 
       <section className={styles.case} aria-labelledby="case-heading">
-        <h2 id="case-heading">Why regional liveability needs better evidence</h2>
+        <h2 id="case-heading">Why this matters</h2>
         <p className={styles.caseLead}>
-          Choosing a regional town involves more than comparing property prices.
-          Housing, healthcare, shops, parks and other everyday services vary between
-          locations, while the information needed to compare them is often scattered.
-          A service’s presence also doesn’t guarantee it’s conveniently accessible
-          from where a person lives.
+          Regional services are scattered and hard to compare. SERINEA brings parks,
+          shops and clinics into one place, shows what a fifteen-minute walk can
+          reach, and helps weigh towns against each other.
         </p>
-
-        <h3 className={styles.caseSub}>What SERINEA does</h3>
-        <ul className={styles.caseList}>
-          <li>
-            <strong>Bring data together.</strong>             Open location data on parks, shops
-            and clinics, in one place for regional Victoria.
-          </li>
-          <li>
-            <strong>Relate it to a 15-minute walk.</strong> Show what may be
-            reachable from a chosen point on foot, with the window fixed.
-          </li>
-          <li>
-            <strong>Support comparison.</strong> Help weigh trade-offs across
-            localities when the same budget buys a different everyday life.
-          </li>
-        </ul>
-
         <p className={styles.caseFigure}>
-          Regional Victoria’s median house price is{" "}
-          <strong>A$636,500</strong>, but what that budget buys varies
-          significantly between towns.
-        </p>
-        <p className={styles.caseSdg}>
-          Connects to UN SDG 11: sustainable cities. Housing, services and public
-          space made easier to understand.
+          Regional Victoria’s median house price is <strong>A$636,500</strong>.
+          What that budget buys still varies by town.
         </p>
         <p className={styles.caseSource}>
-          Sources: ABC News (REIV figures, reported Nov 2025) · Victorian Government
-          Planning · United Nations Sustainable Development Goal 11
+          Source: ABC News, REIV figures, Nov 2025 · UN SDG 11
         </p>
       </section>
 
