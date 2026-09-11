@@ -882,6 +882,27 @@ svg {
 .poi-mark.is-on {
   box-shadow: 0 0 0 2px var(--enamel), 0 0 0 3.5px var(--ink);
 }
+.leaflet-tooltip.poi-timing-tip,
+.leaflet-tooltip.poi-name-tip {
+  padding: 0.35rem 0.55rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: none;
+  white-space: nowrap;
+}
+.leaflet-tooltip.poi-timing-tip {
+  color: var(--forest);
+}
+.leaflet-tooltip.poi-timing-tip::before,
+.leaflet-tooltip.poi-name-tip::before {
+  border-top-color: var(--ink);
+}
 .poi-mark--park {
   background: var(--park);
 }

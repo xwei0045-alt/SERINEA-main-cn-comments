@@ -290,20 +290,37 @@ export default function ReachMap({
         : reachable;
       for (const row of rows) {
         const on = row.poi.id === selectedId;
-        const label = row.poi.name;
+        const name = row.poi.name;
+        const timing = `(${row.journey.outboundMinutes} min)`;
         const wide = row.poi.category === "pharmacy";
         const size = on ? (wide ? 30 : 26) : wide ? 24 : 20;
         const mark = L.marker([row.poi.lat, row.poi.lng], {
           icon: L.divIcon({
             className: "",
-            html: poiMarkHtml(row.poi.category, on, label),
+            html: poiMarkHtml(row.poi.category, on, ""),
             iconSize: [size, size],
             iconAnchor: [size / 2, size / 2]
           }),
-          zIndexOffset: on ? 400 : 200,
-          title: label
+          zIndexOffset: on ? 400 : 200
         }).addTo(map);
-        mark.bindTooltip(label, { direction: "top", offset: [0, -12], opacity: 0.95 });
+        // Hover keeps the place name only. Click/selection shows walk timing on top.
+        if (on) {
+          mark.bindTooltip(timing, {
+            permanent: true,
+            direction: "top",
+            offset: [0, -14],
+            opacity: 1,
+            className: "poi-timing-tip"
+          });
+          mark.openTooltip();
+        } else {
+          mark.bindTooltip(name, {
+            direction: "top",
+            offset: [0, -12],
+            opacity: 0.95,
+            className: "poi-name-tip"
+          });
+        }
         mark.on("click", (event) => {
           L.DomEvent.stopPropagation(event);
           onSelectRef.current(row.poi.id);

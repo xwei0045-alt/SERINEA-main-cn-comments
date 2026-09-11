@@ -49,5 +49,6 @@ export function poiMarkClass(category: PoiCategory, on = false): string {
 
 export function poiMarkHtml(category: PoiCategory, on: boolean, title: string): string {
   const mark = MAP_MARK[category];
-  return `<span class="${poiMarkClass(category, on)}" title="${escapeAttr(title)}">${mark.letter}</span>`;
+  const titleAttr = title ? ` title="${escapeAttr(title)}"` : "";
+  return `<span class="${poiMarkClass(category, on)}"${titleAttr}>${mark.letter}</span>`;
 }
