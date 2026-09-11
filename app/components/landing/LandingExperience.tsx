@@ -14,7 +14,7 @@ type Mode = "town" | "need";
 const TOWNS = [
   {
     name: "Shepparton",
-    blurb: "Our default pin — dense enough to show a full fifteen-minute walk.",
+    blurb: "Our default pin, dense enough to show a full fifteen-minute walk.",
     lat: -36.378248,
     lng: 145.40295
   },
@@ -26,13 +26,13 @@ const TOWNS = [
   },
   {
     name: "Mildura",
-    blurb: "River town — prove the window still holds when the grid thins out.",
+    blurb: "River town. Prove the window still holds when the grid thins out.",
     lat: -34.195496,
     lng: 142.146155
   },
   {
     name: "Wodonga",
-    blurb: "Border regional city — compare what fits a fifteen-minute walk.",
+    blurb: "Border regional city. Compare what fits a fifteen-minute walk.",
     lat: -36.131367,
     lng: 146.883574
   }
@@ -98,7 +98,7 @@ export function LandingExperience() {
 
       <section className={styles.mist} aria-label="The fifteen-minute promise">
         <p className={styles.mistQuote}>
-          Drop a pin and see what you can walk to from there — parks, shops,
+          Drop a pin and see what you can walk to from there: parks, shops,
           clinics and more inside a fixed fifteen-minute walk.
         </p>
         <figure className={styles.mistMat}>
@@ -131,8 +131,8 @@ export function LandingExperience() {
         <h3 className={styles.caseSub}>What SERINEA does</h3>
         <ul className={styles.caseList}>
           <li>
-            <strong>Bring data together.</strong> Open location data on parks, shops
-            and clinics — in one place for regional Victoria.
+            <strong>Bring data together.</strong>             Open location data on parks, shops
+            and clinics, in one place for regional Victoria.
           </li>
           <li>
             <strong>Relate it to a 15-minute walk.</strong> Show what may be
@@ -146,11 +146,11 @@ export function LandingExperience() {
 
         <p className={styles.caseFigure}>
           Regional Victoria’s median house price is{" "}
-          <strong>A$636,500</strong> — but what that budget buys varies
+          <strong>A$636,500</strong>, but what that budget buys varies
           significantly between towns.
         </p>
         <p className={styles.caseSdg}>
-          Connects to UN SDG 11 — sustainable cities: housing, services and public
+          Connects to UN SDG 11: sustainable cities. Housing, services and public
           space made easier to understand.
         </p>
         <p className={styles.caseSource}>
@@ -209,7 +209,7 @@ export function LandingExperience() {
           </div>
           <div className={styles.tr} role="row">
             <span role="rowheader">Travel window</span>
-            <span>Often 5–60 minutes, adjustable</span>
+            <span>Often 5 to 60 minutes, adjustable</span>
             <span>Fixed fifteen-minute walk from your pin</span>
           </div>
           <div className={styles.tr} role="row">
@@ -223,9 +223,9 @@ export function LandingExperience() {
             <span>Regional Victoria extract</span>
           </div>
           <div className={styles.tr} role="row">
-            <span role="rowheader">Evidence</span>
-            <span>Scattered listings, hard to compare</span>
-            <span>Places, walk reach and town ranking together</span>
+            <span role="rowheader">Times</span>
+            <span>May imply live transit</span>
+            <span>Walking estimates, labelled clearly</span>
           </div>
         </div>
       </section>
@@ -233,8 +233,8 @@ export function LandingExperience() {
       <section className={styles.begin} id="begin">
         <h2>Begin</h2>
         <p className={styles.beginLead}>
-          Start with a town on the map, or choose the facilities that matter — then
-          compare how localities differ when the same walk window is held fixed.
+          Name a town, or choose what must be nearby, then we take you to the map
+          or the town ladder.
         </p>
         <div className={styles.switch} role="tablist" aria-label="Begin">
           <button
@@ -352,7 +352,7 @@ export function LandingExperience() {
         <div>
           <p className={styles.footBrand}>SERINEA</p>
           <p>
-            Team SERINEA · TA06 · FIT5120. Regional reach without the marketing fluff.
+            Team SERINEA · TP06 · FIT5120. Regional reach without the marketing fluff.
           </p>
         </div>
         <div className={styles.footLinks}>
