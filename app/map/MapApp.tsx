@@ -181,8 +181,6 @@ export default function MapApp() {
     }
   }, [listed, selectedId]);
 
-  const selected = listed.find((row) => row.poi.id === selectedId) ?? null;
-
   const waterMessage = waterCopy(result?.water ?? null);
   const placeWord = listed.length === 1 ? "place" : "places";
 
@@ -366,27 +364,6 @@ export default function MapApp() {
               </div>
             </div>
           </div>
-
-          {selected && (
-            <div className="place-card" role="dialog" aria-label="Selected place">
-              <div className="place-card-copy">
-                <p className="place-card-kicker">
-                  {facilityLabel(selected.poi.subcategory, selected.poi.category)}
-                </p>
-                <h2 className="place-card-title">{selected.poi.name}</h2>
-                <p className="place-card-meta">{titleCase(selected.poi.suburb)}</p>
-              </div>
-              <div className="place-card-actions">
-                <button
-                  type="button"
-                  className="walk-secondary place-card-clear"
-                  onClick={() => setSelectedId(null)}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          )}
 
           <div className="map-fab-row">
             <button
