@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Current = "home" | "map" | "compare";
+type Current = "home" | "map" | "compare" | "assistant";
 
 type Props = {
   current: Current;
@@ -22,7 +22,14 @@ export function Chrome({ current, floating = false }: Props) {
       <Link href="/" className="wordmark" aria-current={current === "home" ? "page" : undefined}>
         SERINEA
       </Link>
-      <div className="mast-side mast-side--end" aria-hidden="true" />
+      <nav className="mast-side mast-side--end" aria-label="AI Recommendation">
+        <Link
+          href="/ai-assistant"
+          aria-current={current === "assistant" ? "page" : undefined}
+        >
+          AI Recommendation
+        </Link>
+      </nav>
     </header>
   );
 }

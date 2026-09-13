@@ -150,6 +150,12 @@ svg {
 .mast--editorial .wordmark {
   color: var(--forest);
 }
+.mast--editorial .mast-side--end a {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
 .mast--float {
   position: fixed;
   top: 0;
@@ -1943,6 +1949,26 @@ svg {
     width: 40px !important;
     height: 40px !important;
     line-height: 40px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .mast--editorial {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mast--editorial .wordmark {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+  }
+
+  .mast--editorial .mast-side {
+    grid-row: 2;
+  }
+
+  .mast--editorial .mast-side--end a {
+    font-size: 0.75rem;
   }
 }
 

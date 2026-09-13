@@ -1,0 +1,90 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import path from "node:path";
+import { IncentiveService } from "./IncentiveService";
+import type { IncentiveRequest } from "@/shared/contracts/incentives";
+
+const dataDirectory = path.join(process.cwd(), "data");
+const service = new IncentiveService(dataDirectory);
+
+function request(overrides: Partial<IncentiveRequest> = {}): IncentiveRequest {
+  return {
+    message: "What mock incentives are available in Lucas?",
+    relocationStage: "already_moved",
+    profile: {
+      age: 28,
+      income: 80_000,
+      income_scope: "household",
+      income_period: "annual",
+      income_basis: "gross",
+      has_child: false,
+      child_ages: [],
+      locality: null,
+      lga_name: null,
+      move_distance_km: 60,
+      days_since_move: 30,
+      new_resident: true
+    },
+    towns: [],
+    limitPerTown: 5,
+    ...overrides
+  };
+}
+
+test("named locality query returns only non-closed mock records", async () => {
+  const result = await service.find(request());
+  assert.equal(result.dataSource, "SERINEA_mock_subsidies_450.csv");
+  assert.equal(result.isSynthetic, true);
+  assert.equal(result.queryArea, "LUCAS");
+  assert.equal(result.groups.length, 1);
+  assert.equal(result.groups[0].locality, "LUCAS");
+  assert.ok(result.groups[0].items.length > 0);
+  assert.ok(result.groups[0].items.every((item) =>
+    ["mock_open", "mock_upcoming"].includes(item.mockStatus)
+  ));
+});
+
+test("complete Lucas relocation facts produce a Possible Match", async () => {
+  const result = await service.find(request({
+    message: "I need moving expense support in Lucas."
+  }));
+  const moving = result.groups[0].items.find((item) => item.subsidyId === "MOCK-SUB-0002");
+  assert.equal(moving?.status, "Possible Match");
+  assert.deepEqual(moving?.missing, []);
+});
+
+test("planning users receive Potential Incentive without changing lifestyle order", async () => {
+  const towns = [
+    { locality: "Wangaratta", lgaName: "Wangaratta" },
+    { locality: "Shepparton", lgaName: "Greater Shepparton" }
+  ];
+  const result = await service.find(request({
+    message: "We plan to move and want incentive guidance.",
+    relocationStage: "planning_to_move",
+    towns
+  }));
+  assert.deepEqual(result.groups.map((group) => group.locality), ["WANGARATTA", "SHEPPARTON"]);
+  assert.ok(result.groups.flatMap((group) => group.items).every((item) => item.status === "Potential Incentive"));
+});
+
+test("unknown income scope is surfaced instead of silently compared", async () => {
+  const base = request();
+  const result = await service.find(request({
+    message: "I need moving expense support in Lucas.",
+    profile: { ...base.profile, income_scope: "unknown" }
+  }));
+  const moving = result.groups[0].items.find((item) => item.subsidyId === "MOCK-SUB-0002");
+  assert.equal(moving?.status, "More Information Needed");
+  assert.ok(moving?.missing.includes("Household income scope"));
+});
+
+test("dependent-child rules use child age and never applicant age", async () => {
+  const base = request();
+  const result = await service.find(request({
+    message: "What school support is available in Lucas?",
+    profile: { ...base.profile, has_child: true, child_ages: [7] }
+  }));
+  const school = result.groups[0].items.find((item) => item.subsidyId === "MOCK-SUB-0066");
+  assert.equal(school?.status, "Possible Match");
+  assert.ok(school?.matched.includes("Dependent child's age"));
+});

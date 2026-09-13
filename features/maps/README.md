@@ -19,4 +19,4 @@
 
 ## Out of scope
 
-Compare preference ranking, Groq chat, landing marketing copy, AWS deploy scripts.
+Compare preference ranking, AI Assistant page, landing marketing copy, AWS deploy scripts.

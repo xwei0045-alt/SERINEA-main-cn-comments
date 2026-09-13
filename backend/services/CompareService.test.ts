@@ -104,3 +104,39 @@ test("scores retain missing preference weights instead of scaling the winner to 
   const none = await service.rank({ ...query, prefs: ["park"] });
   assert.deepEqual(none.items, []);
 });
+
+test("primary-school and gym preferences use only the documented name proxies", async () => {
+  const service = new CompareService({
+    listAll: async () => ({
+      items: [
+        {
+          locality: "Proxy Town",
+          lgaName: "Test LGA",
+          regionalGroup: "Test Region",
+          totalPoiCount: 4,
+          categories: [
+            { category: "education", poiCount: 2, subcategories: [{ subcategory: "school", displayName: "School", poiCount: 2 }] },
+            { category: "recreation", poiCount: 2, subcategories: [{ subcategory: "sports_centre", displayName: "Sports centre", poiCount: 2 }] }
+          ]
+        }
+      ],
+      totalPois: 4,
+      dataSource: "csv" as const
+    })
+  } as unknown as LocalitySummaryService, {
+    load: async () => ({
+      pois: [
+        { osmId: "1", name: "Proxy Primary School", locality: "Proxy Town", lgaName: "Test LGA", regionalGroup: "Test Region", subcategory: "school", displayName: "School", latitude: -37, longitude: 144 },
+        { osmId: "2", name: "Proxy Secondary College", locality: "Proxy Town", lgaName: "Test LGA", regionalGroup: "Test Region", subcategory: "school", displayName: "School", latitude: -37.01, longitude: 144 },
+        { osmId: "3", name: "Community Fitness Centre", locality: "Proxy Town", lgaName: "Test LGA", regionalGroup: "Test Region", subcategory: "sports_centre", displayName: "Sports centre", latitude: -37, longitude: 144.01 },
+        { osmId: "4", name: "Aquatic Centre", locality: "Proxy Town", lgaName: "Test LGA", regionalGroup: "Test Region", subcategory: "sports_centre", displayName: "Sports centre", latitude: -37.01, longitude: 144.01 }
+      ]
+    })
+  });
+
+  const result = await service.rank({ prefs: ["primary_school", "gym"], weights: [5, 1], q: "", limit: 5 });
+  assert.equal(result.items[0].breakdown[0].count, 1);
+  assert.equal(result.items[0].breakdown[1].count, 1);
+  assert.equal(result.preferences[0].evidenceMethod, "name_heuristic");
+  assert.match(result.preferences[0].warning ?? "", /Coverage may be incomplete/);
+});

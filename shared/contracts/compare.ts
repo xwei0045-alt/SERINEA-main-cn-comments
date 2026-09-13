@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { COMPARE_PREFERENCES } from "@/lib/types";
+import { RANKING_PREFERENCES } from "@/lib/types";
 
-const preferenceIds = COMPARE_PREFERENCES.map((item) => item.id) as [
+const preferenceIds = RANKING_PREFERENCES.map((item) => item.id) as [
   string,
   ...string[]
 ];
@@ -84,7 +84,9 @@ export const compareResponseSchema = z.object({
     z.object({
       id: z.string(),
       label: z.string(),
-      weight: z.number().positive()
+      weight: z.number().positive(),
+      evidenceMethod: z.enum(["exact_subcategory", "category_total", "name_heuristic"]),
+      warning: z.string().optional()
     })
   ),
   totalLocalitiesScored: z.number().int().nonnegative(),
