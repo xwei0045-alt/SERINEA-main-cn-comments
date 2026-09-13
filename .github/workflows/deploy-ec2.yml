@@ -42,6 +42,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Wait 30 seconds before deployment
+        run: sleep 30
+
       - name: Create source package without credentials or legacy runtime data
         run: |
           tar -czf /tmp/serinea-main-${GITHUB_SHA::7}.tar.gz \
