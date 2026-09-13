@@ -67,11 +67,25 @@ jobs:
         run: |
           archive="/tmp/serinea-main-${GITHUB_SHA::7}.tar.gz"
           remote_archive="serinea-main-${GITHUB_SHA::7}.tar.gz"
+          remote_release="/opt/serinea-release-${GITHUB_SHA::7}"
           scp "$archive" "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST:/home/$EC2_DEPLOY_USER/$remote_archive"
           ssh "$EC2_DEPLOY_USER@$EC2_DEPLOY_HOST" "set -e; \
-            sudo tar -xzf /home/$EC2_DEPLOY_USER/$remote_archive -C /opt/serinea; \
-            sudo chown -R $EC2_DEPLOY_USER:$EC2_DEPLOY_USER /opt/serinea; \
-            cd /opt/serinea; npm ci; npm run build; \
-            sudo systemctl restart serinea; \
-            for attempt in {1..20}; do curl -fsS http://127.0.0.1:5173/api/health && exit 0; sleep 2; done; \
-            sudo systemctl status serinea --no-pager; exit 1"
+            sudo rm -rf '$remote_release' /opt/serinea-previous; \
+            sudo install -d -o $EC2_DEPLOY_USER -g $EC2_DEPLOY_USER '$remote_release'; \
+            tar -xzf /home/$EC2_DEPLOY_USER/$remote_archive -C '$remote_release'; \
+            sudo cp /opt/serinea/.env.local '$remote_release/.env.local'; \
+            sudo chown -R $EC2_DEPLOY_USER:$EC2_DEPLOY_USER '$remote_release'; \
+            cd '$remote_release'; npm ci; npm run build; \
+            sudo systemctl stop serinea; \
+            sudo mv /opt/serinea /opt/serinea-previous; \
+            sudo mv '$remote_release' /opt/serinea; \
+            if sudo systemctl start serinea && \
+              (for attempt in {1..20}; do curl -fsS http://127.0.0.1:5173/api/health && exit 0; sleep 2; done); then \
+              sudo rm -rf /opt/serinea-previous; \
+            else \
+              sudo systemctl stop serinea || true; \
+              sudo rm -rf /opt/serinea; \
+              sudo mv /opt/serinea-previous /opt/serinea; \
+              sudo systemctl start serinea; \
+              exit 1; \
+            fi"
