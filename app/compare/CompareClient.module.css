@@ -1,6 +1,9 @@
 /* Override the How page's list counter only inside Compare. */
 .page.page li { counter-increment: none; }
 .page.page li::before { content: none; display: none; }
+/* Keep user messages readable above the shared paragraph color rule. */
+.page [data-chat-role="user"] { color: var(--enamel); }
+
 .page .row { padding: 18px; }
 .rowTop { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; }
 .town { min-width: 0; overflow-wrap: anywhere; }

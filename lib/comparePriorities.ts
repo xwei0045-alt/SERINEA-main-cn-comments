@@ -13,3 +13,11 @@ export function preferenceWeights(count: number, priority: boolean): number[] {
     priority ? (count - index) / (count * (count + 1) / 2) : 1 / count,
   );
 }
+
+// Keep the user's latest order; append newly confirmed AI choices at the end.
+export function applyPreferenceSelection(current: string[], proposed: string[]): string[] {
+  return [...new Set([
+    ...current.filter((id) => proposed.includes(id)),
+    ...proposed.filter((id) => !current.includes(id)),
+  ])];
+}

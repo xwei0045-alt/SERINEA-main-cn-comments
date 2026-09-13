@@ -5,9 +5,11 @@ import { Environment } from "@/backend/config/Environment";
 import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
 import { CompareController } from "@/backend/controllers/CompareController";
+import { buildRecommendations } from "./ChatRecommendationService";
+import { planSchema } from "@/lib/chatRecommendations";
 import { PostgresComparePoiLoader } from "@/backend/repositories/PostgresComparePoiLoader";
 
-test("Compare defaults to database without reading CSV, preserving dedupe and pins", async (t) => {
+test("Compare and AI default to database without reading CSV, preserving dedupe and pins", async (t) => {
   t.mock.method(Environment, "getInstance", () => ({ databaseUrl: "unused-test-connection" }));
   t.mock.method(CsvDatasetLoader.prototype, "load", () => { throw new Error("CSV must not be read"); });
   const poi = { osmId: "1", name: "Park", locality: "TEST TOWN", lgaName: "TEST LGA",
@@ -27,6 +29,15 @@ test("Compare defaults to database without reading CSV, preserving dedupe and pi
   assert.equal(result.items[0].breakdown[0].count, 1);
   assert.equal(result.items[0].latitude, -37);
   assert.equal(result.items[0].score, 100);
+  const plan = planSchema.parse({ include: ["park"], area: "TEST", intent: "recommend", town: "", priority: false, bonus: [], exclude: [], unverified: [] });
+  const reply = await buildRecommendations(plan);
+  assert.equal(reply.places[0].name, "Test Town");
+  assert.equal(reply.places[0].latitude, result.items[0].latitude);
+  assert.match(reply.reply, /AWS RDS: public.regional_pois/);
+  assert.doesNotMatch(reply.reply, /CSV|\.csv/);
+  const details = await buildRecommendations({ ...plan, intent: "town_details", town: "TEST TOWN" });
+  assert.match(details.reply, /Park: 1/);
+  assert.match(details.reply, /AWS RDS/);
   const empty = await new CompareController().handle(new NextRequest("http://localhost/api/compare?prefs=park&q=NO_MATCH"));
   assert.deepEqual((await empty.json()).items, []);
 });

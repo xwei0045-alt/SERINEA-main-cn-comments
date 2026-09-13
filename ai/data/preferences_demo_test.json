@@ -1,0 +1,22 @@
+[
+  {"id":"test_001","group_id":"test_01","source":"ai_generated_demo","text":"School access and food shopping matter to me, but parks do not need to influence the results.","include":["school","grocery"],"exclude":["park"]},
+  {"id":"test_002","group_id":"test_02","source":"ai_generated_demo","text":"把诊所和药房纳入偏好，健身房就不用了。","include":["gp","pharmacy"],"exclude":["gym"]},
+  {"id":"test_003","group_id":"test_03","source":"ai_generated_demo","text":"Compare access to hospitals and public transport stops, but do not use community centres as a priority.","include":["hospital","transit"],"exclude":["community"]},
+  {"id":"test_004","group_id":"test_04","source":"ai_generated_demo","text":"图书馆和公园对我重要，学校不用考虑。","include":["library","park"],"exclude":["school"]},
+  {"id":"test_005","group_id":"test_05","source":"ai_generated_demo","text":"Sports centres and community halls are my priorities, not grocery shopping.","include":["gym","community"],"exclude":["grocery"]},
+  {"id":"test_006","group_id":"test_06","source":"ai_generated_demo","text":"学校优先，全科诊所和药房不用纳入这次比较。","include":["school"],"exclude":["gp","pharmacy"]},
+  {"id":"test_007","group_id":"test_07","source":"ai_generated_demo","text":"Please use grocery availability in the comparison, but leave hospitals and transit stops out.","include":["grocery"],"exclude":["hospital","transit"]},
+  {"id":"test_008","group_id":"test_08","source":"ai_generated_demo","text":"我只提出一个需要考虑的类别：诊所。图书馆和公园不用考虑。","include":["gp"],"exclude":["library","park"]},
+  {"id":"test_009","group_id":"test_09","source":"ai_generated_demo","text":"Include chemists, but omit gyms and community centres from my priorities.","include":["pharmacy"],"exclude":["gym","community"]},
+  {"id":"test_010","group_id":"test_10","source":"ai_generated_demo","text":"公交站和火车站比较重要，学校和超市这次不作为偏好。","include":["transit"],"exclude":["school","grocery"]},
+  {"id":"test_011","group_id":"test_11","source":"ai_generated_demo","text":"Where can I find cheaper rent?","include":[],"exclude":[]},
+  {"id":"test_012","group_id":"test_12","source":"ai_generated_demo","text":"找一个治安更好的地方。","include":[],"exclude":[]},
+  {"id":"test_013","group_id":"test_13","source":"ai_generated_demo","text":"I would like a place with good services.","include":[],"exclude":[]},
+  {"id":"test_014","group_id":"test_14","source":"ai_generated_demo","text":"不要按公园数量给城镇加分。","include":[],"exclude":["park"]},
+  {"id":"test_015","group_id":"test_15","source":"ai_generated_demo","text":"Prioritise places where I can go to a gym and borrow library books.","include":["gym","library"],"exclude":[]},
+  {"id":"test_016","group_id":"test_16","source":"ai_generated_demo","text":"我需要方便去医院，也希望有超市买菜。","include":["hospital","grocery"],"exclude":[]},
+  {"id":"test_017","group_id":"test_17","source":"ai_generated_demo","text":"I do not want pharmacies used as a ranking preference.","include":[],"exclude":["pharmacy"]},
+  {"id":"test_018","group_id":"test_18","source":"ai_generated_demo","text":"我希望附近有社区活动中心和学校。","include":["community","school"],"exclude":[]},
+  {"id":"test_019","group_id":"test_19","source":"ai_generated_demo","text":"Please consider clinics and public transport stops.","include":["gp","transit"],"exclude":[]},
+  {"id":"test_020","group_id":"test_20","source":"ai_generated_demo","text":"不要考虑图书馆；药房要算进去。","include":["pharmacy"],"exclude":["library"]}
+]

@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create source package without credentials
+      - name: Create source package without credentials or legacy runtime data
         run: |
           tar -czf /tmp/serinea-main-${GITHUB_SHA::7}.tar.gz \
             --exclude=.git \
@@ -50,9 +50,7 @@ jobs:
             --exclude=.next \
             --exclude=.env \
             --exclude=.env.local \
-            --exclude='data/locality_poi_summary_iteration1.csv' \
-            --exclude='data/regional_pois_detail_optimized_iteration1.csv' \
-            --exclude='data/SERINEA_mock_subsidies_450.csv' \
+            --exclude='data/*.csv' \
             --exclude='docs/SERINEA_FRONTEND_BACKEND_ARCHITECTURE.drawio' \
             .
 

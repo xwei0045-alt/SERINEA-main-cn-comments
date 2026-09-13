@@ -14,7 +14,7 @@ Use **feature branches**, not dump branches:
 | --- | --- |
 | `feature/maps` | Map, reach, walk |
 | `feature/filters` | Compare prefs & ranking |
-| `feature/ai-assistant` | Separate mock AI Assistant page |
+| `feature/ai-assistant` | Chat / Groq assistant |
 | `feature/data` | CSV extract & loaders |
 | `feature/home` | Landing / how-it-works UI |
 

@@ -15,8 +15,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
-  // Optional browser-side Qwen model download. Ranking data remains same-origin.
-  "connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co",
+  "connect-src 'self'",
   "worker-src 'self' blob:",
   // Only after Nginx terminates TLS on :443. On plain HTTP this forces the
   // browser to fetch /_next CSS+JS over HTTPS and the UI renders unstyled.

@@ -7,20 +7,14 @@ import { Chrome } from "../components/Chrome";
 import { TownSearchField } from "../components/TownSearchField";
 import { compareApiClient } from "@/frontend/api/CompareApiClient";
 import { preferenceWeights } from "@/lib/comparePriorities";
-import {
-  COMPARE_HIERARCHY_PREFERENCES,
-  COMPARE_PREFERENCE_GROUPS
-} from "@/lib/types";
+import { COMPARE_PREFERENCES } from "@/lib/types";
 import { findPreferences } from "@/lib/preferenceSearch";
-import {
-  preferenceLabel,
-  toggleHierarchicalPreference
-} from "@/lib/preferenceHierarchy";
 import type { CompareRankItem, CompareResponse } from "@/shared/contracts/compare";
+import FloatingAssistant from "./FloatingAssistant";
 import styles from "./compareFlow.module.css";
 
 const scoreFormat = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 2 });
-const knownPrefs = new Set(COMPARE_HIERARCHY_PREFERENCES.map((pref) => pref.id));
+const knownPrefs = new Set(COMPARE_PREFERENCES.map((pref) => pref.id));
 
 type Step = 1 | 2 | 3;
 
@@ -53,16 +47,15 @@ export default function CompareClient() {
   const [step, setStep] = useState<Step>(bootPrefs?.length ? 3 : 1);
   const [selected, setSelected] = useState<string[]>(bootPrefs ?? []);
   const [priority, setPriority] = useState(false);
-  const [area, setArea] = useState("");
+  const [chatArea, setChatArea] = useState("");
   const [areaDraft, setAreaDraft] = useState("");
   const [prefQuery, setPrefQuery] = useState("");
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["education"]));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CompareResponse | null>(null);
 
   const available = useMemo(
-    () => findPreferences(prefQuery, selected, COMPARE_HIERARCHY_PREFERENCES),
+    () => findPreferences(prefQuery, selected),
     [prefQuery, selected]
   );
 
@@ -93,7 +86,7 @@ export default function CompareClient() {
             prefs: selected,
             weights: preferenceWeights(selected.length, priority),
             limit: 10,
-            q: area || undefined
+            q: chatArea || undefined
           },
           controller.signal
         )
@@ -113,27 +106,14 @@ export default function CompareClient() {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [selected, priority, area, step]);
+  }, [selected, priority, chatArea, step]);
 
   const matches = result?.items.slice(0, 10) ?? [];
 
   function toggle(id: string) {
-    setSelected((current) => toggleHierarchicalPreference(current, id));
-  }
-
-  function toggleGroup(id: string) {
-    setExpandedGroups((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function preferenceGroupLabel(id: string): string {
-    return COMPARE_PREFERENCE_GROUPS.find((group) =>
-      group.preferenceId === id || group.childIds.some((childId) => childId === id)
-    )?.label ?? "Facility";
+    setSelected((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
   }
 
   return (
@@ -151,7 +131,6 @@ export default function CompareClient() {
                 type="button"
                 className={step === item.n ? styles.stepOn : styles.step}
                 aria-current={step === item.n ? "step" : undefined}
-                disabled={item.n > 1 && selected.length === 0}
                 onClick={() => setStep(item.n)}
               >
                 <span>{item.n}</span>
@@ -163,9 +142,9 @@ export default function CompareClient() {
 
         {step === 1 && (
           <section className={styles.pane} aria-labelledby="step1">
-            <h1 id="step1">What matters most?</h1>
+            <h1 id="step1">What has to be in town?</h1>
             <p className={styles.lead}>
-              Choose a broad category, or open it to select specific facility types.
+              Pick from the full extract — bus stations, schools, parks, clinics…
             </p>
             <input
               className={styles.search}
@@ -177,27 +156,27 @@ export default function CompareClient() {
             />
             <div className={styles.selectedRow}>
               {selected.length === 0 ? (
-                <span>Select at least one.</span>
+                <span>None selected</span>
               ) : (
                 selected.map((id) => {
-                  const label = preferenceLabel(id);
+                  const label =
+                    COMPARE_PREFERENCES.find((item) => item.id === id)?.label ?? id;
                   return (
                     <button
                       key={id}
                       type="button"
                       className={styles.pillOn}
-                      aria-label={`Remove ${label}`}
                       onClick={() => toggle(id)}
                     >
-                      {selected.indexOf(id) + 1}. {label} ×
+                      {label} ×
                     </button>
                   );
                 })
               )}
             </div>
-            {prefQuery.trim() ? (
-              <div className={styles.searchGrid} role="group" aria-label="Matching categories and facility types">
-                {available.map((pref) => (
+            <div className={styles.grid} role="group" aria-label="Facilities">
+              {(prefQuery.trim() ? available : COMPARE_PREFERENCES.filter((p) => !selected.includes(p.id))).map(
+                (pref) => (
                   <button
                     key={pref.id}
                     type="button"
@@ -207,78 +186,11 @@ export default function CompareClient() {
                       setPrefQuery("");
                     }}
                   >
-                    <strong>{preferenceLabel(pref.id)}</strong>
-                    <small>
-                      {COMPARE_PREFERENCE_GROUPS.some((group) => group.preferenceId === pref.id)
-                        ? "Broad category"
-                        : `${preferenceGroupLabel(pref.id)} · specific type`}
-                    </small>
+                    {pref.label}
                   </button>
-                ))}
-              </div>
-            ) : (
-              <div className={styles.categoryGrid} aria-label="Facility categories">
-                {COMPARE_PREFERENCE_GROUPS.map((group) => {
-                  const expanded = expandedGroups.has(group.id);
-                  const parentSelected = selected.includes(group.preferenceId);
-                  const childCount = group.childIds.filter((id) => selected.includes(id)).length;
-                  return (
-                    <article
-                      key={group.id}
-                      className={`${styles.categoryCard} ${parentSelected || childCount > 0 ? styles.categoryHasSelection : ""}`}
-                    >
-                      <div className={styles.categoryTop}>
-                        <button
-                          type="button"
-                          className={parentSelected ? styles.categorySelected : styles.categoryPick}
-                          aria-pressed={parentSelected}
-                          onClick={() => toggle(group.preferenceId)}
-                        >
-                          <span>Broad category</span>
-                          <strong>{group.label}</strong>
-                          <small>{group.description}</small>
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.branchToggle}
-                          aria-expanded={expanded}
-                          aria-controls={`category-${group.id}`}
-                          onClick={() => toggleGroup(group.id)}
-                        >
-                          {expanded ? "Hide types" : `View ${group.childIds.length} types`}
-                          <span aria-hidden="true">{expanded ? "−" : "+"}</span>
-                        </button>
-                      </div>
-                      {expanded && (
-                        <div id={`category-${group.id}`} className={styles.categoryBranch}>
-                          <p>
-                            {parentSelected
-                              ? "Choosing a specific type will replace this broad category."
-                              : "Choose one or more specific types."}
-                          </p>
-                          <div>
-                            {group.childIds.map((id) => {
-                              const active = selected.includes(id);
-                              return (
-                                <button
-                                  key={id}
-                                  type="button"
-                                  className={active ? styles.subcategoryOn : styles.subcategory}
-                                  aria-pressed={active}
-                                  onClick={() => toggle(id)}
-                                >
-                                  {preferenceLabel(id)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </article>
-                  );
-                })}
-              </div>
-            )}
+                )
+              )}
+            </div>
             {prefQuery.trim() && available.length === 0 && (
               <p className={styles.note} role="status">
                 Not found — no facility matched “{prefQuery.trim()}”.
@@ -299,9 +211,9 @@ export default function CompareClient() {
 
         {step === 2 && (
           <section className={styles.pane} aria-labelledby="step2">
-            <h1 id="step2">Choose an area</h1>
+            <h1 id="step2">Narrow the area?</h1>
             <p className={styles.lead}>
-              Optional. Leave blank for all regional Victoria.
+              Optional. Leave blank to rank across all regional Victoria.
             </p>
             <div className={styles.areaField}>
               <TownSearchField
@@ -312,17 +224,17 @@ export default function CompareClient() {
                 placeholder="Type to limit ranking…"
                 onSelect={(item) => {
                   setAreaDraft(item.locality);
-                  setArea(item.locality);
+                  setChatArea(item.locality);
                 }}
               />
             </div>
-            {area && (
+            {chatArea && (
               <p className={styles.areaChip}>
-                Limited to <strong>{titleCase(area)}</strong>
+                Limited to <strong>{titleCase(chatArea)}</strong>
                 <button
                   type="button"
                   onClick={() => {
-                    setArea("");
+                    setChatArea("");
                     setAreaDraft("");
                   }}
                 >
@@ -331,7 +243,7 @@ export default function CompareClient() {
               </p>
             )}
             <div className={styles.weight} role="group" aria-label="How to weight your picks">
-              <p className={styles.weightLabel}>Ranking priority</p>
+              <p className={styles.weightLabel}>How to weight your picks</p>
               <div className={styles.weightSeg}>
                 <button
                   type="button"
@@ -339,7 +251,7 @@ export default function CompareClient() {
                   aria-pressed={!priority}
                   onClick={() => setPriority(false)}
                 >
-                  Equal
+                  Equal weight
                 </button>
                 <button
                   type="button"
@@ -347,35 +259,15 @@ export default function CompareClient() {
                   aria-pressed={priority}
                   onClick={() => setPriority(true)}
                 >
-                  First choice first
+                  First pick matters most
                 </button>
               </div>
-              {priority && (
-                <ul className={styles.weightList} aria-label="Selected ranking weights">
-                  {selected.map((id, index) => (
-                    <li key={id}>
-                      <span>
-                        {index + 1}.{" "}
-                        {preferenceLabel(id)}
-                      </span>
-                      <strong>
-                        {(preferenceWeights(selected.length, priority)[index] * 100).toFixed(1)}%
-                      </strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
             <div className={styles.footer}>
               <button type="button" className={styles.back} onClick={() => setStep(1)}>
                 ← Facilities
               </button>
-              <button
-                type="button"
-                className={styles.next}
-                disabled={selected.length === 0}
-                onClick={() => setStep(3)}
-              >
+              <button type="button" className={styles.next} onClick={() => setStep(3)}>
                 See rankings →
               </button>
             </div>
@@ -384,20 +276,20 @@ export default function CompareClient() {
 
         {step === 3 && (
           <section className={styles.pane} aria-labelledby="step3">
-            <h1 id="step3">Town rankings</h1>
+            <h1 id="step3">Town ladder</h1>
             <p className={styles.lead}>
-              Based on{" "}
+              Best-fit localities from our data for{" "}
               {selected
-                .map(preferenceLabel)
+                .map((id) => COMPARE_PREFERENCES.find((p) => p.id === id)?.label ?? id)
                 .join(", ")}
-              {area ? ` within ${titleCase(area)}` : ""}.
+              {chatArea ? ` within ${titleCase(chatArea)}` : ""}.
             </p>
             <div className={styles.footer} style={{ marginBottom: "1rem" }}>
               <button type="button" className={styles.back} onClick={() => setStep(1)}>
                 Edit facilities
               </button>
               <button type="button" className={styles.back} onClick={() => setStep(2)}>
-                Edit area & weights
+                Edit area
               </button>
             </div>
 
@@ -409,12 +301,6 @@ export default function CompareClient() {
             {error && (
               <p className={styles.note} role="alert">
                 {error}
-              </p>
-            )}
-
-            {result && matches.length > 0 && (
-              <p className={styles.methodNote}>
-                Scores use town-wide facility counts. They do not measure distance or quality.
               </p>
             )}
 
@@ -450,6 +336,16 @@ export default function CompareClient() {
           </section>
         )}
       </main>
+      <FloatingAssistant
+        context={{ preferences: selected, priority, area: chatArea }}
+        onApply={({ preferences, priority, area }) => {
+          setSelected(preferences);
+          setPriority(priority);
+          setChatArea(area);
+          setAreaDraft(area);
+          setStep(3);
+        }}
+      />
     </div>
   );
 }
@@ -468,20 +364,12 @@ function LadderRow({ item, rank }: { item: CompareRankItem; rank: number }) {
         <p>
           {titleCase(item.lgaName)} · {item.totalPoiCount.toLocaleString("en-AU")} places
         </p>
-        <dl className={styles.counts}>
-          {item.breakdown.map((entry) => (
-            <div key={entry.preferenceId}>
-              <dt>{entry.label}</dt>
-              <dd>{entry.count.toLocaleString("en-AU")}</dd>
-            </div>
-          ))}
-        </dl>
+        <p className={styles.counts}>
+          {item.breakdown.map((entry) => `${entry.label} ${entry.count}`).join(" · ")}
+        </p>
       </div>
       <div className={styles.rungScore}>
-        <span>Fit score</span>
-        <strong>
-          {scoreFormat.format(item.score)} <small>/ 100</small>
-        </strong>
+        <strong>{scoreFormat.format(item.score)}</strong>
         <Link href={mapHref}>Map</Link>
       </div>
     </li>

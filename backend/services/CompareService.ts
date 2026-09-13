@@ -1,4 +1,4 @@
-import { RANKING_PREFERENCES } from "@/lib/types";
+import { COMPARE_PREFERENCES } from "@/lib/types";
 import { LocalitySummaryServiceFactory } from "@/backend/factories/LocalitySummaryServiceFactory";
 import { PostgresComparePoiLoader, type ComparePoi } from "@/backend/repositories/PostgresComparePoiLoader";
 import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
@@ -45,15 +45,13 @@ export class CompareService {
 
   async rank(query: CompareQuery): Promise<CompareResponse> {
     const selected = query.prefs
-      .map((id) => RANKING_PREFERENCES.find((pref) => pref.id === id))
-      .filter((pref): pref is (typeof RANKING_PREFERENCES)[number] => Boolean(pref));
+      .map((id) => COMPARE_PREFERENCES.find((pref) => pref.id === id))
+      .filter((pref): pref is (typeof COMPARE_PREFERENCES)[number] => Boolean(pref));
     const weights = query.weights ?? selected.map(() => 1);
     const preferences = selected.map((pref, index) => ({
       id: pref.id,
       label: pref.label,
-      weight: weights[index],
-      evidenceMethod: pref.evidenceMethod,
-      warning: pref.warning
+      weight: weights[index]
     }));
 
     const catalog = await this.localities.listAll();
@@ -169,29 +167,6 @@ export class CompareService {
         }
       }
 
-      const derived = [
-        {
-          subcategory: "primary_school",
-          displayName: "Name-identified primary school",
-          poiCount: pois.filter((poi) =>
-            poi.subcategory === "school" && /\bprimary\b/i.test(poi.name)
-          ).length,
-          parent: "education"
-        },
-        {
-          subcategory: "gym",
-          displayName: "Name-identified gym or fitness centre",
-          poiCount: pois.filter((poi) =>
-            poi.subcategory === "sports_centre" && /\b(?:gym|fitness)\b/i.test(poi.name)
-          ).length,
-          parent: "recreation"
-        }
-      ].filter((entry) => entry.poiCount > 0);
-
-      for (const entry of derived) {
-        subCounts.set(entry.subcategory, entry);
-      }
-
       // Keep the original category buckets but replace counts with deduped totals.
       const categories = item.categories
         .map((category) => {
@@ -203,17 +178,7 @@ export class CompareService {
                 : { ...sub, poiCount: 0 };
             })
             .filter((sub) => sub.poiCount > 0);
-          for (const entry of derived.filter((candidate) => candidate.parent === category.category)) {
-            subcategories.push({
-              subcategory: entry.subcategory,
-              displayName: entry.displayName,
-              poiCount: entry.poiCount
-            });
-          }
-          // Derived rows describe existing POIs, so do not add them to category totals.
-          const poiCount = subcategories
-            .filter((sub) => !["primary_school", "gym"].includes(sub.subcategory))
-            .reduce((sum, sub) => sum + sub.poiCount, 0);
+          const poiCount = subcategories.reduce((sum, sub) => sum + sub.poiCount, 0);
           return { ...category, poiCount, subcategories };
         })
         .filter((category) => category.poiCount > 0)
@@ -232,7 +197,7 @@ export class CompareService {
 
   private scoreLocality(
     item: LocalitySummaryItem,
-    selected: typeof RANKING_PREFERENCES,
+    selected: typeof COMPARE_PREFERENCES,
     weights: number[],
     categoryMaximums: number[]
   ) {

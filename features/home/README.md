@@ -15,4 +15,4 @@
 
 ## Out of scope
 
-Map reach APIs, Compare ranking maths, AI Assistant page, CSV pipeline.
+Map reach APIs, Compare ranking maths, Groq assistant, CSV pipeline.

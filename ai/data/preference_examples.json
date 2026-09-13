@@ -1,0 +1,30 @@
+[
+    {
+      "id": "001",
+      "group_id": "g001",
+      "text": "I need supermarkets and schools nearby.",
+      "include": ["grocery", "school"],
+      "exclude": []
+    },
+    {
+      "id": "002",
+      "group_id": "g002",
+      "text": "A doctor or clinic is important to me. Parks are not a priority.",
+      "include": ["gp"],
+      "exclude": ["park"]
+    },
+    {
+      "id": "003",
+      "group_id": "g003",
+      "text": "我希望附近有公交站和药房。",
+      "include": ["transit", "pharmacy"],
+      "exclude": []
+    },
+    {
+      "id": "004",
+      "group_id": "g004",
+      "text": "Somewhere with easy access to a library would be nice.",
+      "include": ["library"],
+      "exclude": []
+    }
+  ]
