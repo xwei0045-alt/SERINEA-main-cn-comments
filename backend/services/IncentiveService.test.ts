@@ -142,3 +142,42 @@ test("profile locality and LGA are treated as one exact area", async () => {
   assert.deepEqual(result.groups.map((group) => group.lgaName), ["LGA TWO"]);
   assert.deepEqual(result.groups[0].items.map((item) => item.subsidyId), ["MOCK-SUB-OTHER"]);
 });
+
+test("database records refresh after the cache TTL", async () => {
+  let loads = 0;
+  let time = 1_000;
+  const repository: SubsidyRepository = {
+    dataSource: "database",
+    async load() {
+      loads += 1;
+      return [];
+    }
+  };
+  const refreshingService = new IncentiveService(repository, 100, () => time);
+
+  await refreshingService.find(request());
+  time += 50;
+  await refreshingService.find(request());
+  assert.equal(loads, 1);
+
+  time += 51;
+  await refreshingService.find(request());
+  assert.equal(loads, 2);
+});
+
+test("a failed database read is retried on the next request", async () => {
+  let loads = 0;
+  const repository: SubsidyRepository = {
+    dataSource: "database",
+    async load() {
+      loads += 1;
+      if (loads === 1) throw new Error("temporary database error");
+      return [];
+    }
+  };
+  const retryingService = new IncentiveService(repository);
+
+  await assert.rejects(() => retryingService.find(request()), /temporary database error/);
+  await retryingService.find(request());
+  assert.equal(loads, 2);
+});

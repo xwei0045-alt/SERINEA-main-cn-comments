@@ -63,8 +63,13 @@ function categoriesIn(message: string): Set<string> {
 
 export class IncentiveService {
   private recordsPromise: Promise<SubsidyRecord[]> | undefined;
+  private recordsLoadedAt = 0;
 
-  constructor(private readonly repository: SubsidyRepository = new PostgresSubsidyRepository()) {}
+  constructor(
+    private readonly repository: SubsidyRepository = new PostgresSubsidyRepository(),
+    private readonly cacheTtlMs = 5 * 60 * 1000,
+    private readonly now = Date.now
+  ) {}
 
   async find(input: IncentiveRequest): Promise<IncentiveResponse> {
     const records = await this.load();
@@ -226,7 +231,14 @@ export class IncentiveService {
   }
 
   private load(): Promise<SubsidyRecord[]> {
-    if (!this.recordsPromise) this.recordsPromise = this.repository.load();
+    if (!this.recordsPromise || this.now() - this.recordsLoadedAt >= this.cacheTtlMs) {
+      this.recordsLoadedAt = this.now();
+      this.recordsPromise = this.repository.load().catch((error) => {
+        this.recordsPromise = undefined;
+        this.recordsLoadedAt = 0;
+        throw error;
+      });
+    }
     return this.recordsPromise;
   }
 }
