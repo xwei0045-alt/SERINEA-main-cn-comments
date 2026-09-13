@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import path from "node:path";
 import { IncentiveService } from "./IncentiveService";
-import { CsvSubsidyRepository } from "@/backend/repositories/SubsidyRepository";
+import {
+  CsvSubsidyRepository,
+  type SubsidyRecord,
+  type SubsidyRepository
+} from "@/backend/repositories/SubsidyRepository";
 import type { IncentiveRequest } from "@/shared/contracts/incentives";
 
 const dataDirectory = path.join(process.cwd(), "data");
@@ -98,4 +102,43 @@ test("dependent-child incentives are excluded when the user explicitly has no ch
   assert.equal(result.groups.length, 1);
   assert.ok(result.groups[0].items.every((item) => item.subsidyId !== "MOCK-SUB-0066"));
   assert.ok(result.groups[0].items.every((item) => !item.missing.includes("Dependent child's age")));
+});
+
+test("profile locality and LGA are treated as one exact area", async () => {
+  const baseRecord: SubsidyRecord = {
+    subsidyId: "MOCK-SUB-TEST",
+    subsidyName: "[MOCK] Test support",
+    category: "relocation",
+    locality: "SPRINGFIELD",
+    lgaName: "LGA ONE",
+    benefitType: "grant",
+    maxAmountAud: 1000,
+    incomeLimitAnnual: null,
+    incomeAssessmentUnit: "household",
+    ageSubject: "applicant",
+    ageMin: null,
+    ageMax: null,
+    newResidentRequired: false,
+    applyWithinDays: null,
+    minimumMoveDistanceKm: null,
+    eligibilitySummary: "Synthetic rule",
+    requiredEvidence: "Synthetic evidence",
+    mockStatus: "mock_open",
+    recordNotice: "Fictional subsidy for testing only."
+  };
+  const repository: SubsidyRepository = {
+    dataSource: "database",
+    async load() {
+      return [baseRecord, { ...baseRecord, subsidyId: "MOCK-SUB-OTHER", lgaName: "LGA TWO" }];
+    }
+  };
+  const exactAreaService = new IncentiveService(repository);
+  const base = request();
+  const result = await exactAreaService.find(request({
+    message: "Show available support.",
+    profile: { ...base.profile, locality: "Springfield", lga_name: "LGA Two" }
+  }));
+
+  assert.deepEqual(result.groups.map((group) => group.lgaName), ["LGA TWO"]);
+  assert.deepEqual(result.groups[0].items.map((item) => item.subsidyId), ["MOCK-SUB-OTHER"]);
 });

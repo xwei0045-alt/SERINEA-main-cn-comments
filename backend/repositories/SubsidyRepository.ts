@@ -1,6 +1,7 @@
 import path from "path";
 import { readFile } from "fs/promises";
 import { parse } from "csv-parse/sync";
+import { z } from "zod";
 import { Environment } from "@/backend/config/Environment";
 import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 
@@ -49,6 +50,39 @@ function nullableNumber(value: string | number | null): number | null {
   return number;
 }
 
+const subsidyRecordSchema = z.object({
+  subsidyId: z.string().trim().min(1),
+  subsidyName: z.string().trim().min(1),
+  category: z.string().trim().min(1),
+  locality: z.string().trim().min(1),
+  lgaName: z.string().trim().min(1),
+  benefitType: z.string().trim().min(1),
+  maxAmountAud: z.number().nonnegative(),
+  incomeLimitAnnual: z.number().nonnegative().nullable(),
+  incomeAssessmentUnit: z.enum(["individual", "household"]),
+  ageSubject: z.enum(["applicant", "dependent_child"]),
+  ageMin: z.number().int().nonnegative().nullable(),
+  ageMax: z.number().int().nonnegative().nullable(),
+  newResidentRequired: z.boolean(),
+  applyWithinDays: z.number().int().nonnegative().nullable(),
+  minimumMoveDistanceKm: z.number().nonnegative().nullable(),
+  eligibilitySummary: z.string().trim().min(1),
+  requiredEvidence: z.string().trim().min(1),
+  mockStatus: z.enum(["mock_open", "mock_upcoming", "mock_closed"]),
+  recordNotice: z.string().trim().min(1)
+});
+
+function validateRecord(record: SubsidyRecord): SubsidyRecord {
+  const result = subsidyRecordSchema.safeParse(record);
+  if (!result.success) {
+    throw new Error(`Invalid subsidy record ${record.subsidyId || "<unknown>"}: ${z.prettifyError(result.error)}`);
+  }
+  if (record.ageMin != null && record.ageMax != null && record.ageMin > record.ageMax) {
+    throw new Error(`Invalid subsidy record ${record.subsidyId}: ageMin exceeds ageMax.`);
+  }
+  return result.data;
+}
+
 /** Reads the synthetic subsidy dataset from the production PostgreSQL table. */
 export class PostgresSubsidyRepository implements SubsidyRepository {
   readonly dataSource = "database" as const;
@@ -81,7 +115,7 @@ export class PostgresSubsidyRepository implements SubsidyRepository {
       FROM public.subsidies
       WHERE is_synthetic IS TRUE`);
 
-    return result.rows.map((row) => ({
+    return result.rows.map((row) => validateRecord({
       ...row,
       maxAmountAud: nullableNumber(row.maxAmountAud) ?? 0,
       incomeLimitAnnual: nullableNumber(row.incomeLimitAnnual),
@@ -124,7 +158,7 @@ export class CsvSubsidyRepository implements SubsidyRepository {
       if (row.is_synthetic?.trim().toLowerCase() !== "true") {
         throw new Error(`${FILE_NAME}:${line} must be marked synthetic.`);
       }
-      return {
+      return validateRecord({
         subsidyId: requiredText(row, "subsidy_id", line),
         subsidyName: requiredText(row, "subsidy_name", line),
         category: requiredText(row, "subsidy_category", line),
@@ -144,7 +178,7 @@ export class CsvSubsidyRepository implements SubsidyRepository {
         requiredEvidence: requiredText(row, "required_evidence", line),
         mockStatus: requiredText(row, "mock_status", line) as SubsidyRecord["mockStatus"],
         recordNotice: requiredText(row, "record_notice", line)
-      };
+      });
     });
   }
 }

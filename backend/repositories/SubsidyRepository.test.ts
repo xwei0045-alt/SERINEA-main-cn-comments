@@ -40,3 +40,38 @@ test("Postgres subsidy repository reads only synthetic records and maps numeric 
   assert.equal(records[0].incomeLimitAnnual, 90000);
   assert.equal(records[0].minimumMoveDistanceKm, 50);
 });
+
+test("Postgres subsidy repository rejects invalid eligibility enums", async () => {
+  const database = {
+    async query() {
+      return {
+        rows: [{
+          subsidyId: "MOCK-SUB-BAD",
+          subsidyName: "[MOCK] Invalid support",
+          category: "relocation",
+          locality: "LUCAS",
+          lgaName: "BALLARAT",
+          benefitType: "grant",
+          maxAmountAud: "100.00",
+          incomeLimitAnnual: null,
+          incomeAssessmentUnit: "family",
+          ageSubject: "applicant",
+          ageMin: null,
+          ageMax: null,
+          newResidentRequired: false,
+          applyWithinDays: null,
+          minimumMoveDistanceKm: null,
+          eligibilitySummary: "Synthetic test rule",
+          requiredEvidence: "Synthetic test evidence",
+          mockStatus: "mock_open",
+          recordNotice: "Fictional subsidy for testing only."
+        }]
+      };
+    }
+  } as unknown as PostgresDatabase;
+
+  await assert.rejects(
+    () => new PostgresSubsidyRepository(database).load(),
+    /Invalid subsidy record MOCK-SUB-BAD/
+  );
+});

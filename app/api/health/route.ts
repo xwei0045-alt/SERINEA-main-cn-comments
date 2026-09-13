@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Environment } from "@/backend/config/Environment";
 import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { ReachServiceFactory } from "@/backend/factories/ReachServiceFactory";
+import { DatabaseReadinessService } from "@/backend/services/DatabaseReadinessService";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,7 @@ export async function GET() {
 
     if (environment.databaseUrl) {
       const connection = PostgresDatabase.getInstance(environment.databaseUrl);
-      databaseOk = await connection.isHealthy();
+      databaseOk = await new DatabaseReadinessService(connection).isReady();
     }
 
     const healthy =

@@ -119,7 +119,11 @@ export class IncentiveService {
       ? normalizeArea(profileLocality)
       : localities.find((candidate) => containsArea(message, candidate));
     if (locality) {
-      const matches = records.filter((record) => record.locality === locality);
+      const normalizedProfileLga = profileLga ? normalizeArea(profileLga) : null;
+      const matches = records.filter((record) =>
+        record.locality === locality &&
+        (normalizedProfileLga == null || record.lgaName === normalizedProfileLga)
+      );
       return [...new Map(matches.map((record) => [record.lgaName, record])).values()]
         .map((record) => ({ locality: record.locality, lgaName: record.lgaName, source: "named_area_query" as const }));
     }
