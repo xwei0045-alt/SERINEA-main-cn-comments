@@ -88,3 +88,13 @@ test("dependent-child rules use child age and never applicant age", async () => 
   assert.equal(school?.status, "Possible Match");
   assert.ok(school?.matched.includes("Dependent child's age"));
 });
+
+test("dependent-child incentives are excluded when the user explicitly has no children", async () => {
+  const result = await service.find(request({
+    message: "What school support is available in Lucas?"
+  }));
+
+  assert.equal(result.groups.length, 1);
+  assert.ok(result.groups[0].items.every((item) => item.subsidyId !== "MOCK-SUB-0066"));
+  assert.ok(result.groups[0].items.every((item) => !item.missing.includes("Dependent child's age")));
+});

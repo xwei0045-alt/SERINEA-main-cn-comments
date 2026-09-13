@@ -188,6 +188,8 @@ export class IncentiveService {
         if (record.ageMax != null && profile.age > record.ageMax) failed.push("Maximum age");
         if (!failed.some((item) => item.includes("age"))) matched.push("Applicant age");
       }
+    } else if (profile.has_child === false) {
+      failed.push("Dependent child required");
     } else if (profile.child_ages.length === 0) {
       missing.push("Dependent child's age");
     } else if (profile.child_ages.some((age) =>
