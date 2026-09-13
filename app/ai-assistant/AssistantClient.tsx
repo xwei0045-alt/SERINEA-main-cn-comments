@@ -417,7 +417,7 @@ export default function AssistantClient() {
             )}
             {latestIncentives && (
               <p className={styles.sourceNote}>
-                Incentive source: local 450-row synthetic CSV. Results are prototype screening only.
+                Incentive source: 450 synthetic database records. Results are prototype screening only.
               </p>
             )}
           </aside>

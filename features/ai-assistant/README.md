@@ -16,10 +16,11 @@ Compare page. Qwen3-0.6B is an optional WebGPU review and cannot alter ranking.
 Production ranking reads the existing PostgreSQL/RDS source through
 `CompareService.rank()`. The model runs in the browser and needs no LLM API key.
 
-The local candidate also reads `data/SERINEA_mock_subsidies_450.csv`. It can
-answer a named-town policy query or attach mock policy screening to the five
-lifestyle-ranked towns. Incentives remain a separate signal and never alter
-the town order.
+Production incentive screening reads the 450 synthetic records from
+`public.subsidies` in PostgreSQL. The CSV adapter is retained only for isolated
+dataset validation and unit tests. The service can answer a named-town policy
+query or attach mock policy screening to the five lifestyle-ranked towns.
+Incentives remain a separate signal and never alter the town order.
 
 This website path does not use embedding RAG. Exact locality/category retrieval
 and deterministic rules are safer for the structured 450-row dataset. The

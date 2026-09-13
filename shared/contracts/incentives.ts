@@ -63,7 +63,7 @@ export type IncentiveResponse = {
   groups: IncentiveTownGroup[];
   queryArea: string | null;
   needsAreaOrLifestyle: boolean;
-  dataSource: "SERINEA_mock_subsidies_450.csv";
+  dataSource: "database" | "SERINEA_mock_subsidies_450.csv";
   isSynthetic: true;
   recordNotice: string;
   generatedAt: string;

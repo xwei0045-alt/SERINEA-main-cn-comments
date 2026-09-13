@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import path from "node:path";
 import { IncentiveService } from "./IncentiveService";
+import { CsvSubsidyRepository } from "@/backend/repositories/SubsidyRepository";
 import type { IncentiveRequest } from "@/shared/contracts/incentives";
 
 const dataDirectory = path.join(process.cwd(), "data");
-const service = new IncentiveService(dataDirectory);
+const service = new IncentiveService(new CsvSubsidyRepository(dataDirectory));
 
 function request(overrides: Partial<IncentiveRequest> = {}): IncentiveRequest {
   return {

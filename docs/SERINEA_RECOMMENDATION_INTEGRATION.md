@@ -257,13 +257,14 @@ It is outside the Assistant integration and did not fail the build.
 
 ## 8. Known limitations and next integration steps
 
-1. The website now reads `SERINEA_mock_subsidies_450.csv` locally and validates
-   that it contains 450 synthetic rows. These are fictional prototype records,
-   not government programs. Real deployment requires sourced policy records,
-   update dates, ownership and expiry handling.
-2. Production RDS acceptance was not run because no real `DATABASE_URL` was
-   present. Before deployment, run the same Assistant request against the
-   deployed `regional_pois` table and verify the public URL.
+1. Production incentive screening reads 450 synthetic rows from
+   `public.subsidies` in PostgreSQL. The CSV adapter is retained only for
+   isolated validation and unit tests. These are fictional prototype records,
+   not government programs. Real policy deployment still requires sourced
+   records, update dates, ownership and expiry handling.
+2. The application database role must have `SELECT` permission on
+   `public.subsidies`. Verify that permission and run the same Assistant request
+   against the deployed database before merging to `main`.
 3. The browser model needs WebGPU and a large first download. The deterministic
    system remains fully usable without it.
 4. Name-based primary-school and gym coverage is incomplete by design. The UI
@@ -335,7 +336,7 @@ it was not claimed or performed here.
 
 ### New website paths
 
-- `POST /api/incentives`: validates the request and reads the local synthetic CSV.
+- `POST /api/incentives`: validates the request and reads synthetic records from PostgreSQL.
 - Named-area mode: retrieves policies for a locality or up to five localities in
   a named LGA.
 - Combined mode: receives the existing five lifestyle-ranked towns and returns

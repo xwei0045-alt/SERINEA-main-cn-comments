@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Incentive matching failed.", error);
     return NextResponse.json(
-      { error: { code: "INCENTIVE_FAILED", message: "Could not read the mock incentive data right now." } },
+      { error: { code: "INCENTIVE_FAILED", message: "Could not read the mock incentive data from the database right now." } },
       { status: 500 }
     );
   }
