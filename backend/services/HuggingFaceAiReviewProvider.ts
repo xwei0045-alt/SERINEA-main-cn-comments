@@ -18,7 +18,7 @@ export class HuggingFaceAiReviewProvider implements AiReviewProvider {
         max_tokens: 220,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: "Return JSON only: {\\"preferences\\":[{\\"target\\":string,\\"importance\\":\\"very_high|high|medium|low|very_low\\"}],\\"unsupported\\":[string]}. Review only the deterministic catalogue extraction; never invent targets." },
+          { role: "system", content: `Return JSON only with preferences [{target, importance}] and unsupported [string]. Importance must be very_high, high, medium, low or very_low. Review only the deterministic catalogue extraction; never invent targets.` },
           { role: "user", content: JSON.stringify({ message, deterministic }) }
         ]
       }),
