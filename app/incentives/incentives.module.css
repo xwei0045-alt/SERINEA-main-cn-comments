@@ -1,20 +1,16 @@
 /*
- * ============================================================
- * FILE: incentives.module.css  →  styles for /incentives
- * ============================================================
- * WHAT TO SAY IF ASKED:
- *   "This CSS Module styles only the Incentives page.
- *    Class names like styles.panel are imported in IncentivesClient.tsx."
+ * Styles for the Incentives page only.
  *
- * SECTION MAP (class → what it styles):
- *   .shell / .main     page background + content width
- *   .panel             the white form card
- *   .field / .row      input labels and two-column rows
- *   .townField         town typeahead wrapper
- *   .more / .moreBody  collapsed "More details" section
- *   .actions           Find incentives button + AI link
- *   .group / .card     result list after submit
- *   .status            Potential / Possible Match label
+ * IncentivesClient imports these as styles.panel, styles.card, and so on.
+ *
+ * Quick map:
+ * - shell / main: page layout
+ * - panel: the form card
+ * - field / row: inputs
+ * - townField: town suggestions
+ * - more: optional details section
+ * - actions: Find incentives button
+ * - group / card / status: results after submit
  */
 
 /* Page wrapper */
@@ -96,7 +92,7 @@
   gap: 0.75rem;
 }
 
-/* Town suggestions field */
+/* Town suggestions */
 .townField {
   display: grid;
   gap: 0.35rem;
