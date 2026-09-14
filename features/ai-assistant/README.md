@@ -4,7 +4,7 @@
 
 `POST /api/ai/review` accepts only `{ "message": "..." }`. The route repeats
 the deterministic catalogue extraction on the server, then asks the private
-service configured by `AI_REVIEW_BASE_URL` to review it. The review can report
+Hugging Face Inference Providers to review it. The review can report
 agreement, but it cannot replace deterministic preferences or town ranking.
 
 Successful reviews are stored in PostgreSQL `ai_review_cache`. The SHA-256 key
@@ -13,8 +13,9 @@ version and policy version. Changing either version invalidates old entries.
 Provider failures and invalid model output are not cached; the API returns
 `source: "fallback"` and keeps the deterministic result active.
 
-The private process must expose `POST /predict`, accept `message`,
-`deterministic` and `policyVersion`, and return:
+The server sends `message` and the deterministic extraction to the Hugging Face
+Router. Keep `HF_TOKEN` server-side and never expose it to the browser. The
+model must return:
 
 ```json
 {
