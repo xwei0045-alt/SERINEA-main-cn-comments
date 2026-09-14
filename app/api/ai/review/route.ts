@@ -14,7 +14,8 @@ export async function POST(request: Request) {
   let body: unknown;
   try {
     body = await request.json();
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.error("AI review failed:", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Send valid JSON." }, { status: 400 });
   }
   const parsed = aiReviewRequestSchema.safeParse(body);
@@ -38,7 +39,8 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(await service.review(parsed.data.message, deterministic),
       { headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.error("AI review failed:", error instanceof Error ? error.message : error);
     return NextResponse.json({
       agreed: false,
       summary: "Cloud Qwen review was unavailable. Deterministic extraction remained active.",

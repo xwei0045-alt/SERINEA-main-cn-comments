@@ -4,6 +4,24 @@ import type { AiReviewProvider } from "./AiReviewService";
 
 type Completion = { choices?: Array<{ message?: { content?: string | null } }> };
 
+function parseJsonObject(content: string): unknown {
+  const cleaned = content.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/```(?:json)?|```/gi, "").trim();
+  try { return JSON.parse(cleaned); } catch { /* extract the first balanced object below */ }
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
+  throw new Error("Hugging Face returned invalid review JSON.");
+}
+
+function normaliseReviewShape(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const record = value as Record<string, unknown>;
+  const unsupported = typeof record.unsupported === "string"
+    ? (record.unsupported.trim() ? [record.unsupported.trim()] : [])
+    : record.unsupported;
+  return { ...record, unsupported };
+}
+
 /** Server-only Hugging Face Inference Providers adapter. The token never reaches the browser. */
 export class HuggingFaceAiReviewProvider implements AiReviewProvider {
   constructor(private readonly options: { token: string; model: string; timeoutMs: number }) {}
@@ -28,6 +46,6 @@ export class HuggingFaceAiReviewProvider implements AiReviewProvider {
     const decoded = (await response.json()) as Completion;
     const content = decoded.choices?.[0]?.message?.content;
     if (!content) throw new Error("Hugging Face returned no review.");
-    return aiReviewResultSchema.parse(JSON.parse(content));
+    return aiReviewResultSchema.parse(normaliseReviewShape(parseJsonObject(content)));
   }
 }

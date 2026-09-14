@@ -15,7 +15,8 @@ Provider failures and invalid model output are not cached; the API returns
 
 The server sends `message` and the deterministic extraction to the Hugging Face
 Router. Keep `HF_TOKEN` server-side and never expose it to the browser. The
-model must return:
+configured model must be a Router-supported chat model (the custom
+`serinea-qwen3-browser-model` ONNX repository is not one). The model must return:
 
 ```json
 {
