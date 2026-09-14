@@ -17,6 +17,7 @@
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { Chrome } from "../components/Chrome";
+import { TownSearchField } from "../components/TownSearchField";
 import { incentiveApiClient } from "@/frontend/api/IncentiveApiClient";
 import type {
   IncentiveResponse,
@@ -170,28 +171,30 @@ export default function IncentivesClient() {
                 </datalist>
               </div>
 
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label htmlFor="locality">Town / locality</label>
-                  <input
-                    id="locality"
-                    name="locality"
-                    value={locality}
-                    onChange={(e) => setLocality(e.target.value)}
-                    placeholder="e.g. Daylesford"
-                    required
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="lga">LGA (optional)</label>
-                  <input
-                    id="lga"
-                    name="lga"
-                    value={lgaName}
-                    onChange={(e) => setLgaName(e.target.value)}
-                    placeholder="e.g. Hepburn"
-                  />
-                </div>
+              <div className={styles.townField}>
+                <TownSearchField
+                  id="locality"
+                  label="Town / locality"
+                  value={locality}
+                  onValueChange={(value) => {
+                    setLocality(value);
+                    setLgaName("");
+                  }}
+                  placeholder="Type to see towns from our data…"
+                  onSelect={(item) => {
+                    setLocality(titleCase(item.locality));
+                    setLgaName(titleCase(item.lgaName));
+                  }}
+                />
+                {lgaName ? (
+                  <p className={styles.lgaHint}>
+                    LGA: <strong>{lgaName}</strong>
+                  </p>
+                ) : (
+                  <p className={styles.lgaHint}>
+                    Pick a suggested town so we use the matching LGA from the dataset.
+                  </p>
+                )}
               </div>
 
               <div className={styles.row}>
