@@ -2,22 +2,16 @@ import type { Metadata } from "next";
 import IncentivesClient from "./IncentivesClient";
 
 /**
- * ============================================================
- * FILE: page.tsx  →  URL /incentives
- * ============================================================
- * WHAT TO SAY IF ASKED:
- *   "This is the Iteration 2 page entry. Next.js opens this file
- *    when someone clicks Incentives in the nav. It only loads the
- *    real UI from IncentivesClient.tsx."
+ * Iteration 2 page for /incentives.
  *
- * WHY SO SHORT?
- *   Server page = metadata (browser tab title) + render the client UI.
- *   All buttons/forms live in IncentivesClient.tsx.
+ * When someone clicks Incentives in the nav, Next.js opens this file.
+ * It sets the browser tab title, then shows IncentivesClient
+ * (that file has the real form and results).
  *
- * RELATED FILES:
- *   - IncentivesClient.tsx  = the form and results (main thing to show)
- *   - incentives.module.css = the look / layout
- *   - ../components/Chrome.tsx = top nav link "Incentives"
+ * Related files:
+ * - IncentivesClient.tsx (main UI to explain)
+ * - incentives.module.css (styles)
+ * - app/components/Chrome.tsx (nav link)
  */
 export const metadata: Metadata = {
   title: "SERINEA Incentives",
@@ -26,6 +20,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  // Hands the page to the client component that owns the form.
   return <IncentivesClient />;
 }

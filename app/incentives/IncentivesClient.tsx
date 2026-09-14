@@ -1,26 +1,19 @@
 "use client";
 
 /**
- * ============================================================
- * FILE: IncentivesClient.tsx  →  Iteration 2 frontend (main UI)
- * ============================================================
- * WHAT TO SAY IF ASKED (30-second version):
- *   "This is our Iteration 2 page. User enters job + town, then we
- *    show matching regional incentives. Town suggestions come from
- *    the same locality data as Compare/Map."
+ * Iteration 2 Incentives page (main frontend UI).
  *
- * USER FLOW (point at the form while talking):
- *   1. Your job
- *   2. Town (typeahead from our dataset)
- *   3. Moving status
- *   4. Optional extra details (age, income, …) — collapsed by default
- *   5. Find incentives → show result cards
+ * Easy pitch: user enters job and town, we show matching regional incentives.
+ * Town suggestions use the same locality data as Compare and Map.
  *
- * KEY PIECES BELOW (search these labels):
- *   [STATE]     — form values we remember while typing
- *   [SUBMIT]    — what happens when they click Find incentives
- *   [FORM UI]   — what the user sees
- *   [RESULTS]   — cards after the API responds
+ * Flow on the page:
+ * 1. Your job
+ * 2. Town (type to see suggestions from our data)
+ * 3. Moving status
+ * 4. Optional details (age, income, and so on) stay collapsed
+ * 5. Find incentives, then show result cards
+ *
+ * Sections below are marked: STATE, SUBMIT, FORM, RESULTS.
  */
 
 import Link from "next/link";
@@ -37,7 +30,7 @@ import styles from "./incentives.module.css";
 
 type Stage = "planning_to_move" | "already_moved" | "unknown";
 
-/** Pretty town names for the UI (DAYLESFORD → Daylesford). */
+// Make town names nicer for the screen (DAYLESFORD becomes Daylesford).
 function titleCase(value: string): string {
   return value
     .toLocaleLowerCase("en-AU")
@@ -47,7 +40,7 @@ function titleCase(value: string): string {
     .join(" ");
 }
 
-/** Turns optional text boxes into numbers, or null if empty. */
+// Turn optional text into a number, or null if the box is empty.
 function parseOptionalNumber(raw: string): number | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -56,24 +49,21 @@ function parseOptionalNumber(raw: string): number | null {
 }
 
 export default function IncentivesClient() {
-  // ---------- [STATE] form values ----------
-  // WHAT TO SAY: "React state holds whatever the user typed."
+  // STATE: remember what the user typed.
   const [occupation, setOccupation] = useState("");
   const [locality, setLocality] = useState("");
-  const [lgaName, setLgaName] = useState(""); // filled when they pick a suggested town
+  const [lgaName, setLgaName] = useState(""); // set when they pick a suggested town
   const [stage, setStage] = useState<Stage>("planning_to_move");
   const [age, setAge] = useState("");
   const [income, setIncome] = useState("");
   const [newResident, setNewResident] = useState<"unknown" | "yes" | "no">("unknown");
   const [moveDistanceKm, setMoveDistanceKm] = useState("");
   const [daysSinceMove, setDaysSinceMove] = useState("");
-  const [busy, setBusy] = useState(false); // true while waiting for the API
+  const [busy, setBusy] = useState(false); // true while we wait for the server
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<IncentiveResponse | null>(null);
 
-  // ---------- [SUBMIT] Find incentives ----------
-  // WHAT TO SAY: "On submit we send job + town + optional facts to /api/incentives
-  //              and store the response so the cards can render."
+  // SUBMIT: send job + town (+ optional facts) and keep the response for the cards.
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const town = locality.trim();
@@ -114,7 +104,7 @@ export default function IncentivesClient() {
           new_resident:
             newResident === "yes" ? true : newResident === "no" ? false : null
         },
-        // If they picked a suggestion, send exact town + LGA from our dataset.
+        // If they picked a suggestion, send the exact town and LGA from our data.
         towns: lga
           ? [
               {
@@ -134,10 +124,10 @@ export default function IncentivesClient() {
     }
   }
 
-  // ---------- [FORM UI] what the user sees ----------
+  // FORM: what the user sees on the page.
   return (
     <div className={styles.shell}>
-      {/* Top nav — Incentives is highlighted here */}
+      {/* Top nav. Incentives is the active link. */}
       <Chrome current="incentives" />
 
       <main className={styles.main}>
@@ -148,7 +138,7 @@ export default function IncentivesClient() {
 
         <section className={styles.panel}>
           <form className={styles.fields} onSubmit={onSubmit}>
-            {/* STEP 1 — job / occupation */}
+            {/* Step 1: job */}
             <div className={styles.field}>
               <label htmlFor="occupation">Your job</label>
               <input
@@ -168,7 +158,7 @@ export default function IncentivesClient() {
               </datalist>
             </div>
 
-            {/* STEP 2 — town from our dataset (same component Compare uses) */}
+            {/* Step 2: town from our dataset (same search as Compare) */}
             <div className={styles.townField}>
               <TownSearchField
                 id="locality"
@@ -180,7 +170,7 @@ export default function IncentivesClient() {
                 }}
                 placeholder="Start typing a town…"
                 onSelect={(item) => {
-                  // Picking a suggestion also saves the matching LGA.
+                  // Also save the matching LGA when they pick a suggestion.
                   setLocality(titleCase(item.locality));
                   setLgaName(titleCase(item.lgaName));
                 }}
@@ -188,7 +178,7 @@ export default function IncentivesClient() {
               {lgaName ? <p className={styles.lgaHint}>{lgaName}</p> : null}
             </div>
 
-            {/* STEP 3 — planning vs already moved */}
+            {/* Step 3: planning or already moved */}
             <div className={styles.field}>
               <label htmlFor="stage">Moving status</label>
               <select
@@ -203,7 +193,7 @@ export default function IncentivesClient() {
               </select>
             </div>
 
-            {/* OPTIONAL — kept collapsed so the page stays simple */}
+            {/* Optional fields stay hidden until opened */}
             <details className={styles.more}>
               <summary>More details (optional)</summary>
               <div className={styles.moreBody}>
@@ -273,7 +263,7 @@ export default function IncentivesClient() {
               </div>
             </details>
 
-            {/* STEP 4 — primary action */}
+            {/* Step 4: main button */}
             <div className={styles.actions}>
               <button type="submit" disabled={busy}>
                 {busy ? "Checking…" : "Find incentives"}
@@ -282,7 +272,7 @@ export default function IncentivesClient() {
             </div>
           </form>
 
-          {/* ---------- [RESULTS] ---------- */}
+          {/* RESULTS */}
           {error ? <p className={styles.error}>{error}</p> : null}
 
           {result ? (
@@ -300,7 +290,7 @@ export default function IncentivesClient() {
   );
 }
 
-/** One town heading + its incentive cards. */
+// One town heading plus its incentive cards.
 function TownGroup({ group }: { group: IncentiveTownGroup }) {
   return (
     <div className={styles.group}>
@@ -315,10 +305,7 @@ function TownGroup({ group }: { group: IncentiveTownGroup }) {
   );
 }
 
-/**
- * One incentive result card.
- * Status examples: Potential Incentive / Possible Match / More Information Needed
- */
+// One incentive card. Status can be Potential Incentive, Possible Match, or More Information Needed.
 function IncentiveCard({ item }: { item: IncentiveResultItem }) {
   return (
     <article className={styles.card}>
