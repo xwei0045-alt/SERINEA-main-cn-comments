@@ -18,7 +18,9 @@ export const aiReviewResponseSchema = z.object({
   summary: z.string(),
   source: z.enum(["cache", "inference", "fallback"]),
   modelVersion: z.string(),
-  policyVersion: z.string()
+  policyVersion: z.string(),
+  preferences: aiReviewResultSchema.shape.preferences,
+  unsupported: aiReviewResultSchema.shape.unsupported
 }).strict();
 
 export type AiReviewResult = z.infer<typeof aiReviewResultSchema>;

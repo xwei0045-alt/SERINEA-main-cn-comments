@@ -132,7 +132,7 @@ export default function AssistantClient() {
 
     const userMessage: Message = { id: nextMessageId.current++, role: "user", text: value };
     const extraction = extractRecommendation(value);
-    const nextProfile = mergeRecommendationState(profile, extraction);
+    let nextProfile = mergeRecommendationState(profile, extraction);
     setMessages((current) => [...current, userMessage]);
     setProfile(nextProfile);
     setDraft("");
@@ -140,17 +140,21 @@ export default function AssistantClient() {
 
     if (useTiny) {
       setTinyStatus("Cloud Qwen review is checking the extraction…");
-      fetch("/api/ai/review", {
+      try {
+      const response = await fetch("/api/ai/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: value })
-      })
-        .then(async (response) => {
-          if (!response.ok) throw new Error("Review request failed.");
-          return response.json() as Promise<{ summary: string }>;
-        })
-        .then((review) => setTinyStatus(review.summary))
-        .catch(() => setTinyStatus("Cloud Qwen review was unavailable. Deterministic extraction remained active."));
+      });
+      if (!response.ok) throw new Error("Review request failed.");
+      const review = await response.json() as { summary: string; preferences?: Array<{ target: string; importance: Importance }>; unsupported?: string[]; source?: string };
+      setTinyStatus(review.summary);
+      if (review.source !== "fallback" && review.preferences) {
+        const aiPreferences = review.preferences.map((item) => ({ ...item, evidence: "Understood by Cloud Qwen" }));
+        nextProfile = { ...nextProfile, preferences: aiPreferences, unsupported: review.unsupported ?? nextProfile.unsupported };
+        setProfile(nextProfile);
+      }
+      } catch { setTinyStatus("Cloud Qwen review was unavailable. Deterministic extraction remained active."); }
     }
 
     try {

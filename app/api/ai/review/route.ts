@@ -22,8 +22,8 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Send a message containing 1 to 2000 characters." }, { status: 400 });
   }
+  const deterministic = extractRecommendation(parsed.data.message);
   try {
-    const deterministic = extractRecommendation(parsed.data.message);
     const databaseUrl = process.env.DATABASE_URL?.trim();
     const hfToken = process.env.HF_TOKEN?.trim();
     if (!databaseUrl || !hfToken) throw new Error("AI review is not configured.");
@@ -46,7 +46,9 @@ export async function POST(request: Request) {
       summary: "Cloud Qwen review was unavailable. Deterministic extraction remained active.",
       source: "fallback",
       modelVersion,
-      policyVersion
+      policyVersion,
+      preferences: deterministic?.preferences?.map(({ target, importance }) => ({ target, importance })) ?? [],
+      unsupported: deterministic?.unsupported ?? []
     }, { headers: { "Cache-Control": "no-store" } });
   }
 }
