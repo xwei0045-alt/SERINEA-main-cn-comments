@@ -12,7 +12,6 @@
     "test": "tsx --test backend/**/*.test.ts lib/**/*.test.ts"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.8.1",
     "csv-parse": "^7.0.2",
     "leaflet": "^1.9.4",
     "next": "^15.5.24",
