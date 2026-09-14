@@ -316,6 +316,129 @@ export const COMPARE_PREFERENCES: {
   searchTerms: [...facility.searchTerms, facility.group.toLocaleLowerCase("en-AU")]
 }));
 
+const facilitiesByGroup = (group: string) =>
+  DATASET_FACILITIES
+    .filter((facility) => facility.group === group)
+    .map((facility) => facility.subcategory);
+
+/**
+ * The assistant can rank exact extract rows, broad category totals, and the two
+ * explicitly documented name-based proxies. Compare keeps its existing chip list.
+ */
+export const RANKING_PREFERENCES: {
+  id: string;
+  label: string;
+  subcategories: string[];
+  searchTerms: string[];
+  evidenceMethod: "exact_subcategory" | "category_total" | "name_heuristic";
+  warning?: string;
+}[] = [
+  ...COMPARE_PREFERENCES.map((preference) => ({
+    ...preference,
+    evidenceMethod: "exact_subcategory" as const
+  })),
+  ...[
+    ["community", "Community services", "Community"],
+    ["education", "Education services", "Education"],
+    ["healthcare", "Healthcare", "Healthcare"],
+    ["public_transport", "Public transport", "Public transport"],
+    ["recreation", "Recreation facilities", "Recreation"],
+    ["shopping", "Shopping facilities", "Shopping"]
+  ].map(([id, label, group]) => ({
+    id,
+    label,
+    subcategories: facilitiesByGroup(group),
+    searchTerms: [label.toLocaleLowerCase("en-AU")],
+    evidenceMethod: "category_total" as const
+  })),
+  {
+    id: "primary_school",
+    label: "Name-identified primary school",
+    subcategories: ["primary_school"],
+    searchTerms: ["primary school", "elementary school"],
+    evidenceMethod: "name_heuristic",
+    warning:
+      "Identified from school names containing ‘Primary’. Coverage may be incomplete; zero records does not prove absence."
+  },
+  {
+    id: "gym",
+    label: "Name-identified gym or fitness centre",
+    subcategories: ["gym"],
+    searchTerms: ["gym", "fitness centre", "fitness center"],
+    evidenceMethod: "name_heuristic",
+    warning:
+      "Identified from sports-centre names containing ‘gym’ or ‘fitness’. Coverage may be incomplete; zero records does not prove absence."
+  }
+];
+
+/**
+ * User-facing hierarchy for Compare. A broad parent uses the existing
+ * category-total preference; its children use exact rows or a disclosed name
+ * heuristic. The UI keeps a parent and its children mutually exclusive so the
+ * same facility records are never weighted twice.
+ */
+export const COMPARE_PREFERENCE_GROUPS = [
+  {
+    id: "education",
+    label: "Education",
+    description: "Schools, early learning and further study",
+    preferenceId: "education",
+    childIds: ["school", "primary_school", "kindergarten", "childcare", "college"]
+  },
+  {
+    id: "healthcare",
+    label: "Healthcare",
+    description: "Everyday care, medicines and hospitals",
+    preferenceId: "healthcare",
+    childIds: ["doctor", "clinic", "dentist", "hospital", "pharmacy"]
+  },
+  {
+    id: "shopping",
+    label: "Shopping & essentials",
+    description: "Groceries and everyday convenience",
+    preferenceId: "shopping",
+    childIds: ["supermarket", "convenience_store"]
+  },
+  {
+    id: "community",
+    label: "Community life",
+    description: "Libraries, halls and community facilities",
+    preferenceId: "community",
+    childIds: ["library", "community_centre", "town_hall", "social_facility"]
+  },
+  {
+    id: "recreation",
+    label: "Parks & recreation",
+    description: "Green spaces, play and sport",
+    preferenceId: "recreation",
+    childIds: ["park", "nature_reserve", "playground", "garden", "sports_centre", "gym"]
+  },
+  {
+    id: "public_transport",
+    label: "Public transport",
+    description: "Bus, rail and tram infrastructure",
+    preferenceId: "public_transport",
+    childIds: [
+      "bus_stop",
+      "bus_station",
+      "railway_station",
+      "railway_halt",
+      "tram_stop",
+      "platform",
+      "station",
+      "stop_position"
+    ]
+  }
+] as const;
+
+const compareHierarchyIds: Set<string> = new Set(
+  COMPARE_PREFERENCE_GROUPS.flatMap((group) => [group.preferenceId, ...group.childIds])
+);
+
+export const COMPARE_HIERARCHY_PREFERENCES = RANKING_PREFERENCES.filter((preference) =>
+  compareHierarchyIds.has(preference.id)
+);
+
 export type Mode = "walk" | "tram" | "train" | "bus";
 
 export type LatLng = { lat: number; lng: number };

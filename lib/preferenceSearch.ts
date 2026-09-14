@@ -1,14 +1,20 @@
 import { COMPARE_PREFERENCES } from "@/lib/types";
 
+type SearchPreference = (typeof COMPARE_PREFERENCES)[number];
+
 function norm(value: string) {
   return value.toLocaleLowerCase("en-AU").trim();
 }
 
 /** Match preference labels and searchTerms so typed priorities pop up from our list. */
-export function findPreferences(query: string, excludeIds: string[] = []) {
+export function findPreferences(
+  query: string,
+  excludeIds: string[] = [],
+  catalogue: SearchPreference[] = COMPARE_PREFERENCES
+) {
   const q = norm(query);
   const blocked = new Set(excludeIds);
-  const pool = COMPARE_PREFERENCES.filter((pref) => !blocked.has(pref.id));
+  const pool = catalogue.filter((pref) => !blocked.has(pref.id));
   if (!q) return pool;
 
   return pool
