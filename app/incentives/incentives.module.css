@@ -1,0 +1,247 @@
+.shell {
+  min-height: 100svh;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--sage) 48%, transparent), transparent 28rem),
+    var(--paper);
+}
+
+.main {
+  width: min(72rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.75rem 0 5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.45rem;
+  color: var(--arterial);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.main h1 {
+  margin: 0;
+  color: var(--forest);
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+
+.lead {
+  max-width: 58ch;
+  margin: 0.9rem 0 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 1.25rem;
+  margin-top: 2rem;
+  align-items: start;
+}
+
+.panel {
+  border: 1px solid color-mix(in oklab, var(--forest) 16%, transparent);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--enamel) 94%, transparent);
+  box-shadow: 0 18px 55px color-mix(in oklab, var(--forest) 8%, transparent);
+  padding: 1.35rem 1.4rem 1.5rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.35rem;
+  color: var(--forest);
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 400;
+}
+
+.panel > p {
+  margin: 0 0 1.1rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.fields {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  border: 1px solid color-mix(in oklab, var(--forest) 18%, transparent);
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid color-mix(in oklab, var(--forest) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.1rem;
+}
+
+.actions button,
+.actions a {
+  appearance: none;
+  border: 1px solid color-mix(in oklab, var(--forest) 28%, transparent);
+  border-radius: 999px;
+  padding: 0.65rem 1.05rem;
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.actions button {
+  background: var(--forest);
+  color: white;
+  border-color: var(--forest);
+}
+
+.actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.actions a {
+  background: color-mix(in oklab, var(--sage) 70%, white);
+  color: var(--forest);
+}
+
+.notice,
+.error,
+.empty {
+  margin: 1rem 0 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 12px;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.notice {
+  background: color-mix(in oklab, var(--sage) 55%, white);
+  color: var(--forest);
+}
+
+.error {
+  background: color-mix(in oklab, var(--arterial) 12%, white);
+  color: var(--ink);
+}
+
+.empty {
+  background: color-mix(in oklab, var(--enamel) 88%, white);
+  color: var(--ink-soft);
+}
+
+.group {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in oklab, var(--forest) 12%, transparent);
+}
+
+.group h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+  color: var(--forest);
+}
+
+.card {
+  margin: 0 0 0.7rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--forest) 12%, transparent);
+  background: white;
+}
+
+.card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--ink);
+}
+
+.card p {
+  margin: 0.2rem 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.status {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--arterial);
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.steps li {
+  padding: 0.85rem 0.95rem;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--sage) 42%, white);
+}
+
+.steps strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--forest);
+}
+
+.steps span {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 860px) {
+  .grid,
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -4,7 +4,7 @@ import AssistantClient from "./AssistantClient";
 /**
  * Iteration 2 route: /ai-assistant
  *
- * COMES FROM: Chrome nav link "AI Recommendation" (next to Compare).
+ * COMES FROM: Chrome nav link "AI Recommendation" (far right of the mast).
  * GOES TO: AssistantClient (client UI) which calls:
  *   1) lib/recommendationAssistant → structured preferences from the user message
  *   2) GET /api/compare → lifestyle town ranking (CompareService — same as Compare page)
