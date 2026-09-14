@@ -5,6 +5,7 @@ import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { PostgresAiReviewCacheRepository } from "@/backend/repositories/PostgresAiReviewCacheRepository";
 import { AiReviewService } from "@/backend/services/AiReviewService";
 import { HttpAiReviewProvider } from "@/backend/services/HttpAiReviewProvider";
+import { HuggingFaceAiReviewProvider } from "@/backend/services/HuggingFaceAiReviewProvider";
 
 export const runtime = "nodejs";
 
@@ -25,11 +26,19 @@ export async function POST(request: Request) {
     const deterministic = extractRecommendation(parsed.data.message);
     const databaseUrl = process.env.DATABASE_URL?.trim();
     const baseUrl = process.env.AI_REVIEW_BASE_URL?.trim();
-    if (!databaseUrl || !baseUrl) throw new Error("AI review is not configured.");
+    const hfToken = process.env.HF_TOKEN?.trim();
+    if (!databaseUrl || (!baseUrl && !hfToken)) throw new Error("AI review is not configured.");
     const timeout = Number(process.env.AI_REVIEW_TIMEOUT_MS || 8000);
+    const provider = baseUrl
+      ? new HttpAiReviewProvider({ baseUrl, timeoutMs: Number.isFinite(timeout) ? timeout : 8000, policyVersion })
+      : new HuggingFaceAiReviewProvider({
+          token: hfToken!,
+          model: process.env.HF_MODEL?.trim() || "serinea-qwen3-browser-model/serinea-qwen3-browser-model",
+          timeoutMs: Number.isFinite(timeout) ? timeout : 8000
+        });
     const service = new AiReviewService({
       repository: new PostgresAiReviewCacheRepository(PostgresDatabase.getInstance(databaseUrl)),
-      provider: new HttpAiReviewProvider({ baseUrl, timeoutMs: Number.isFinite(timeout) ? timeout : 8000, policyVersion }),
+      provider,
       modelVersion, policyVersion
     });
     return NextResponse.json(await service.review(parsed.data.message, deterministic),
