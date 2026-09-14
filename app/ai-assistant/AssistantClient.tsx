@@ -34,6 +34,7 @@ import {
   type Importance,
   type RecommendationState
 } from "@/lib/recommendationAssistant";
+import { RANKING_PREFERENCES } from "@/lib/types";
 import type { CompareRankItem, CompareResponse } from "@/shared/contracts/compare";
 import type {
   IncentiveResponse,
@@ -150,7 +151,10 @@ export default function AssistantClient() {
       const review = await response.json() as { summary: string; preferences?: Array<{ target: string; importance: Importance }>; unsupported?: string[]; source?: string };
       setTinyStatus(review.summary);
       if (review.source !== "fallback" && review.preferences) {
-        const aiPreferences = review.preferences.map((item) => ({ ...item, evidence: "Understood by Cloud Qwen" }));
+        const supportedTargets = new Set(RANKING_PREFERENCES.map((item) => item.id));
+        const aiPreferences = review.preferences
+          .filter((item) => supportedTargets.has(item.target))
+          .map((item) => ({ ...item, evidence: "Understood by Cloud Qwen" }));
         nextProfile = { ...nextProfile, preferences: aiPreferences, unsupported: review.unsupported ?? nextProfile.unsupported };
         setProfile(nextProfile);
       }
