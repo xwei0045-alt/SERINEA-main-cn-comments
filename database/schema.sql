@@ -76,3 +76,16 @@ CREATE TABLE IF NOT EXISTS locality_poi_summaries (
 
 CREATE INDEX IF NOT EXISTS locality_summaries_search
   ON locality_poi_summaries (dataset_version, locality, lga_name, regional_group);
+
+CREATE TABLE IF NOT EXISTS ai_review_cache (
+  cache_key TEXT PRIMARY KEY,
+  model_version TEXT NOT NULL,
+  policy_version TEXT NOT NULL,
+  result JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_accessed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  hit_count INTEGER NOT NULL DEFAULT 0 CHECK (hit_count >= 0)
+);
+
+CREATE INDEX IF NOT EXISTS ai_review_cache_last_accessed
+  ON ai_review_cache (last_accessed_at);

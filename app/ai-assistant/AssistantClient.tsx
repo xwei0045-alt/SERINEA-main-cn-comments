@@ -19,7 +19,7 @@
  */
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Chrome } from "../components/Chrome";
 import { compareApiClient } from "@/frontend/api/CompareApiClient";
 import { incentiveApiClient } from "@/frontend/api/IncentiveApiClient";
@@ -99,15 +99,10 @@ export default function AssistantClient() {
   const [latestIncentives, setLatestIncentives] = useState<IncentiveResponse | null>(null);
   const [chosenTowns, setChosenTowns] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [webGpu, setWebGpu] = useState(false);
   const [useTiny, setUseTiny] = useState(false);
-  const [tinyStatus, setTinyStatus] = useState("Local AI review is off.");
+  const [tinyStatus, setTinyStatus] = useState("Cloud AI review is off.");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const nextMessageId = useRef(1);
-
-  useEffect(() => {
-    setWebGpu("gpu" in navigator);
-  }, []);
 
   async function rank(state: RecommendationState): Promise<CompareResponse> {
     return compareApiClient.rank({
@@ -143,18 +138,19 @@ export default function AssistantClient() {
     setDraft("");
     setLoading(true);
 
-    if (useTiny && webGpu) {
-      setTinyStatus("Loading local Qwen review. The first model download is cached by your browser…");
-      import("./localTiny")
-        .then(({ reviewWithLocalTiny }) =>
-          reviewWithLocalTiny(value, extraction, (progress) => {
-            if (progress.status === "progress") {
-              setTinyStatus(`${progress.file ?? "Model"}: ${Math.round(progress.progress ?? 0)}%`);
-            }
-          })
-        )
+    if (useTiny) {
+      setTinyStatus("Cloud Qwen review is checking the extraction…");
+      fetch("/api/ai/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: value })
+      })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Review request failed.");
+          return response.json() as Promise<{ summary: string }>;
+        })
         .then((review) => setTinyStatus(review.summary))
-        .catch(() => setTinyStatus("Local Qwen review was unavailable. Deterministic extraction remained active."));
+        .catch(() => setTinyStatus("Cloud Qwen review was unavailable. Deterministic extraction remained active."));
     }
 
     try {
@@ -273,7 +269,7 @@ export default function AssistantClient() {
     setLatestResult(null);
     setLatestIncentives(null);
     setChosenTowns([]);
-    setTinyStatus(useTiny ? "Local AI review is ready for your next message." : "Local AI review is off.");
+    setTinyStatus(useTiny ? "Cloud AI review is ready for your next message." : "Cloud AI review is off.");
     inputRef.current?.focus();
   }
 
@@ -411,17 +407,16 @@ export default function AssistantClient() {
                 <input
                   type="checkbox"
                   checked={useTiny}
-                  disabled={!webGpu}
                   onChange={(event) => {
                     setUseTiny(event.target.checked);
                     setTinyStatus(event.target.checked
-                      ? "Local AI review will run after your next message."
-                      : "Local AI review is off.");
+                      ? "Cloud AI review will run after your next message."
+                      : "Cloud AI review is off.");
                   }}
                 />
                 <span>
-                  <strong>Local Qwen review</strong>
-                  <small>{webGpu ? "Optional · first download about 657 MB" : "WebGPU is unavailable in this browser"}</small>
+                  <strong>Cloud Qwen review</strong>
+                  <small>Optional · no browser model download</small>
                 </span>
               </label>
               <p>{tinyStatus}</p>

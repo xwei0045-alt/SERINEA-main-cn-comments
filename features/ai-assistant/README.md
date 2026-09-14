@@ -1,5 +1,33 @@
 # feature/ai-assistant
 
+## Server-side Qwen review boundary
+
+`POST /api/ai/review` accepts only `{ "message": "..." }`. The route repeats
+the deterministic catalogue extraction on the server, then asks the private
+service configured by `AI_REVIEW_BASE_URL` to review it. The review can report
+agreement, but it cannot replace deterministic preferences or town ranking.
+
+Successful reviews are stored in PostgreSQL `ai_review_cache`. The SHA-256 key
+contains the whitespace-normalised message, deterministic extraction, model
+version and policy version. Changing either version invalidates old entries.
+Provider failures and invalid model output are not cached; the API returns
+`source: "fallback"` and keeps the deterministic result active.
+
+The private process must expose `POST /predict`, accept `message`,
+`deterministic` and `policyVersion`, and return:
+
+```json
+{
+  "preferences": [{ "target": "library", "importance": "high" }],
+  "unsupported": []
+}
+```
+
+It should bind to localhost, load Qwen once before reporting ready, and reuse
+that loaded model for every request. Before enabling it on EC2, record cold
+start time, steady-state RSS, p50/p95 latency and timeout rate on the actual
+instance. Run `npm run db:migrate` before enabling the endpoint.
+
 **Branch:** `feature/ai-assistant`
 
 ## Owns
