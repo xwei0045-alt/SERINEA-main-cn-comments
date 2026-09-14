@@ -2,14 +2,22 @@ import type { Metadata } from "next";
 import IncentivesClient from "./IncentivesClient";
 
 /**
- * Iteration 2 route: /incentives
+ * ============================================================
+ * FILE: page.tsx  →  URL /incentives
+ * ============================================================
+ * WHAT TO SAY IF ASKED:
+ *   "This is the Iteration 2 page entry. Next.js opens this file
+ *    when someone clicks Incentives in the nav. It only loads the
+ *    real UI from IncentivesClient.tsx."
  *
- * COMES FROM: Chrome nav "Incentives" (after Compare).
- * LeanKit Epic 2: Occupation-Based Regional Incentives
- *   US2.1 Explore Occupation-Based Opportunities
- *   US2.2 Get AI-Assisted Incentive Guidance (also via /ai-assistant)
+ * WHY SO SHORT?
+ *   Server page = metadata (browser tab title) + render the client UI.
+ *   All buttons/forms live in IncentivesClient.tsx.
  *
- * Product intent: occupation / job context + incentives → best towns to consider.
+ * RELATED FILES:
+ *   - IncentivesClient.tsx  = the form and results (main thing to show)
+ *   - incentives.module.css = the look / layout
+ *   - ../components/Chrome.tsx = top nav link "Incentives"
  */
 export const metadata: Metadata = {
   title: "SERINEA Incentives",
@@ -18,5 +26,6 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
+  // Hands the page to the client component that owns the form.
   return <IncentivesClient />;
 }
