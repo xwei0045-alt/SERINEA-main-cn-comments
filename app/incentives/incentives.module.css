@@ -1,3 +1,23 @@
+/*
+ * ============================================================
+ * FILE: incentives.module.css  →  styles for /incentives
+ * ============================================================
+ * WHAT TO SAY IF ASKED:
+ *   "This CSS Module styles only the Incentives page.
+ *    Class names like styles.panel are imported in IncentivesClient.tsx."
+ *
+ * SECTION MAP (class → what it styles):
+ *   .shell / .main     page background + content width
+ *   .panel             the white form card
+ *   .field / .row      input labels and two-column rows
+ *   .townField         town typeahead wrapper
+ *   .more / .moreBody  collapsed "More details" section
+ *   .actions           Find incentives button + AI link
+ *   .group / .card     result list after submit
+ *   .status            Potential / Possible Match label
+ */
+
+/* Page wrapper */
 .shell {
   min-height: 100svh;
   color: var(--ink);
@@ -25,6 +45,7 @@
   line-height: 1.5;
 }
 
+/* Form card */
 .panel {
   margin-top: 1.75rem;
   padding: 1.25rem 1.3rem 1.4rem;
@@ -75,6 +96,7 @@
   gap: 0.75rem;
 }
 
+/* Town suggestions field */
 .townField {
   display: grid;
   gap: 0.35rem;
@@ -86,6 +108,7 @@
   font-size: 0.85rem;
 }
 
+/* Optional details (collapsed) */
 .more {
   border-top: 1px solid color-mix(in oklab, var(--forest) 10%, transparent);
   padding-top: 0.65rem;
@@ -112,6 +135,7 @@
   gap: 0.75rem;
 }
 
+/* Find incentives button */
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -160,6 +184,7 @@
   color: var(--ink-soft);
 }
 
+/* Results after submit */
 .group {
   margin-top: 1.25rem;
   padding-top: 1rem;
