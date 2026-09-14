@@ -1,85 +1,50 @@
 .shell {
   min-height: 100svh;
   color: var(--ink);
-  background:
-    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--sage) 48%, transparent), transparent 28rem),
-    var(--paper);
+  background: var(--paper);
 }
 
 .main {
-  width: min(72rem, calc(100% - 2rem));
+  width: min(40rem, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 2.75rem 0 5rem;
-}
-
-.eyebrow {
-  margin: 0 0 0.45rem;
-  color: var(--arterial);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  padding: 2.5rem 0 4rem;
 }
 
 .main h1 {
   margin: 0;
   color: var(--forest);
   font-family: var(--font-display);
-  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
   font-weight: 400;
-  line-height: 0.98;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.03em;
 }
 
 .lead {
-  max-width: 58ch;
-  margin: 0.9rem 0 0;
+  margin: 0.6rem 0 0;
   color: var(--ink-soft);
-  line-height: 1.6;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 1.25rem;
-  margin-top: 2rem;
-  align-items: start;
+  line-height: 1.5;
 }
 
 .panel {
-  border: 1px solid color-mix(in oklab, var(--forest) 16%, transparent);
-  border-radius: 18px;
+  margin-top: 1.75rem;
+  padding: 1.25rem 1.3rem 1.4rem;
+  border: 1px solid color-mix(in oklab, var(--forest) 14%, transparent);
+  border-radius: 16px;
   background: color-mix(in oklab, var(--enamel) 94%, transparent);
-  box-shadow: 0 18px 55px color-mix(in oklab, var(--forest) 8%, transparent);
-  padding: 1.35rem 1.4rem 1.5rem;
-}
-
-.panel h2 {
-  margin: 0 0 0.35rem;
-  color: var(--forest);
-  font-family: var(--font-display);
-  font-size: 1.55rem;
-  font-weight: 400;
-}
-
-.panel > p {
-  margin: 0 0 1.1rem;
-  color: var(--ink-soft);
-  line-height: 1.5;
-  font-size: 0.95rem;
 }
 
 .fields {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.9rem;
 }
 
 .field {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
-.field label {
+.field label,
+.townField :global(label) {
   font-size: 0.78rem;
   font-weight: 650;
   letter-spacing: 0.04em;
@@ -107,57 +72,64 @@
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 .townField {
   display: grid;
-  gap: 0.45rem;
-}
-
-.townField :global(label) {
-  font-size: 0.78rem;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  gap: 0.35rem;
 }
 
 .lgaHint {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 0.88rem;
-  line-height: 1.4;
+  font-size: 0.85rem;
 }
 
-.lgaHint strong {
+.more {
+  border-top: 1px solid color-mix(in oklab, var(--forest) 10%, transparent);
+  padding-top: 0.65rem;
+}
+
+.more summary {
+  cursor: pointer;
   color: var(--forest);
-  font-weight: 650;
+  font-size: 0.92rem;
+  font-weight: 600;
+  list-style: none;
+}
+
+.more summary::-webkit-details-marker {
+  display: none;
+}
+
+.more[open] summary {
+  margin-bottom: 0.75rem;
+}
+
+.moreBody {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 1.1rem;
-}
-
-.actions button,
-.actions a {
-  appearance: none;
-  border: 1px solid color-mix(in oklab, var(--forest) 28%, transparent);
-  border-radius: 999px;
-  padding: 0.65rem 1.05rem;
-  font: inherit;
-  font-size: 0.9rem;
-  text-decoration: none;
-  cursor: pointer;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 0.25rem;
 }
 
 .actions button {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 0.7rem 1.15rem;
   background: var(--forest);
   color: white;
-  border-color: var(--forest);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
 }
 
 .actions button:disabled {
@@ -166,106 +138,73 @@
 }
 
 .actions a {
-  background: color-mix(in oklab, var(--sage) 70%, white);
   color: var(--forest);
+  font-size: 0.9rem;
 }
 
-.notice,
 .error,
 .empty {
   margin: 1rem 0 0;
-  padding: 0.85rem 0.95rem;
-  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  border-radius: 10px;
   line-height: 1.45;
   font-size: 0.92rem;
 }
 
-.notice {
-  background: color-mix(in oklab, var(--sage) 55%, white);
-  color: var(--forest);
-}
-
 .error {
   background: color-mix(in oklab, var(--arterial) 12%, white);
-  color: var(--ink);
 }
 
 .empty {
-  background: color-mix(in oklab, var(--enamel) 88%, white);
+  background: color-mix(in oklab, var(--sage) 40%, white);
   color: var(--ink-soft);
 }
 
 .group {
-  margin-top: 1.1rem;
+  margin-top: 1.25rem;
   padding-top: 1rem;
   border-top: 1px solid color-mix(in oklab, var(--forest) 12%, transparent);
 }
 
-.group h3 {
-  margin: 0 0 0.55rem;
-  font-size: 1.05rem;
+.group h2 {
+  margin: 0 0 0.65rem;
   color: var(--forest);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 400;
 }
 
 .card {
-  margin: 0 0 0.7rem;
-  padding: 0.85rem 0.9rem;
-  border-radius: 12px;
+  margin: 0 0 0.65rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: 10px;
   border: 1px solid color-mix(in oklab, var(--forest) 12%, transparent);
   background: white;
 }
 
 .card strong {
   display: block;
-  margin-bottom: 0.25rem;
-  color: var(--ink);
+  margin-bottom: 0.2rem;
 }
 
 .card p {
-  margin: 0.2rem 0;
+  margin: 0.15rem 0 0;
   color: var(--ink-soft);
   font-size: 0.9rem;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .status {
   display: inline-block;
-  margin-bottom: 0.35rem;
-  font-size: 0.72rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--arterial);
 }
 
-.steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.85rem;
-}
-
-.steps li {
-  padding: 0.85rem 0.95rem;
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--sage) 42%, white);
-}
-
-.steps strong {
-  display: block;
-  margin-bottom: 0.2rem;
-  color: var(--forest);
-}
-
-.steps span {
-  color: var(--ink-soft);
-  font-size: 0.92rem;
-  line-height: 1.45;
-}
-
-@media (max-width: 860px) {
-  .grid,
+@media (max-width: 640px) {
   .row {
     grid-template-columns: 1fr;
   }
