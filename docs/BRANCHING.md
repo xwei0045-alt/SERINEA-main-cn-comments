@@ -15,7 +15,7 @@ feature/<name>         → one product capability
 | --- | --- | --- |
 | `feature/maps` | Pin, reach hull, places list, walk HUD, `/map`, `/api/reach`, `/api/walk` | Compare ranking UI, Groq chat |
 | `feature/filters` | Compare prefs, weights, town ranking, `/compare` (manual UI), `/api/compare` | Map canvas, AI chat drawer |
-| `feature/ai-assistant` | Chat / assistant panels, `/api/chat`, `/api/assistant`, Groq prompts | Map Leaflet code |
+| `feature/ai-assistant` | Chat / assistant panels, `/api/chat`, Groq prompts | Map Leaflet code |
 | `feature/data` | CSV / Postgres extract, dedupe, `data/*.csv`, loaders, `DATASET.md` | UI chrome, landing copy |
 | `feature/home` *(optional)* | Landing `/`, `/story`, how-it-works marketing copy | Backend ranking maths |
 

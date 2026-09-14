@@ -421,7 +421,7 @@ export default function AssistantClient() {
                 />
                 <span>
                   <strong>Local Qwen review</strong>
-                  <small>{webGpu ? "Optional · first download about 570 MB" : "WebGPU is unavailable in this browser"}</small>
+                  <small>{webGpu ? "Optional · first download about 657 MB" : "WebGPU is unavailable in this browser"}</small>
                 </span>
               </label>
               <p>{tinyStatus}</p>

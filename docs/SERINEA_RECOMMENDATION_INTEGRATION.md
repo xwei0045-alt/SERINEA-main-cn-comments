@@ -86,7 +86,7 @@ warning for each name proxy.
 - Runtime: `@huggingface/transformers` 3.8.1
 - Device: WebGPU
 - Quantisation: `q4f16`
-- First model download: approximately 570 MB, then browser-cached
+- First model download: approximately 657 MB, then browser-cached
 - External LLM API: none
 
 The runtime is loaded only after the user enables **Local Qwen review**. The

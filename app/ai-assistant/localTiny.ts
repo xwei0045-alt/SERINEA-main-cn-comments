@@ -1,6 +1,8 @@
 import type { RecommendationExtraction } from "@/lib/recommendationAssistant";
 
-export const TINY_MODEL_ID = "onnx-community/Qwen3-0.6B-ONNX";
+// Public repository maintained for the SERINEA browser model. The model is
+// downloaded only when the user enables Local Qwen review.
+export const TINY_MODEL_ID = "serinea-qwen3-browser-model/serinea-qwen3-browser-model";
 
 type Progress = { status?: string; file?: string; progress?: number };
 type Generator = (
