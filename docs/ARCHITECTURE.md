@@ -21,9 +21,7 @@ MapApp
   -> ReachController
   -> ReachService
   -> ReachRepository
-  -> CsvReachRepository (default now)
-  -> DemoReachRepository (optional fallback)
-  -> PostgresReachRepository (AWS deployment)
+  -> PostgresReachRepository (online database)
 ```
 
 ## Object-oriented responsibilities
@@ -32,18 +30,15 @@ MapApp
 - `ReachController` owns HTTP parsing and safe HTTP errors.
 - `ReachService` owns the 15-minute round-trip business rule.
 - `ReachRepository` defines the data-source contract.
-- `CsvDatasetLoader` parses and validates both supplied files once per service instance.
-- `SpatialGridIndex` limits statewide POI searches to nearby grid cells.
-- `CsvReachRepository` maps supported data categories and calculates walking estimates.
-- `PostgresReachRepository` reads the active validated dataset version from PostgreSQL.
-- `DemoReachRepository` adapts the existing static data to that contract.
+- `CsvDatasetLoader` is an archived fixture reader under `backend/test-support/`; it is not used by production API factories.
+- `PostgresReachRepository` reads mapped nearby POIs from PostgreSQL.
 - `PostgresDatabase` owns the PostgreSQL connection pool.
 - `Environment` owns validated backend configuration.
 - `ReachServiceFactory` wires the selected implementation together.
 
 ## Current data flow
 
-`REACH_DATA_SOURCE` defaults to `database`. `/api/reach` queries `public.regional_pois` directly; `/api/localities` aggregates that same table for town search. CSV loaders remain only as historical import tooling and are not a runtime data source.
+`REACH_DATA_SOURCE` defaults to `database`. `/api/reach` queries `public.regional_pois` directly; `/api/localities` aggregates that same table for town search. CSV loaders remain only in offline test support and are not a runtime data source.
 
 ## AWS database mode
 

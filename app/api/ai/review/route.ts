@@ -8,6 +8,7 @@ import { HuggingFaceAiReviewProvider } from "@/backend/services/HuggingFaceAiRev
 
 export const runtime = "nodejs";
 
+// Ask the optional reviewer to check deterministic preference extraction.
 export async function POST(request: Request) {
   const modelVersion = process.env.AI_REVIEW_MODEL_VERSION?.trim() || "qwen3-0.6b-q4f16-v1";
   const policyVersion = process.env.AI_REVIEW_POLICY_VERSION?.trim() || "serinea-review-v1";

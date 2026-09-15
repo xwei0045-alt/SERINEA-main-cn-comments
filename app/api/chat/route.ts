@@ -67,6 +67,7 @@ function respond(body: object, status = 200) {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 }
 
+// Turn a chat message into a validated recommendation response.
 export async function POST(request: Request) {
   let body: unknown;
   try {

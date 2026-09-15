@@ -30,6 +30,7 @@ export const runtime = "nodejs";
 
 const service = new IncentiveService();
 
+// Match relocation facts against the synthetic incentive catalogue.
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {

@@ -1,7 +1,7 @@
 import { RANKING_PREFERENCES } from "@/lib/types";
 import { LocalitySummaryServiceFactory } from "@/backend/factories/LocalitySummaryServiceFactory";
 import { PostgresComparePoiLoader, type ComparePoi } from "@/backend/repositories/PostgresComparePoiLoader";
-import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
+import { CsvDatasetLoader } from "@/backend/test-support/CsvDatasetLoader";
 import { dedupeRegionalPois } from "@/backend/data/poiDedupe";
 import { haversineKm } from "@/lib/geo";
 import type {
@@ -135,6 +135,9 @@ export class CompareService {
     dataSource: "csv" | "database"
   ): Promise<LocalitySummaryItem[]> {
     if (this.detailLoader === null) return items;
+    if (dataSource !== "database" && process.env.NODE_ENV === "production") {
+      throw new Error("CSV comparison is available only in offline tests.");
+    }
 
     const loader = this.detailLoader ?? (dataSource === "database"
       ? new PostgresComparePoiLoader() : new CsvDatasetLoader());

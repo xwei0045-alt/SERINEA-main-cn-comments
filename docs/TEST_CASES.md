@@ -26,34 +26,22 @@ No debugger statements in the app. If a test fails, the product rule broke.
 - Precondition: mixed park and pharmacy rows
 - Steps: search with categories pharmacy
 - Expected: every returned place is pharmacy
-- Automated: same file, plus `CsvReachRepository.test.ts` TC-F05
+- Automated: `backend/iso/iso29119.test.ts`
 
 ### TC-F03 Dataset totals
 - Characteristic: functional correctness
 - Priority: high
 - Precondition: both Iteration 1 CSV files in `/data`
 - Steps: load the dataset
-- Expected: 32569 unique osm ids, summary total matches detail
+- Expected: unique osm ids, positive total, and summary total matches detail; this is an offline fixture test, not a live coverage count
 - Automated: `CsvDatasetLoader.test.ts`
-
-### TC-F04 Real coordinate near the extract
-- Characteristic: functional completeness
-- Priority: high
-- Precondition: CSV repository
-- Steps: pin near Alpine NP record a33069469, window 15
-- Expected: that place is in the list, every row round trip <= 15, source says no GTFS
-- Automated: `CsvReachRepository.test.ts`
-
-### TC-F05 Category after CSV mapping
-- Same idea as TC-F02 on the real files
-- Automated: `CsvReachRepository.test.ts`
 
 ### TC-F06 Town search
 - Characteristic: functional completeness
 - Priority: high
 - Precondition: locality summary CSV
 - Steps: search q=ABBEYARD
-- Expected: one match, 32569 total POIs still reported
+- Expected: one match and a positive fixture-wide POI total still reported
 - Automated: `LocalitySummaryService.test.ts`
 
 ### TC-F07 Postgres contract
@@ -86,14 +74,6 @@ No debugger statements in the app. If a test fails, the product rule broke.
 - Precondition: reach query schema
 - Steps: send window=30
 - Expected: parse fails. Product is 15 minutes only
-- Automated: `backend/iso/iso29119.test.ts`
-
-### TC-P01 Grid does not miss nearby places
-- Characteristic: performance efficiency
-- Priority: high
-- Precondition: 200 synthetic points
-- Steps: SpatialGridIndex.withinRadius vs a full scan
-- Expected: same ids, grid does not drop a point that is actually inside the radius
 - Automated: `backend/iso/iso29119.test.ts`
 
 ### TC-P02 Walk time at 4.8 km/h

@@ -4,10 +4,12 @@ import assert from "node:assert/strict";
 import { buildRecommendations, findTownNames } from "./ChatRecommendationService";
 import { CompareService } from "./CompareService";
 import { LocalitySummaryService } from "./LocalitySummaryService";
+import { CsvLocalitySummaryRepository } from "../test-support/CsvLocalitySummaryRepository";
 import { chatRequestSchema, planSchema, preferenceIds, preferenceNames } from "@/lib/chatRecommendations";
 import { POST } from "@/app/api/chat/route";
 
 const family = { priority: false, intent: "recommend" as const, town: "", include: ["school", "supermarket"], bonus: [], exclude: [], area: "", unverified: [] };
+const csvLocalities = () => new LocalitySummaryService(new CsvLocalitySummaryRepository());
 
 test("request validation rejects bad history and unsupported categories", () => {
   assert.deepEqual(Object.keys(preferenceNames).sort(), [...preferenceIds].sort());
@@ -23,7 +25,7 @@ test("request validation rejects bad history and unsupported categories", () => 
 });
 
 test("real CSV recommendations match Compare ranking, with source and limits", async () => {
-  const localities = new LocalitySummaryService();
+  const localities = csvLocalities();
   const reply = await buildRecommendations(family, localities);
   const expected = await new CompareService(localities).rank({ prefs: family.include, limit: 3, q: "" });
   const title = (value: string) => value.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
@@ -42,7 +44,7 @@ test("real CSV recommendations match Compare ranking, with source and limits", a
 });
 
 test("clarification, no match, explicit bonus, conflicts and long replies stay safe", async () => {
-  const localities = new LocalitySummaryService();
+  const localities = csvLocalities();
   const noPreferences = await buildRecommendations({ ...family, include: [] }, localities);
   assert.equal(noPreferences.places.length, 0);
   const noTown = await buildRecommendations({ ...family, area: "__no_such_town__" }, localities);
@@ -71,7 +73,7 @@ test("town spelling correction is general and does not choose between tied candi
 });
 
 test("town details answer the named town without a new shortlist or preference update", async () => {
-  const localities = new LocalitySummaryService();
+  const localities = csvLocalities();
   for (const [typed, expected] of [["Midura", "Mildura"], ["Sheparton", "Shepparton"],
     ["Wangarata", "Wangaratta"], ["Wodnga", "Wodonga"]]) {
     const reply = await buildRecommendations({ ...family, intent: "town_details", town: typed }, localities);
@@ -101,7 +103,7 @@ test("API connects extraction to data; handles failures without inventing a fall
     new Request("http://localhost/api/chat", { method: "POST", body: JSON.stringify({ messages }) });
   try {
     // Use the CSV fixture for this offline provider test.
-    t.mock.method(LocalitySummaryServiceFactory, "create", () => new LocalitySummaryService());
+    t.mock.method(LocalitySummaryServiceFactory, "create", csvLocalities);
     globalThis.fetch = async (url, init) => {
       calls++;
       assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");
@@ -175,7 +177,7 @@ test("education dataset, priority order, area and all categories agree with Comp
   for (const include of [["school", "kindergarten", "college"], ["park", "supermarket"], preferenceIds]) {
     for (const priority of [false, true]) {
       const plan = { ...family, include, priority, area: "" };
-      const localities = new LocalitySummaryService();
+      const localities = csvLocalities();
       const reply = await buildRecommendations(plan, localities);
       const { preferenceWeights } = await import("@/lib/comparePriorities");
       const expected = await new CompareService(localities).rank({ prefs: include,

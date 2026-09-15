@@ -3,10 +3,10 @@ import test from "node:test";
 import path from "node:path";
 import { IncentiveService } from "./IncentiveService";
 import {
-  CsvSubsidyRepository,
   type SubsidyRecord,
   type SubsidyRepository
 } from "@/backend/repositories/SubsidyRepository";
+import { CsvSubsidyRepository } from "@/backend/test-support/CsvSubsidyRepository";
 import type { IncentiveRequest } from "@/shared/contracts/incentives";
 
 const dataDirectory = path.join(process.cwd(), "data");

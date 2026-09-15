@@ -10,6 +10,7 @@ export const runtime = "nodejs";
  * Lightweight liveness check. Omits data-source / DB detail from the public body
  * (security report: info disclosure on /api/health).
  */
+// Return a small readiness response for the configured backend services.
 export async function GET() {
   try {
     const environment = Environment.getInstance();

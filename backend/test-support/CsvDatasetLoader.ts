@@ -6,7 +6,7 @@ import type {
   LocalityPoiSummaryRecord,
   RegionalDataset,
   RegionalPoiRecord
-} from "./RegionalDataset";
+} from "../data/RegionalDataset";
 
 type CsvRow = Record<string, string>;
 
@@ -15,7 +15,7 @@ const SUMMARY_FILE_NAME = "locality_poi_summary_iteration1.csv";
 const DATASET_HANDOVER_DATE = "2026-09-02";
 
 // Loads the two CSVs Xiaowei handed over.
-// We keep the parsed result so the server does not read 32k rows on every pin move.
+// Keep the parsed offline fixture in memory for repeated tests; runtime reads PostgreSQL.
 export class CsvDatasetLoader {
   private datasetPromise: Promise<RegionalDataset> | undefined;
 

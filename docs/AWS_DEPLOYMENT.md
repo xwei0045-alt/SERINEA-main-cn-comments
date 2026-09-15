@@ -41,14 +41,13 @@ Bootstrap progress is recorded on the instance at `/var/log/serinea-bootstrap.lo
 
 ## Future dataset process
 
-Every import has a version in `dataset_versions`. Data is inserted and reconciled inside one transaction. The `active` pointer changes only after both database row counts match the validated CSV totals, so an interrupted import leaves the previous version active.
+The application reads its current records from PostgreSQL. Dataset changes should be reviewed and loaded through a separate database process, not through the application deployment.
 
-After inspecting a future handover, copy it into `data/`, update the loader if its schema changed, then run:
+The deployed application reads the online database directly. A new dataset must be loaded into PostgreSQL through a separately reviewed data process; deployment no longer imports local CSV files. Deployment checks that both POIs and synthetic subsidies are populated. To update the schema and check online data, run:
 
 ```bash
-npm run data:validate
 DATABASE_URL="postgresql:///serinea?host=/var/run/postgresql" npm run db:migrate
-DATABASE_URL="postgresql:///serinea?host=/var/run/postgresql" npm run db:import -- --version=iteration2
+DATABASE_URL="postgresql:///serinea?host=/var/run/postgresql" npm run data:online-check
 ```
 
 Whether the future dataset replaces or merges with `iteration1` must be decided after its scope and keys are known. The versioned tables preserve `iteration1` for comparison and rollback.

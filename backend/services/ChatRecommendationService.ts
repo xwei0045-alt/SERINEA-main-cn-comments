@@ -100,6 +100,7 @@ async function townDetails(plan: RecommendationPlan, localities: LocalitySummary
 }
 
 // Facts and explanations come from application data, not generated numbers.
+// Build the user-facing recommendation text from the confirmed plan.
 export async function buildRecommendations(input: RecommendationPlan,
   localities = LocalitySummaryServiceFactory.create(),
   explain?: (result: CompareResponse) => Promise<string>) {

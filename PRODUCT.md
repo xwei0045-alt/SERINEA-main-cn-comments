@@ -28,7 +28,7 @@ Hard constraint: **a fixed fifteen-minute walk from your location**. No duration
 
 ## Operating Context
 
-FIT5120 S2 2026, Team SERINEA (TA06), Assignment 1 Iteration 1 (Week 6, 10%). Desktop-first prototype. Places come from a regional OpenStreetMap extract joined with ABS LGA and Vicmap locality fields (32,569 POIs, 1,778 localities). Journeys are straight-line walking at 4.8 km/h, labelled as such. No live GTFS.
+FIT5120 S2 2026, Team SERINEA (TA06), Assignment 1 Iteration 1 (Week 6, 10%). Desktop-first prototype. Places come from regional OpenStreetMap records joined with ABS LGA and Vicmap locality fields; the current runtime reads them from PostgreSQL, so coverage is not a fixed CSV count. Journeys are straight-line walking at 4.8 km/h, labelled as such. No live GTFS.
 
 ## Capabilities and Constraints
 

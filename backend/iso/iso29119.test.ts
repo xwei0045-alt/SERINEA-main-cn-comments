@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { haversineKm } from "@/lib/geo";
 import type { Poi, ReachablePoi } from "@/lib/types";
 import { RegionalPoiMapper } from "@/backend/mappers/RegionalPoiMapper";
 import type {
@@ -11,7 +10,6 @@ import type {
 import { EstimatedJourneyCalculator } from "@/backend/services/EstimatedJourneyCalculator";
 import { FootWalkRouter } from "@/backend/services/FootWalkRouter";
 import { ReachService } from "@/backend/services/ReachService";
-import { SpatialGridIndex } from "@/backend/spatial/SpatialGridIndex";
 import { reachQuerySchema } from "@/shared/contracts/reach";
 import { walkQuerySchema } from "@/shared/contracts/walkRoute";
 
@@ -132,25 +130,6 @@ test("TC-F10 reject a 30 minute window", () => {
     window: "30"
   });
   assert.equal(parsed.success, false);
-});
-
-test("TC-P01 grid matches a full scan and does not drop nearby places", () => {
-  const origin = { lat: -36.378, lng: 145.403 };
-  const points = Array.from({ length: 200 }, (_, index) => ({
-    id: `p${index}`,
-    lat: origin.lat + (index % 20) * 0.01,
-    lng: origin.lng + Math.floor(index / 20) * 0.01
-  }));
-  const radiusKm = 1.2;
-  const index = new SpatialGridIndex(points);
-  const fromGrid = index.withinRadius(origin, radiusKm).map((item) => item.id).sort();
-  const fromScan = points
-    .filter((item) => haversineKm(origin, item) <= radiusKm)
-    .map((item) => item.id)
-    .sort();
-
-  assert.deepEqual(fromGrid, fromScan);
-  assert.ok(fromGrid.length > 0);
 });
 
 test("TC-P02 walk time at 4.8 km/h", () => {

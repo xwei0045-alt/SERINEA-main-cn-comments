@@ -41,7 +41,6 @@ npm start
 Backend checks:
 
 ```bash
-npm run data:validate
 npm test
 ```
 
@@ -100,7 +99,7 @@ SERINEA/
 
 ## Data stance (Iteration 2)
 
-- **Real supplied POIs.** The detailed file has 32,569 unique OSM IDs and valid coordinates.
+- **Online regional POIs.** Runtime POI and locality data come from PostgreSQL; the row count follows the database rather than an old CSV snapshot.
 - **Not live GTFS.** Journeys are straight-line walking estimates at 4.8 km/h.
 - **Fixed 15-minute window.** A place fits when the estimated walk **from the pin** is no more than 15 minutes; return time is not included.
 - **Incomplete route guidance.** A street-path backend endpoint exists, but the current map does not display its path; a real walk may take longer than the estimate.

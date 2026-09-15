@@ -1,17 +1,17 @@
-import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
+import { CsvDatasetLoader } from "./CsvDatasetLoader";
 import type {
   LocalitySummaryData,
   LocalitySummaryRepository
-} from "./LocalitySummaryRepository";
+} from "@/backend/repositories/LocalitySummaryRepository";
 
-/** Reads locality summaries from the supplied CSV file. */
+/** Reads the archived CSV locality snapshot for offline backend tests only. */
 export class CsvLocalitySummaryRepository implements LocalitySummaryRepository {
   readonly dataSource = "csv" as const;
 
-  /** Sets up this component with the dependencies it needs. */
+  /** Uses the archived regional CSV fixture reader. */
   constructor(private readonly loader = new CsvDatasetLoader()) {}
 
-  /** Loads the records required by this repository. */
+  /** Loads locality rows and totals from the test snapshot. */
   async load(): Promise<LocalitySummaryData> {
     const dataset = await this.loader.load();
     return {

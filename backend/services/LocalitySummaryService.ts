@@ -1,4 +1,3 @@
-import { CsvLocalitySummaryRepository } from "@/backend/repositories/CsvLocalitySummaryRepository";
 import type {
   LocalitySummaryData,
   LocalitySummaryRepository
@@ -41,10 +40,7 @@ export class LocalitySummaryService {
   private summariesPromise: Promise<LocalitySummaryItem[]> | undefined;
 
   /** Sets up this component with the dependencies it needs. */
-  constructor(
-    private readonly repository: LocalitySummaryRepository =
-      new CsvLocalitySummaryRepository()
-  ) {}
+  constructor(private readonly repository: LocalitySummaryRepository) {}
 
   /** Searches the data using the validated request. */
   async search(query: LocalitySummaryQuery): Promise<LocalitySummaryResponse> {

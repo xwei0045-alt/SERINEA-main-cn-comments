@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import { Environment } from "@/backend/config/Environment";
 import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
-import { CsvDatasetLoader } from "@/backend/data/CsvDatasetLoader";
+import { CsvDatasetLoader } from "@/backend/test-support/CsvDatasetLoader";
 import { CompareController } from "@/backend/controllers/CompareController";
 import { buildRecommendations } from "./ChatRecommendationService";
 import { planSchema } from "@/lib/chatRecommendations";

@@ -76,7 +76,7 @@ runuser -u serinea -- bash -lc "
   cd '${APPLICATION_DIRECTORY}'
   npm ci
   DATABASE_URL='${DATABASE_URL}' npm run db:migrate
-  DATABASE_URL='${DATABASE_URL}' npm run db:import -- --version=iteration1
+  DATABASE_URL='${DATABASE_URL}' npm run data:online-check
   npm run build
 "
 

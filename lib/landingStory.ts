@@ -67,7 +67,7 @@ export const FACTS: FunFact[] = [
   {
     id: "f1",
     kicker: "Coverage",
-    line: "Regional Victoria only — 32,569 OpenStreetMap places across 1,778 localities. Melbourne CBD is out of scope."
+    line: "Regional Victoria only — mapped places come from the current SERINEA database. Melbourne CBD is out of scope."
   },
   {
     id: "f2",

@@ -5,10 +5,11 @@ import { PostgresLocalitySummaryRepository } from "./PostgresLocalitySummaryRepo
 import { LocalitySummaryService } from "../services/LocalitySummaryService";
 
 test("TC-F11 locality API can read the active PostgreSQL dataset", async () => {
+  const databasePoiCount = 123;
   const database = {
     async query(sql: string) {
       if (sql.includes('AS "totalPois"')) {
-        return { rows: [{ totalPois: 32_569 }] };
+        return { rows: [{ totalPois: databasePoiCount }] };
       }
       if (sql.includes("AVG(")) {
         return {
@@ -46,6 +47,6 @@ test("TC-F11 locality API can read the active PostgreSQL dataset", async () => {
   const result = await service.search({ q: "ABBEYARD", limit: 10 });
 
   assert.equal(result.dataSource, "database");
-  assert.equal(result.totalPois, 32_569);
+  assert.equal(result.totalPois, databasePoiCount);
   assert.equal(result.items[0]?.locality, "ABBEYARD");
 });
