@@ -1,39 +1,119 @@
-# SERINEA
+# SERINEA — The 15 minute map (Iteration 1)
 
-**FIT5120 S2 2026 | Regional Victoria relocation prototype**
+**FIT5120 S2 2026 · Team SERINEA (TA06) · Assignment 1 — Iteration 1**
 
-SERINEA helps people explore regional Victorian towns before relocating. Users can see what is within a 15-minute walk, compare towns by nearby facilities, and check prototype relocation incentives. The AI Recommendation page turns a free-text request into facility preferences; town rankings and incentive checks still follow backend data and rules.
+Full-stack prototype for a **15-minute walking reach map**, framed for **small towns and regional Victoria**. Users can explore nearby places, compare towns by facilities, screen prototype relocation incentives, and describe preferences through the AI Recommendation page.
 
-## Explore the app
+POI coordinates and locality counts come from the data-team CSV handover and are served from PostgreSQL at runtime. Journey times are labelled straight-line walking estimates, not street routes or public transport schedules.
 
-- **Map:** Find nearby places from a selected pin using a fixed 15-minute one-way walking estimate.
-- **Compare:** Rank towns by the facilities that matter to you.
-- **Incentives:** Screen fictional relocation subsidies for a selected town.
-- **AI Recommendation:** Describe your needs in English and review suggested towns.
+## Team branching
 
-Walking times are straight-line estimates, not street navigation. Incentive records are synthetic and are not official government programs or eligibility decisions.
+Use **feature branches**, not dump branches:
 
-## Run locally
+| Branch | Focus |
+| --- | --- |
+| `feature/maps` | Map, reach, walk |
+| `feature/filters` | Compare preferences and ranking |
+| `feature/ai-assistant` | Recommendation and optional AI review |
+| `feature/data` | Regional data and loaders |
+| `feature/home` | Home and story UI |
 
-You need Node.js, npm and a populated PostgreSQL database. Copy `.env.example` to `.env.local` and set `DATABASE_URL` for your database. Keep credentials out of Git.
+Ownership lists live in `features/<name>/README.md`. Full rules: [`docs/BRANCHING.md`](docs/BRANCHING.md).
+
+## Quick start
+
+Node.js, npm, and a populated PostgreSQL database are required. Copy `.env.example` to `.env.local`, set `DATABASE_URL`, and keep credentials out of Git. Database preparation is covered in [`docs/BACKEND.md`](docs/BACKEND.md).
 
 ```bash
-npm ci
+npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173). For database setup and optional AI keys, see [backend setup](docs/BACKEND.md). The Incentives page also requires a populated `public.subsidies` table; the POI import command does not populate it.
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-## Check the project
+Production build:
 
 ```bash
-npm test
 npm run build
+npm start
 ```
 
-## More detail
+Backend checks:
 
-- [Product rules](PRODUCT.md)
-- [Architecture](docs/ARCHITECTURE.md) and [backend/API notes](docs/BACKEND.md)
-- [Datasets and limitations](docs/DATASET.md)
-- [Deployment](docs/AUTO_DEPLOYMENT.md) and [branching](docs/BRANCHING.md)
+```bash
+npm run data:validate
+npm test
+```
+
+## Stack
+
+| Layer | Technology |
+| --- | --- |
+| Framework | Next.js 15 (App Router) |
+| UI | React 19, TypeScript |
+| Styling | CSS Modules + global CSS |
+| Map | Leaflet (client-only on `/map`) |
+| Backend | Next.js route handlers, service and repository layers |
+| Current data | PostgreSQL, populated from validated regional POI CSV files |
+| Database | Versioned PostgreSQL schema, importer, and repositories |
+
+## Routes
+
+| Path | Purpose |
+| --- | --- |
+| `/` | Home / product story |
+| `/map` | Pin, walking reach, nearby POIs |
+| `/compare` | Town comparison by facilities |
+| `/incentives` | Prototype subsidy screening |
+| `/ai-assistant` | Free-text preference extraction and town suggestions |
+| `/api/reach` | Nearby POIs within the one-way walking window |
+| `/api/localities` | Searchable locality/LGA summaries |
+| `/api/health` | Repository and database readiness |
+
+Other API endpoints and request contracts are documented in [`docs/BACKEND.md`](docs/BACKEND.md).
+
+## Repository layout
+
+```
+SERINEA/
+├── app/                    # Next.js pages and thin API route handlers
+│   ├── components/         # Shared UI
+│   ├── map/                # Map page and Leaflet shell
+│   ├── compare/            # Town comparison UI
+│   ├── incentives/         # Incentive screening UI
+│   ├── ai-assistant/        # AI Recommendation UI
+│   ├── globals.css         # Design tokens and base styles
+│   └── layout.tsx          # Root layout and fonts
+├── backend/                # Controllers, services, repositories, data loading
+│   └── iso/                # ISO 29119 automated test cases
+├── frontend/               # Browser-side API clients
+├── shared/                 # Runtime-validated API contracts
+├── data/                   # Supplied POI files and prototype subsidy data
+├── database/               # PostgreSQL schema
+├── scripts/                # Dataset validation, migration, import
+├── lib/                    # Shared UI types, map helpers, recommendation rules
+├── docs/                   # Architecture, backend, dataset, deployment notes
+├── PRODUCT.md              # Product rules
+├── DESIGN.md               # Visual / UX direction
+└── package.json
+```
+
+## Data stance (Iteration 1)
+
+- **Real supplied POIs.** The detailed file has 32,569 unique OSM IDs and valid coordinates.
+- **Not live GTFS.** Journeys are straight-line walking estimates at 4.8 km/h.
+- **Fixed 15-minute window.** A place fits when the estimated walk **from the pin** is no more than 15 minutes; return time is not included.
+- **Prototype incentives.** Subsidy records are synthetic, not official government programs or eligibility decisions.
+- **AI-assisted input.** Cloud review is optional; facility ranking and incentive screening remain backend rule-based.
+
+See [`docs/BACKEND.md`](docs/BACKEND.md) for integration points and [`docs/DATASET.md`](docs/DATASET.md) for data limitations.
+
+See [`docs/AWS_DEPLOYMENT.md`](docs/AWS_DEPLOYMENT.md) and [`docs/AUTO_DEPLOYMENT.md`](docs/AUTO_DEPLOYMENT.md) for deployment details.
+
+## Branch
+
+Backend and data integration were developed on **`backend-integration`**. Current integration is on `main`.
+
+## Team
+
+Team SERINEA (TA06) — roles and phases are summarised in the home story (`lib/landingStory.ts`).
