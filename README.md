@@ -1,6 +1,6 @@
 # SERINEA — The 15 minute map (Iteration 2)
 
-**FIT5120 S2 2026 · Team SERINEA (TA06) · Assignment 1 — Iteration 2**
+**FIT5120 S2 2026 · Team SERINEA (TP06) · Assignment 1 — Iteration 2**
 
 Full-stack prototype for a **15-minute walking reach map**, framed for **small towns and regional Victoria**. The current version lets users explore nearby POIs, compare towns by supported facility records, screen synthetic relocation incentives, and describe preferences through the AI Recommendation page. These are prototype features, not complete routing, policy or personalised advice services.
 
@@ -117,4 +117,4 @@ Backend and data integration were developed on **`backend-integration`**. Curren
 
 ## Team
 
-Team SERINEA (TA06) — roles and phases are summarised in the home story (`lib/landingStory.ts`).
+Team SERINEA (TP06) — roles and phases are summarised in the home story (`lib/landingStory.ts`).
