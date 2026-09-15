@@ -2,9 +2,9 @@
 
 **FIT5120 S2 2026 · Team SERINEA (TA06) · Assignment 1 — Iteration 2**
 
-Full-stack prototype for a **15-minute walking reach map**, framed for **small towns and regional Victoria**. Users can explore nearby places, compare towns by facilities, screen prototype relocation incentives, and describe preferences through the AI Recommendation page.
+Full-stack prototype for a **15-minute walking reach map**, framed for **small towns and regional Victoria**. The current version lets users explore nearby POIs, compare towns by supported facility records, screen synthetic relocation incentives, and describe preferences through the AI Recommendation page. These are prototype features, not complete routing, policy or personalised advice services.
 
-POI coordinates and locality counts come from the data-team CSV handover and are served from PostgreSQL at runtime. Journey times are labelled straight-line walking estimates, not street routes or public transport schedules.
+POI coordinates and locality counts come from the data-team CSV handover and are served from PostgreSQL at runtime. Map reach and list times use straight-line walking estimates; the current map UI does not show a verified street route or public transport journey.
 
 ## Team branching
 
@@ -22,7 +22,7 @@ Ownership lists live in `features/<name>/README.md`. Full rules: [`docs/BRANCHIN
 
 ## Quick start
 
-Node.js, npm, and a populated PostgreSQL database are required. Copy `.env.example` to `.env.local`, set `DATABASE_URL`, and keep credentials out of Git. Database preparation is covered in [`docs/BACKEND.md`](docs/BACKEND.md).
+Node.js, npm, and a populated PostgreSQL database are required. Copy `.env.example` to `.env.local`, set `DATABASE_URL`, and keep credentials out of Git. Database preparation is covered in [`docs/BACKEND.md`](docs/BACKEND.md). Incentive screening also requires a separately populated `public.subsidies` table; the POI import does not create those records.
 
 ```bash
 npm install
@@ -62,15 +62,15 @@ npm test
 | Path | Purpose |
 | --- | --- |
 | `/` | Home / product story |
-| `/map` | Pin, walking reach, nearby POIs |
-| `/compare` | Town comparison by facilities |
-| `/incentives` | Prototype subsidy screening |
-| `/ai-assistant` | Free-text preference extraction and town suggestions |
+| `/map` | Pin, estimated walking reach and nearby POIs; no street-path overlay in the current UI |
+| `/compare` | Town comparison using supported POI facility records, not all aspects of liveability |
+| `/incentives` | Synthetic subsidy screening; job input is present but occupation matching is not supported by current records |
+| `/ai-assistant` | English free-text extraction for supported facilities and backend-ranked town suggestions; optional Cloud Qwen review |
 | `/api/reach` | Nearby POIs within the one-way walking window |
 | `/api/localities` | Searchable locality/LGA summaries |
 | `/api/health` | Repository and database readiness |
 
-Other API endpoints and request contracts are documented in [`docs/BACKEND.md`](docs/BACKEND.md).
+Other API routes are implemented under `app/api/`; their request contracts live under `shared/contracts/`.
 
 ## Repository layout
 
@@ -98,13 +98,14 @@ SERINEA/
 └── package.json
 ```
 
-## Data stance (Iteration 1)
+## Data stance (Iteration 2)
 
 - **Real supplied POIs.** The detailed file has 32,569 unique OSM IDs and valid coordinates.
 - **Not live GTFS.** Journeys are straight-line walking estimates at 4.8 km/h.
 - **Fixed 15-minute window.** A place fits when the estimated walk **from the pin** is no more than 15 minutes; return time is not included.
-- **Prototype incentives.** Subsidy records are synthetic, not official government programs or eligibility decisions.
-- **AI-assisted input.** Cloud review is optional; facility ranking and incentive screening remain backend rule-based.
+- **Incomplete route guidance.** A street-path backend endpoint exists, but the current map does not display its path; a real walk may take longer than the estimate.
+- **Prototype incentives.** Subsidy records are synthetic, not official government programs or eligibility decisions. Occupation-based matching is not available yet.
+- **Limited recommendation evidence.** Ranking uses supported POI facilities, not safety, housing cost, internet quality or other unverified requests. Cloud Qwen review is optional and off by default; facility ranking and incentive screening remain backend rule-based.
 
 See [`docs/BACKEND.md`](docs/BACKEND.md) for integration points and [`docs/DATASET.md`](docs/DATASET.md) for data limitations.
 
