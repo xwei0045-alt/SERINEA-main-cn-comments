@@ -1,6 +1,6 @@
-# SERINEA — The 15 minute map (Iteration 1)
+# SERINEA — The 15 minute map (Iteration 2)
 
-**FIT5120 S2 2026 · Team SERINEA (TA06) · Assignment 1 — Iteration 1**
+**FIT5120 S2 2026 · Team SERINEA (TA06) · Assignment 1 — Iteration 2**
 
 Full-stack prototype for a **15-minute walking reach map**, framed for **small towns and regional Victoria**. Users can explore nearby places, compare towns by facilities, screen prototype relocation incentives, and describe preferences through the AI Recommendation page.
 
