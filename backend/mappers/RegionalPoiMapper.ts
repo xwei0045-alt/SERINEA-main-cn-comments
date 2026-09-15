@@ -3,7 +3,7 @@ import type { PoiCategoryId } from "@/shared/contracts/reach";
 import type { RegionalPoiRecord } from "@/backend/data/RegionalDataset";
 
 /** Every Iteration 1 subcategory maps onto a labelled map type. */
-export const CATEGORY_BY_SUBCATEGORY: Record<string, PoiCategoryId> = {
+const CATEGORY_BY_SUBCATEGORY: Record<string, PoiCategoryId> = {
   park: "park",
   nature_reserve: "park",
   playground: "park",
@@ -49,6 +49,7 @@ export type MappableRegionalPoi = Pick<
 
 /** Maps every supplied subcategory. Falls back to a readable unknown bucket only if a new tag appears. */
 export class RegionalPoiMapper {
+  /** Converts a stored record into a map place. */
   toMapPoi(record: MappableRegionalPoi): Poi | null {
     const category = CATEGORY_BY_SUBCATEGORY[record.subcategory];
     if (!category) return null;
@@ -64,6 +65,7 @@ export class RegionalPoiMapper {
     };
   }
 
+  /** Handles the readable name step. */
   private readableName(value: string): string {
     return value
       .split("_")

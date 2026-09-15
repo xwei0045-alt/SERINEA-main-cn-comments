@@ -10,6 +10,7 @@ import type {
 } from "@/shared/contracts/localities";
 import { rankLocalityMatches } from "@/lib/localitySearch";
 
+/** Handles the locality key step. */
 function localityKey(locality: string, lgaName: string, regionalGroup: string) {
   return `${locality}\u0000${lgaName}\u0000${regionalGroup}`;
 }
@@ -39,11 +40,13 @@ export class LocalitySummaryService {
   private dataPromise: ReturnType<LocalitySummaryRepository["load"]> | undefined;
   private summariesPromise: Promise<LocalitySummaryItem[]> | undefined;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(
     private readonly repository: LocalitySummaryRepository =
       new CsvLocalitySummaryRepository()
   ) {}
 
+  /** Searches the data using the validated request. */
   async search(query: LocalitySummaryQuery): Promise<LocalitySummaryResponse> {
     const data = await this.getData();
     const summaries = await this.getSummaries(data);
@@ -83,11 +86,13 @@ export class LocalitySummaryService {
     };
   }
 
+  /** Returns the data. */
   private getData(): ReturnType<LocalitySummaryRepository["load"]> {
     if (!this.dataPromise) this.dataPromise = this.repository.load();
     return this.dataPromise;
   }
 
+  /** Returns the summaries. */
   private getSummaries(data: LocalitySummaryData): Promise<LocalitySummaryItem[]> {
     if (!this.summariesPromise) {
       this.summariesPromise = Promise.resolve(this.aggregate(data));
@@ -95,6 +100,7 @@ export class LocalitySummaryService {
     return this.summariesPromise;
   }
 
+  /** Handles the aggregate step. */
   private aggregate(data: LocalitySummaryData): LocalitySummaryItem[] {
     const localities = new Map<string, MutableLocality>();
     const centroidByKey = new Map(

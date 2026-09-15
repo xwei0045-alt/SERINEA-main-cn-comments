@@ -43,6 +43,7 @@ type DatabaseRow = Omit<SubsidyRecord,
     minimumMoveDistanceKm: string | number | null;
   };
 
+/** Handles the nullable number step. */
 function nullableNumber(value: string | number | null): number | null {
   if (value == null) return null;
   const number = Number(value);
@@ -72,6 +73,7 @@ const subsidyRecordSchema = z.object({
   recordNotice: z.string().trim().min(1)
 });
 
+/** Handles the validate record step. */
 function validateRecord(record: SubsidyRecord): SubsidyRecord {
   const result = subsidyRecordSchema.safeParse(record);
   if (!result.success) {
@@ -87,10 +89,12 @@ function validateRecord(record: SubsidyRecord): SubsidyRecord {
 export class PostgresSubsidyRepository implements SubsidyRepository {
   readonly dataSource = "database" as const;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly database = PostgresDatabase.getInstance(
     Environment.getInstance().databaseUrl as string
   )) {}
 
+  /** Loads the records required by this repository. */
   async load(): Promise<SubsidyRecord[]> {
     const result = await this.database.query<DatabaseRow>(`SELECT
       subsidy_id AS "subsidyId",
@@ -130,12 +134,14 @@ export class PostgresSubsidyRepository implements SubsidyRepository {
 type CsvRow = Record<string, string>;
 const FILE_NAME = "SERINEA_mock_subsidies_450.csv";
 
+/** Handles the required text step. */
 function requiredText(row: CsvRow, key: string, line: number): string {
   const value = row[key]?.trim();
   if (!value) throw new Error(`${FILE_NAME}:${line} is missing ${key}.`);
   return value;
 }
 
+/** Handles the optional number step. */
 function optionalNumber(value: string | undefined): number | null {
   if (!value?.trim()) return null;
   const number = Number(value);
@@ -147,8 +153,10 @@ function optionalNumber(value: string | undefined): number | null {
 export class CsvSubsidyRepository implements SubsidyRepository {
   readonly dataSource = FILE_NAME as "SERINEA_mock_subsidies_450.csv";
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly dataDirectory = path.join(process.cwd(), "data")) {}
 
+  /** Loads the records required by this repository. */
   async load(): Promise<SubsidyRecord[]> {
     const text = await readFile(path.join(this.dataDirectory, FILE_NAME), "utf8");
     const rows = parse(text, { bom: true, columns: true, skip_empty_lines: true }) as CsvRow[];

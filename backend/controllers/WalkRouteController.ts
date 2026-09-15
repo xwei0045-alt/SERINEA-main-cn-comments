@@ -4,8 +4,10 @@ import { walkQuerySchema } from "@/shared/contracts/walkRoute";
 
 // Checks the walk query, then asks the street router. Bad coords get 400, no path gets 502.
 export class WalkRouteController {
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly router: FootWalkRouter) {}
 
+  /** Validates the request and returns the API response. */
   async handle(request: NextRequest): Promise<NextResponse> {
     const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsedQuery = walkQuerySchema.safeParse(rawQuery);

@@ -11,6 +11,7 @@ const databaseGlobal = globalThis as typeof globalThis & {
  * The rest of the backend uses this class instead of opening new connections directly.
  */
 export class PostgresDatabase {
+  /** Sets up this component with the dependencies it needs. */
   private constructor(private readonly pool: Pool) {}
 
   /** Creates the pool once and reuses it for later requests. */

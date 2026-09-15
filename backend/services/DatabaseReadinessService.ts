@@ -1,13 +1,13 @@
-import type { QueryResultRow } from "pg";
-
 type QueryableDatabase = {
-  query<Row extends QueryResultRow>(sql: string, values?: readonly unknown[]): Promise<unknown>;
+  query(sql: string, values?: readonly unknown[]): Promise<unknown>;
 };
 
 /** Verifies that the deployed API account can read every table required by backend routes. */
 export class DatabaseReadinessService {
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly database: QueryableDatabase) {}
 
+  /** Checks that the API can read every required database table. */
   async isReady(): Promise<boolean> {
     try {
       await this.database.query("SELECT 1 FROM public.regional_pois LIMIT 1");

@@ -4,8 +4,10 @@ import { localitySummaryQuerySchema } from "@/shared/contracts/localities";
 
 /** Translates HTTP requests into locality summary service calls. */
 export class LocalitySummaryController {
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly service: LocalitySummaryService) {}
 
+  /** Validates the request and returns the API response. */
   async handle(request: NextRequest): Promise<NextResponse> {
     const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsedQuery = localitySummaryQuerySchema.safeParse(rawQuery);

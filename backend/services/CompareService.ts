@@ -11,10 +11,12 @@ import type {
 } from "@/shared/contracts/compare";
 import type { LocalitySummaryItem } from "@/shared/contracts/localities";
 
+/** Handles the locality key step. */
 function localityKey(item: Pick<LocalitySummaryItem, "locality" | "lgaName" | "regionalGroup">) {
   return `${item.locality}\u0000${item.lgaName}\u0000${item.regionalGroup}`;
 }
 
+/** Handles the subcategory count step. */
 function subcategoryCount(item: LocalitySummaryItem, subcategories: string[]): number {
   const wanted = new Set(subcategories);
   let total = 0;
@@ -26,6 +28,7 @@ function subcategoryCount(item: LocalitySummaryItem, subcategories: string[]): n
   return total;
 }
 
+/** Handles the title case step. */
 function titleCase(value: string): string {
   return value
     .toLocaleLowerCase("en-AU")
@@ -37,12 +40,14 @@ function titleCase(value: string): string {
 
 /** Ranks regional localities by weighted preference coverage from the regional extract. */
 export class CompareService {
+  /** Sets up this component with the dependencies it needs. */
   constructor(
     private readonly localities = LocalitySummaryServiceFactory.create(),
     /** Pass null in unit tests to keep counts on the injected locality summary. */
     private readonly detailLoader?: { load(): Promise<{ pois: ComparePoi[] }> } | null
   ) {}
 
+  /** Ranks towns using the selected preference weights. */
   async rank(query: CompareQuery): Promise<CompareResponse> {
     const selected = query.prefs
       .map((id) => RANKING_PREFERENCES.find((pref) => pref.id === id))
@@ -230,6 +235,7 @@ export class CompareService {
     });
   }
 
+  /** Handles the score locality step. */
   private scoreLocality(
     item: LocalitySummaryItem,
     selected: typeof RANKING_PREFERENCES,

@@ -18,12 +18,14 @@ export class CsvReachRepository implements ReachRepository {
 
   private indexPromise: Promise<SpatialGridIndex<IndexedPoi>> | undefined;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(
     private readonly loader = new CsvDatasetLoader(),
     private readonly mapper = new RegionalPoiMapper(),
     private readonly journeyCalculator = new EstimatedJourneyCalculator()
   ) {}
 
+  /** Finds places reachable under the supplied rules. */
   async findReachable(criteria: ReachSearchCriteria): Promise<ReachComputation> {
     const [dataset, index] = await Promise.all([this.loader.load(), this.getIndex()]);
     const searchRadiusKm = this.journeyCalculator.maximumOutboundDistanceKm(
@@ -63,6 +65,7 @@ export class CsvReachRepository implements ReachRepository {
     };
   }
 
+  /** Checks whether the required data source is available. */
   async isHealthy(): Promise<boolean> {
     try {
       await this.loader.load();
@@ -72,6 +75,7 @@ export class CsvReachRepository implements ReachRepository {
     }
   }
 
+  /** Returns the index. */
   private getIndex(): Promise<SpatialGridIndex<IndexedPoi>> {
     if (!this.indexPromise) {
       this.indexPromise = this.loader.load().then((dataset) => {

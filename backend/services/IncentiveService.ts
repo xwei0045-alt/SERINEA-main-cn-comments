@@ -46,18 +46,22 @@ const CATEGORY_TERMS: Record<string, string[]> = {
 
 const NOTICE = "Fictional subsidy data for SERINEA prototype testing only. These are not government programs or official eligibility decisions.";
 
+/** Handles the normalize area step. */
 function normalizeArea(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLocaleUpperCase("en-AU");
 }
 
+/** Handles the escape reg exp step. */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Handles the contains area step. */
 function containsArea(message: string, area: string): boolean {
   return new RegExp(`\\b${escapeRegExp(area).replaceAll("\\ ", "\\s+")}\\b`, "i").test(message);
 }
 
+/** Handles the to annual income step. */
 function toAnnualIncome(
   amount: number,
   period: IncentiveRequest["profile"]["income_period"]
@@ -68,6 +72,7 @@ function toAnnualIncome(
   return null;
 }
 
+/** Handles the categories in step. */
 function categoriesIn(message: string): Set<string> {
   const normalized = message.toLocaleLowerCase("en-AU");
   return new Set(Object.entries(CATEGORY_TERMS)
@@ -79,12 +84,14 @@ export class IncentiveService {
   private recordsPromise: Promise<SubsidyRecord[]> | undefined;
   private recordsLoadedAt = 0;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(
     private readonly repository: SubsidyRepository = new PostgresSubsidyRepository(),
     private readonly cacheTtlMs = 5 * 60 * 1000,
     private readonly now = Date.now
   ) {}
 
+  /** Finds the . */
   async find(input: IncentiveRequest): Promise<IncentiveResponse> {
     const records = await this.load();
     const requestedAreas = input.towns.length
@@ -126,6 +133,7 @@ export class IncentiveService {
     };
   }
 
+  /** Handles the area from message step. */
   private areaFromMessage(
     message: string,
     profileLocality: string | null,
@@ -161,6 +169,7 @@ export class IncentiveService {
       .slice(0, 5);
   }
 
+  /** Checks one incentive against the user's facts. */
   private check(record: SubsidyRecord, input: IncentiveRequest): CheckResult {
     const { profile, relocationStage } = input;
     const matched = ["Locality"];
@@ -221,6 +230,7 @@ export class IncentiveService {
     return { matched, missing: [...new Set(missing)], failed: [...new Set(failed)] };
   }
 
+  /** Handles the to result step. */
   private toResult(
     record: SubsidyRecord,
     check: CheckResult,
@@ -244,6 +254,7 @@ export class IncentiveService {
     };
   }
 
+  /** Loads the records required by this repository. */
   private load(): Promise<SubsidyRecord[]> {
     if (!this.recordsPromise || this.now() - this.recordsLoadedAt >= this.cacheTtlMs) {
       this.recordsLoadedAt = this.now();

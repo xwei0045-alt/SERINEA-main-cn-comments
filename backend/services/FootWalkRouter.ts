@@ -36,10 +36,12 @@ type OsrmResponse = {
   routes?: OsrmRoute[];
 };
 
+/** Handles the to lat lng step. */
 function toLatLng(pair: [number, number]): LatLng {
   return { lat: pair[1], lng: pair[0] };
 }
 
+/** Handles the walking seconds step. */
 function walkingSeconds(distanceMeters: number, reportedSeconds: number): number {
   if (distanceMeters <= 0) return 0;
   const impliedKmh = distanceMeters / 1000 / (Math.max(reportedSeconds, 1) / 3600);
@@ -47,6 +49,7 @@ function walkingSeconds(distanceMeters: number, reportedSeconds: number): number
   return reportedSeconds;
 }
 
+/** Handles the map steps step. */
 function mapSteps(steps: OsrmStep[] | undefined): WalkStep[] {
   return (steps ?? [])
     .filter((step) => step.maneuver?.type !== "arrive")
@@ -68,11 +71,13 @@ function mapSteps(steps: OsrmStep[] | undefined): WalkStep[] {
 // Street path from OSM foot routing.
 // If the server gives a driving speed we throw that away and use 4.8 km/h.
 export class FootWalkRouter {
+  /** Sets up this component with the dependencies it needs. */
   constructor(
     private readonly endpoint = FOSSGIS_FOOT,
     private readonly fetchImpl: typeof fetch = fetch.bind(globalThis)
   ) {}
 
+  /** Handles the route step. */
   async route(input: {
     from: LatLng;
     to: LatLng;
@@ -93,6 +98,7 @@ export class FootWalkRouter {
     };
   }
 
+  /** Requests and validates one walking route leg. */
   private async oneLeg(from: LatLng, to: LatLng, id: WalkLeg["id"]): Promise<WalkLeg> {
     const coordinates = `${from.lng},${from.lat};${to.lng},${to.lat}`;
     const url = `${this.endpoint}/${coordinates}?overview=full&geometries=geojson&steps=true`;

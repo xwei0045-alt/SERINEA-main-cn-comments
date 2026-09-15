@@ -5,6 +5,7 @@ import type { LatLng } from "@/lib/types";
 export class SpatialGridIndex<T extends LatLng> {
   private readonly cells = new Map<string, T[]>();
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(
     items: readonly T[],
     private readonly cellSizeDegrees = 0.02
@@ -48,14 +49,17 @@ export class SpatialGridIndex<T extends LatLng> {
     return matches;
   }
 
+  /** Handles the key for step. */
   private keyFor(latitude: number, longitude: number): string {
     return `${this.latitudeCell(latitude)}:${this.longitudeCell(longitude)}`;
   }
 
+  /** Handles the latitude cell step. */
   private latitudeCell(latitude: number): number {
     return Math.floor((latitude + 90) / this.cellSizeDegrees);
   }
 
+  /** Handles the longitude cell step. */
   private longitudeCell(longitude: number): number {
     return Math.floor((longitude + 180) / this.cellSizeDegrees);
   }

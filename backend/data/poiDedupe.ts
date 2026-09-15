@@ -37,6 +37,7 @@ export function dedupeRegionalPois<T extends DedupePoi>(
   return kept;
 }
 
+/** Handles the collapse near step. */
 function collapseNear<T extends DedupePoi>(bucket: T[], maxKm: number): T[] {
   // Prefer a named record when choosing the survivor of a near-duplicate pair.
   const ordered = [...bucket].sort((a, b) => {

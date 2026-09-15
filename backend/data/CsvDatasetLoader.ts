@@ -19,8 +19,10 @@ const DATASET_HANDOVER_DATE = "2026-09-02";
 export class CsvDatasetLoader {
   private datasetPromise: Promise<RegionalDataset> | undefined;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly dataDirectory = path.join(process.cwd(), "data")) {}
 
+  /** Loads the records required by this repository. */
   load(): Promise<RegionalDataset> {
     if (!this.datasetPromise) {
       this.datasetPromise = this.readDataset();
@@ -28,6 +30,7 @@ export class CsvDatasetLoader {
     return this.datasetPromise;
   }
 
+  /** Reads and validates the regional CSV files. */
   private async readDataset(): Promise<RegionalDataset> {
     const detailPath = path.join(this.dataDirectory, DETAIL_FILE_NAME);
     const summaryPath = path.join(this.dataDirectory, SUMMARY_FILE_NAME);
@@ -112,6 +115,7 @@ export class CsvDatasetLoader {
     }));
   }
 
+  /** Parses CSV text into named rows. */
   private parseRows(text: string, fileName: string): CsvRow[] {
     try {
       return parse(text, {
@@ -125,6 +129,7 @@ export class CsvDatasetLoader {
     }
   }
 
+  /** Converts one CSV row into a place record. */
   private toPoi(row: CsvRow, line: number): RegionalPoiRecord {
     const latitude = this.requiredNumber(row.latitude, "latitude", DETAIL_FILE_NAME, line);
     const longitude = this.requiredNumber(
@@ -173,6 +178,7 @@ export class CsvDatasetLoader {
     };
   }
 
+  /** Converts one CSV row into a locality summary. */
   private toSummary(row: CsvRow, line: number): LocalityPoiSummaryRecord {
     const poiCount = this.requiredNumber(
       row.poi_count,
@@ -202,6 +208,7 @@ export class CsvDatasetLoader {
     };
   }
 
+  /** Handles the required text step. */
   private requiredText(
     value: string | undefined,
     column: string,
@@ -215,6 +222,7 @@ export class CsvDatasetLoader {
     return normalized;
   }
 
+  /** Handles the required number step. */
   private requiredNumber(
     value: string | undefined,
     column: string,
@@ -228,6 +236,7 @@ export class CsvDatasetLoader {
     return number;
   }
 
+  /** Checks that every place identifier is unique. */
   private validateUniquePoiIds(pois: RegionalPoiRecord[]): void {
     const ids = new Set<string>();
     for (const poi of pois) {

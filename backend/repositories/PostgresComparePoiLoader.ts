@@ -8,10 +8,12 @@ export type ComparePoi = Pick<RegionalPoiRecord,
 
 /** Loads the same production POIs as town search for ranking deduplication and pins. */
 export class PostgresComparePoiLoader {
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly database = PostgresDatabase.getInstance(
     Environment.getInstance().databaseUrl as string
   )) {}
 
+  /** Loads the records required by this repository. */
   async load(): Promise<{ pois: ComparePoi[] }> {
     const result = await this.database.query<ComparePoi>(`SELECT
       osm_id::text AS "osmId", COALESCE(name, '') AS name, locality,

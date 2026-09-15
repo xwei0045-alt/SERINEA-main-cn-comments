@@ -23,8 +23,10 @@ type EnvironmentValues = z.infer<typeof environmentSchema>;
 export class Environment {
   private static instance: Environment | undefined;
 
+  /** Sets up this component with the dependencies it needs. */
   private constructor(private readonly values: EnvironmentValues) {}
 
+  /** Returns the shared instance used by the backend. */
   static getInstance(): Environment {
     if (!Environment.instance) {
       Environment.instance = new Environment(environmentSchema.parse(process.env));

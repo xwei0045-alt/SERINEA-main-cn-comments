@@ -1,5 +1,5 @@
 import type { QueryResultRow } from "pg";
-import type { Poi, ReachablePoi } from "@/lib/types";
+import type { ReachablePoi } from "@/lib/types";
 import type { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import {
   RegionalPoiMapper,
@@ -26,12 +26,14 @@ type DatabasePoiRow = QueryResultRow & {
 export class PostgresReachRepository implements ReachRepository {
   readonly dataSource = "database" as const;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(
     private readonly database: PostgresDatabase,
     private readonly mapper = new RegionalPoiMapper(),
     private readonly journeyCalculator = new EstimatedJourneyCalculator()
   ) {}
 
+  /** Finds places reachable under the supplied rules. */
   async findReachable(criteria: ReachSearchCriteria): Promise<ReachComputation> {
     const searchRadiusKm = this.journeyCalculator.maximumOutboundDistanceKm(
       criteria.windowMinutes
@@ -97,6 +99,7 @@ export class PostgresReachRepository implements ReachRepository {
     };
   }
 
+  /** Checks whether the required data source is available. */
   async isHealthy(): Promise<boolean> {
     try {
       await this.database.query("SELECT 1 FROM public.regional_pois LIMIT 1");

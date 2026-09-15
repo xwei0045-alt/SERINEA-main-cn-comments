@@ -4,8 +4,10 @@ import { reachQuerySchema } from "@/shared/contracts/reach";
 
 // HTTP in, ReachService out. Bad query is 400. Real failures stay in the server log.
 export class ReachController {
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly service: ReachService) {}
 
+  /** Validates the request and returns the API response. */
   async handle(request: NextRequest): Promise<NextResponse> {
     const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsedQuery = reachQuerySchema.safeParse(rawQuery);

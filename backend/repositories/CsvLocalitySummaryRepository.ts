@@ -8,8 +8,10 @@ import type {
 export class CsvLocalitySummaryRepository implements LocalitySummaryRepository {
   readonly dataSource = "csv" as const;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly loader = new CsvDatasetLoader()) {}
 
+  /** Loads the records required by this repository. */
   async load(): Promise<LocalitySummaryData> {
     const dataset = await this.loader.load();
     return {

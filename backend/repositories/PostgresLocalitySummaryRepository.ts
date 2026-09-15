@@ -22,8 +22,10 @@ export class PostgresLocalitySummaryRepository
 {
   readonly dataSource = "database" as const;
 
+  /** Sets up this component with the dependencies it needs. */
   constructor(private readonly database: PostgresDatabase) {}
 
+  /** Loads the records required by this repository. */
   async load(): Promise<LocalitySummaryData> {
     // RDS supplies detailed POIs only, so these read-only aggregates replace
     // the retired CSV and dataset-version summary tables at request startup.
