@@ -1,121 +1,92 @@
-# SERINEA — The 15 minute map (Iteration 1)
+# SERINEA
 
-**FIT5120 S2 2026 · Team SERINEA (TA06) · Assignment 1 — Iteration 1**
+**FIT5120 S2 2026 | Regional Victoria relocation prototype**
 
-Full-stack prototype for a **15-minute round-trip reach map**, framed for **small towns and regional Victoria**. The map now reads the supplied Iteration 1 regional POI files through server-side APIs.
+SERINEA helps people explore regional towns through a 15-minute one-way walking reach map, compare towns by nearby facilities, and screen fictional relocation incentives. The AI Recommendation page accepts a free-text request, but town ranking and incentive eligibility checks use structured project data and backend rules.
 
-POI coordinates and locality counts come from the data-team CSV handover. Journey times are still clearly labelled straight-line walking estimates because the supplied files do not contain GTFS routes or timetables.
+## Features
 
-## Team branching
-
-Use **feature branches**, not dump branches:
-
-| Branch | Focus |
+| Page | What it does |
 | --- | --- |
-| `feature/maps` | Map, reach, walk |
-| `feature/filters` | Compare prefs & ranking |
-| `feature/ai-assistant` | Chat / Groq assistant |
-| `feature/data` | CSV extract & loaders |
-| `feature/home` | Landing / how-it-works UI |
+| `/map` | Shows nearby points of interest (POIs) within a fixed 15-minute walk from the selected pin. Journey times are straight-line estimates, not turn-by-turn routing or public transport schedules. |
+| `/compare` | Ranks towns using selected facility preferences and the current POI records. Its optional chat assistant uses Groq when configured. |
+| `/incentives` | Screens a selected town's fictional subsidy records against relocation status and any facts the user supplies. The current records do not support occupation matching, despite the job field in the form. |
+| `/ai-assistant` | Extracts facility preferences from English free text, ranks towns through the same Compare backend, and shows separate incentive results when requested. |
 
-Ownership lists live in `features/<name>/README.md`. Full rules: [`docs/BRANCHING.md`](docs/BRANCHING.md).
+The AI Recommendation page starts with deterministic local text extraction. **Cloud Qwen review is optional and off by default.** When enabled and configured, the server sends the message and extraction to Hugging Face Inference Providers; if review is unavailable, the local extraction remains active. Qwen does not calculate the town scores or decide subsidy eligibility. The server-only `HF_TOKEN` must never be exposed to the browser or committed.
 
-## Quick start
+## Data and limits
+
+- Runtime POI and locality data is read from PostgreSQL. The supplied OSM-derived CSV files are used for validation, import and offline tests, not as the deployed runtime source.
+- The map uses a fixed **15-minute one-way** window. Walking times are estimated from straight-line distance at 4.8 km/h; they are not verified street routes.
+- The 450 subsidy records are **synthetic prototype data**. They are not government programs, and a displayed match is not an official eligibility decision.
+- Incentives do not change the lifestyle ranking or town order. Unknown eligibility facts are shown as items to verify rather than assumed true.
+
+## Local setup
+
+Requires Node.js, npm and a reachable PostgreSQL database populated with the project's POI and locality tables. Incentive screening additionally needs a populated `public.subsidies` table.
 
 ```bash
-npm install
+npm ci
+```
+
+Create `.env.local` from [`.env.example`](.env.example) and set at least `REACH_DATA_SOURCE=database` and `DATABASE_URL` to a valid PostgreSQL connection string. `GROQ_API_KEY` is optional for Compare chat; `HF_TOKEN` and `HF_MODEL` are optional for Cloud Qwen review. Do not commit `.env.local` or real keys.
+
+If you are preparing a new database and have write access, the repository provides schema migration and POI/locality import commands:
+
+```bash
+npm run db:migrate
+npm run db:import -- --version=iteration1
+```
+
+These commands do **not** create or populate `public.subsidies`. The synthetic subsidy table must be provisioned and populated separately before the Incentives page can return records. See [backend operating notes](docs/BACKEND.md) and [dataset notes](docs/DATASET.md) for the data handover.
+
+Start the app and open [http://127.0.0.1:5173](http://127.0.0.1:5173):
+
+```bash
 npm run dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
-
-Production build:
-
-```bash
-npm run build
-npm start
-```
-
-Backend checks:
+Checks and production build:
 
 ```bash
 npm run data:validate
 npm test
+npx tsc --noEmit
+npm run build
+npm start
 ```
 
-## Stack
+## API routes
 
-| Layer | Technology |
+| Route | Purpose |
 | --- | --- |
-| Framework | Next.js 15 (App Router) |
-| UI | React 19, TypeScript |
-| Styling | CSS Modules + global CSS |
-| Map | Leaflet (client-only on `/map`) |
-| Backend | Next.js route handlers, object-oriented service/repository layers |
-| Current data | Validated CSV files with an in-memory spatial index |
-| Database | Versioned PostgreSQL schema, transactional importer, and repositories |
-
-## Routes
-
-| Path | Purpose |
-| --- | --- |
-| `/` | Scroll-driven landing / product story |
-| `/map` | Operate tool — pin, isochrone, reachable POIs |
-| `/how` | Short how-it-works |
-| `/api/reach` | Nearby mapped POIs and estimated round trips |
-| `/api/localities` | Searchable locality/LGA/regional POI summaries |
-| `/api/health` | Repository and database readiness |
+| `GET /api/reach` | Nearby POIs within the one-way walking window |
+| `GET /api/localities` | Searchable town/LGA summaries |
+| `GET /api/compare` | Facility-based town ranking |
+| `POST /api/incentives` | Rule-based synthetic subsidy screening |
+| `POST /api/ai/review` | Optional server-side Cloud Qwen extraction review |
+| `POST /api/chat` | Optional Groq-backed Compare chat |
+| `GET /api/health` | Service/database readiness |
+| `GET /api/walk` | Backend street-path endpoint; the current map UI does not display a street navigation path |
 
 ## Repository layout
 
-```
-SERINEA/
-├── app/                    # Next.js pages and thin API route handlers
-│   ├── components/         # Shared UI (Chrome, landing reel)
-│   ├── map/                # Map page + Leaflet shell
-│   ├── how/                # How-it-works page
-│   ├── globals.css         # Design tokens & base styles
-│   └── layout.tsx          # Root layout + fonts
-├── backend/                # Controllers, services, repositories, data loading
-│   └── iso/                # ISO 29119 automated test cases
-├── frontend/               # Browser-side API clients
-├── shared/                 # Runtime-validated API contracts
-├── data/                   # Supplied Iteration 1 CSV files
-├── scripts/                # Dataset validation command
-├── lib/                    # Existing UI types and demonstration helpers
-│   ├── pois.ts             # Demo POI catalogue
-│   ├── stops.ts            # Demo PT stops
-│   ├── reach.ts            # Round-trip reach calculation (client)
-│   ├── landingDemo.ts      # Homepage atlas demo pins
-│   ├── landingStory.ts     # Scroll-reel copy & beats
-│   ├── types.ts            # Shared TypeScript types
-│   └── sources.ts          # Source stamps & demo banner
-├── docs/
-│   ├── ARCHITECTURE.md     # Frontend/backend ownership and object flow
-│   ├── AWS_DEPLOYMENT.md   # EC2, PostgreSQL, Nginx deployment details
-│   ├── BACKEND.md          # API and operating instructions
-│   ├── DATASET.md          # Supplied fields, mapping, and limitations
-│   └── TEST_CASES.md       # ISO 29119 test cases for Iteration 1
-├── PRODUCT.md              # Product spec (mentor reference)
-├── DESIGN.md               # Visual / UX direction
-└── package.json
+```text
+app/                  Next.js pages, UI components and thin API route handlers
+backend/config/       Runtime environment validation
+backend/controllers/  Request parsing and HTTP responses
+backend/services/     Reach, compare, incentive and AI-review logic
+backend/repositories/ PostgreSQL data access and test/offline repositories
+backend/database/     Shared PostgreSQL connection pool
+frontend/api/         Browser-side API clients
+shared/contracts/     Validated request and response contracts
+lib/                  Shared types and deterministic recommendation extraction
+data/                 Supplied POI files and synthetic subsidy CSV
+database/             PostgreSQL schema
+scripts/              Data validation, migration and import commands
+docs/                 Architecture, backend, dataset and deployment notes
+.github/workflows/    Main-branch EC2 deployment workflow
 ```
 
-## Data stance (Iteration 1)
-
-- **Real supplied POIs.** The detailed file has 32,569 unique OSM IDs and valid coordinates.
-- **Not live GTFS.** Journeys are straight-line walking estimates at 4.8 km/h.
-- **Fixed 15-minute window** — outbound + return must fit; no 30/60 options.
-- **Round-trip filter:** if return does not fit, the place is omitted (or shown as ghost on the landing demo only).
-
-See `docs/BACKEND.md` for integration points for the backend developer.
-
-See `docs/AWS_DEPLOYMENT.md` for the current low-cost AWS development architecture and the future dataset update process.
-
-## Branch
-
-Backend and data integration: **`backend-integration`**.
-
-## Team
-
-Team SERINEA (TA06) — roles and phases are summarised on the landing scroll reel (`lib/landingStory.ts`).
+The deployment workflow verifies tests, types and build before deploying `main` to EC2. It needs the repository's EC2 deployment secrets and a separately configured server/database; see [automatic deployment](docs/AUTO_DEPLOYMENT.md). Use feature branches and PRs for changes; see [branching rules](docs/BRANCHING.md).
