@@ -216,24 +216,10 @@ export class IncentiveService {
       }
     }
 
-    if (record.newResidentRequired) {
-      if (relocationStage === "planning_to_move") missing.push("Become a new resident after moving");
-      else if (profile.new_resident == null) missing.push("New resident status");
-      else if (profile.new_resident) matched.push("New resident status");
-      else failed.push("New resident requirement");
-    }
-
     if (record.minimumMoveDistanceKm != null) {
       if (profile.move_distance_km == null) missing.push("Move distance");
       else if (profile.move_distance_km >= record.minimumMoveDistanceKm) matched.push("Move distance");
       else failed.push("Minimum move distance");
-    }
-
-    if (record.applyWithinDays != null) {
-      if (relocationStage === "planning_to_move") missing.push(`Apply within ${record.applyWithinDays} days after moving`);
-      else if (profile.days_since_move == null) missing.push("Days since move");
-      else if (profile.days_since_move <= record.applyWithinDays) matched.push("Application timing");
-      else failed.push("Application timing");
     }
 
     if (relocationStage === "unknown") missing.push("Relocation stage");

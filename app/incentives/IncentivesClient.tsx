@@ -53,9 +53,7 @@ export default function IncentivesClient() {
   const [lgaName, setLgaName] = useState(""); // set when they pick a suggested town
   const [age, setAge] = useState("");
   const [income, setIncome] = useState("");
-  const [newResident, setNewResident] = useState<"unknown" | "yes" | "no">("unknown");
   const [moveDistanceKm, setMoveDistanceKm] = useState("");
-  const [daysSinceMove, setDaysSinceMove] = useState("");
   const [busy, setBusy] = useState(false); // true while we wait for the server
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<IncentiveResponse | null>(null);
@@ -87,10 +85,7 @@ export default function IncentivesClient() {
           child_ages: [],
           locality: town,
           lga_name: lga || null,
-          move_distance_km: parseOptionalNumber(moveDistanceKm),
-          days_since_move: parseOptionalNumber(daysSinceMove),
-          new_resident:
-            newResident === "yes" ? true : newResident === "no" ? false : null
+          move_distance_km: parseOptionalNumber(moveDistanceKm)
         },
         // If they picked a suggestion, send the exact town and LGA from our data.
         towns: lga
@@ -204,21 +199,6 @@ export default function IncentivesClient() {
                 </div>
                 <div className={styles.row}>
                   <div className={styles.field}>
-                    <label htmlFor="new-resident">New resident</label>
-                    <select
-                      id="new-resident"
-                      name="new-resident"
-                      value={newResident}
-                      onChange={(e) =>
-                        setNewResident(e.target.value as "unknown" | "yes" | "no")
-                      }
-                    >
-                      <option value="unknown">Unknown</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                  </div>
-                  <div className={styles.field}>
                     <label htmlFor="distance">Move distance (km)</label>
                     <input
                       id="distance"
@@ -229,17 +209,6 @@ export default function IncentivesClient() {
                       placeholder="60"
                     />
                   </div>
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="days">Days since move</label>
-                  <input
-                    id="days"
-                    name="days"
-                    inputMode="numeric"
-                    value={daysSinceMove}
-                    onChange={(e) => setDaysSinceMove(e.target.value)}
-                    placeholder="30"
-                  />
                 </div>
               </div>
             </details>

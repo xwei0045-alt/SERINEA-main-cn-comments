@@ -16,9 +16,7 @@ export const incentiveProfileSchema = z.object({
   child_ages: z.array(z.number().int().min(0).max(25)),
   locality: z.string().trim().max(100).nullable(),
   lga_name: z.string().trim().max(100).nullable(),
-  move_distance_km: z.number().nonnegative().nullable(),
-  days_since_move: z.number().int().nonnegative().nullable(),
-  new_resident: z.boolean().nullable()
+  move_distance_km: z.number().nonnegative().nullable()
 });
 
 export const incentiveRequestSchema = z.object({
