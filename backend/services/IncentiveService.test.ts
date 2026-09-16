@@ -26,9 +26,7 @@ function request(overrides: Partial<IncentiveRequest> = {}): IncentiveRequest {
       child_ages: [],
       locality: null,
       lga_name: null,
-      move_distance_km: 60,
-      days_since_move: 30,
-      new_resident: true
+      move_distance_km: 60
     },
     towns: [],
     limitPerTown: 5,
