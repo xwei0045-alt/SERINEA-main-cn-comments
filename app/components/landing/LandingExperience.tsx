@@ -2,14 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { TownSearchField } from "@/app/components/TownSearchField";
-import { COMPARE_PREFERENCES, TOWN_JUMPS } from "@/lib/types";
-import { findPreferences } from "@/lib/preferenceSearch";
 import styles from "./homeDesk.module.css";
-
-type Mode = "town" | "need";
 
 const TOWNS = [
   {
@@ -40,32 +33,6 @@ const TOWNS = [
 
 /** Editorial pastoral home — SERINGA-style scroll, SERINEA product truth. */
 export function LandingExperience() {
-  const router = useRouter();
-  const [mode, setMode] = useState<Mode>("town");
-  const [town, setTown] = useState("");
-  const [prefs, setPrefs] = useState<string[]>([]);
-  const [prefQuery, setPrefQuery] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const prefHits = useMemo(
-    () => findPreferences(prefQuery, prefs),
-    [prefQuery, prefs]
-  );
-
-  function togglePref(id: string) {
-    setPrefs((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
-    );
-  }
-
-  function onPriorityGo() {
-    if (prefs.length === 0) {
-      setError("Pick at least one facility.");
-      return;
-    }
-    router.push(`/compare?${new URLSearchParams({ prefs: prefs.join(",") })}`);
-  }
-
   return (
     <div className={styles.journal}>
       <section className={styles.hero} aria-label="SERINEA">
@@ -91,9 +58,9 @@ export function LandingExperience() {
           <p className={styles.heroBrand}>SERINEA</p>
           <p className={styles.heroTag}>Life beyond the city limits</p>
         </div>
-        <a className={styles.pill} href="#begin">
+        <Link className={styles.pill} href="/map">
           Explore
-        </a>
+        </Link>
       </section>
 
       <section className={styles.mist} aria-label="The fifteen-minute promise">
@@ -139,9 +106,9 @@ export function LandingExperience() {
         <p className={styles.breathLine}>
           Less time commuting, more time living. Less noise, more headspace.
         </p>
-        <a className={styles.breathBar} href="#begin">
+        <Link className={styles.breathBar} href="/map">
           Could slower be better?
-        </a>
+        </Link>
       </section>
 
       <section className={styles.forest}>
@@ -203,124 +170,6 @@ export function LandingExperience() {
             <span>Walking estimates, labelled clearly</span>
           </div>
         </div>
-      </section>
-
-      <section className={styles.begin} id="begin">
-        <h2>Begin</h2>
-        <p className={styles.beginLead}>
-          Name a town, or choose what must be nearby, then we take you to the map
-          or the town ladder.
-        </p>
-        <div className={styles.switch} role="tablist" aria-label="Begin">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "town"}
-            className={mode === "town" ? styles.switchOn : styles.switchOff}
-            onClick={() => {
-              setMode("town");
-              setError(null);
-            }}
-          >
-            I know the town
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "need"}
-            className={mode === "need" ? styles.switchOn : styles.switchOff}
-            onClick={() => {
-              setMode("need");
-              setError(null);
-            }}
-          >
-            I know what I need
-          </button>
-        </div>
-
-        {mode === "town" ? (
-          <div className={styles.beginForm}>
-            <TownSearchField
-              id="home-town"
-              label="Town or LGA"
-              value={town}
-              onValueChange={(value) => {
-                setTown(value);
-                setError(null);
-              }}
-              placeholder="Shepparton, Mildura, Bendigo…"
-              onSelect={(item) => {
-                if (item.latitude == null || item.longitude == null) {
-                  setError("That town has no map pin in the extract.");
-                  return;
-                }
-                setTown(item.locality);
-                router.push(
-                  `/map?${new URLSearchParams({
-                    lat: String(item.latitude),
-                    lng: String(item.longitude),
-                    town: item.locality
-                  })}`
-                );
-              }}
-            />
-            <div className={styles.quickTowns}>
-              {TOWN_JUMPS.map((t) => (
-                <button
-                  key={t.label}
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/map?lat=${t.lat}&lng=${t.lng}&town=${encodeURIComponent(t.label)}`
-                    )
-                  }
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className={styles.beginForm}>
-            <input
-              className={styles.prefSearch}
-              value={prefQuery}
-              onChange={(event) => setPrefQuery(event.target.value)}
-              placeholder="Filter facilities: bus, school, pharmacy…"
-              aria-label="Filter facilities"
-              autoComplete="off"
-            />
-            <div className={styles.mosaic} role="group" aria-label="Facilities">
-              {(prefQuery.trim() ? prefHits : COMPARE_PREFERENCES).map((pref) => {
-                const on = prefs.includes(pref.id);
-                return (
-                  <button
-                    key={pref.id}
-                    type="button"
-                    className={on ? styles.tileOn : styles.tile}
-                    aria-pressed={on}
-                    onClick={() => togglePref(pref.id)}
-                  >
-                    {pref.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className={styles.beginActions}>
-              <span>
-                {prefs.length === 0 ? "Nothing selected" : `${prefs.length} selected`}
-              </span>
-              <button type="button" className={styles.pillDark} onClick={onPriorityGo}>
-                Rank towns
-              </button>
-            </div>
-          </div>
-        )}
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
-          </p>
-        )}
       </section>
 
       <footer className={styles.foot}>
