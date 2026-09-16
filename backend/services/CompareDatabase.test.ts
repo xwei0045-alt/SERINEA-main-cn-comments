@@ -15,6 +15,7 @@ test("Compare and AI default to database without reading CSV, preserving dedupe 
   const poi = { osmId: "1", name: "Park", locality: "TEST TOWN", lgaName: "TEST LGA",
     regionalGroup: "Test Region", subcategory: "park", displayName: "Park", latitude: -37, longitude: 144 };
   const database = { async query(sql: string) {
+    if (/public\.(?:sal_profiles|lga_profiles)/.test(sql)) return { rows: [] };
     assert.match(sql, /public\.regional_pois/);
     if (sql.includes('AS "totalPois"')) return { rows: [{ totalPois: 2 }] };
     if (sql.includes("AVG(")) return { rows: [{ ...poi, latitude: -37.01 }] };

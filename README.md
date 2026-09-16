@@ -4,7 +4,7 @@
 
 Full-stack prototype for a **15-minute walking reach map**, framed for **small towns and regional Victoria**. The current version lets users explore nearby POIs, compare towns by supported facility records, screen synthetic relocation incentives, and describe preferences through the AI Recommendation page. These are prototype features, not complete routing, policy or personalised advice services.
 
-POI coordinates and locality counts come from the data-team CSV handover and are served from PostgreSQL at runtime. Map reach and list times use straight-line walking estimates; the current map UI does not show a verified street route or public transport journey.
+POI coordinates, locality counts, SAL profiles, and LGA profiles are served from PostgreSQL at runtime. Map reach and list times use straight-line walking estimates; the current map UI does not show a verified street route or public transport journey.
 
 ## Team branching
 
@@ -22,7 +22,7 @@ Ownership lists live in `features/<name>/README.md`. Full rules: [`docs/BRANCHIN
 
 ## Quick start
 
-Node.js, npm, and a populated PostgreSQL database are required. Copy `.env.example` to `.env.local`, set `DATABASE_URL`, and keep credentials out of Git. Database preparation is covered in [`docs/BACKEND.md`](docs/BACKEND.md). Incentive screening also requires a separately populated `public.subsidies` table; the POI import does not create those records.
+Node.js, npm, and a populated PostgreSQL database are required. Copy `.env.example` to `.env.local`, set `DATABASE_URL`, and keep credentials out of Git. Database preparation is covered in [`docs/BACKEND.md`](docs/BACKEND.md). Production readiness checks require `public.regional_pois`, `public.subsidies`, `public.sal_profiles`, and `public.lga_profiles`.
 
 ```bash
 npm install
@@ -100,6 +100,8 @@ SERINEA/
 ## Data stance (Iteration 2)
 
 - **Online regional POIs.** Runtime POI and locality data come from PostgreSQL; the row count follows the database rather than an old CSV snapshot.
+- **Backend-only area profiles.** Compare results are enriched from `public.sal_profiles` and `public.lga_profiles`. Census/SEIFA evidence keeps its 2021 year, LGA income/jobs evidence keeps its 2023 year, and missing values stay `null` rather than becoming zero.
+- **User priorities remain authoritative.** Profile evidence is explanatory and does not alter facility ranking unless a future, explicit profile preference contract enables it.
 - **Not live GTFS.** Journeys are straight-line walking estimates at 4.8 km/h.
 - **Fixed 15-minute window.** A place fits when the estimated walk **from the pin** is no more than 15 minutes; return time is not included.
 - **Incomplete route guidance.** A street-path backend endpoint exists, but the current map does not display its path; a real walk may take longer than the estimate.

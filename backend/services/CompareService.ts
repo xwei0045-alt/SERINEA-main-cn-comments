@@ -10,6 +10,10 @@ import type {
   CompareResponse
 } from "@/shared/contracts/compare";
 import type { LocalitySummaryItem } from "@/shared/contracts/localities";
+import {
+  areaProfileKey,
+  type AreaProfileRepository
+} from "@/backend/repositories/AreaProfileRepository";
 
 /** Handles the locality key step. */
 function localityKey(item: Pick<LocalitySummaryItem, "locality" | "lgaName" | "regionalGroup">) {
@@ -44,7 +48,9 @@ export class CompareService {
   constructor(
     private readonly localities = LocalitySummaryServiceFactory.create(),
     /** Pass null in unit tests to keep counts on the injected locality summary. */
-    private readonly detailLoader?: { load(): Promise<{ pois: ComparePoi[] }> } | null
+    private readonly detailLoader?: { load(): Promise<{ pois: ComparePoi[] }> } | null,
+    /** Profile evidence is optional so offline tests never require RDS. */
+    private readonly profiles: AreaProfileRepository | null = null
   ) {}
 
   /** Ranks towns using the selected preference weights. */
@@ -90,7 +96,7 @@ export class CompareService {
       );
 
     const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-    const ranked: CompareRankItem[] = scored.slice(0, query.limit).map((row, index) => ({
+    let ranked: CompareRankItem[] = scored.slice(0, query.limit).map((row, index) => ({
       rank: index + 1,
       locality: row.locality,
       lgaName: row.lgaName,
@@ -103,6 +109,18 @@ export class CompareService {
       longitude: row.longitude,
       breakdown: row.breakdown
     }));
+
+    if (this.profiles && ranked.length > 0) {
+      const evidence = await this.profiles.findForAreas(ranked);
+      ranked = ranked.map((row) => ({
+        ...row,
+        profileEvidence: {
+          ...(evidence.get(areaProfileKey(row.locality, row.lgaName)) ?? { sal: null, lga: null }),
+          // Population, income and SEIFA remain explanatory until the user explicitly asks for them.
+          affectsRanking: false as const
+        }
+      }));
+    }
 
     const top = ranked[0] ?? null;
     const recommendation = top

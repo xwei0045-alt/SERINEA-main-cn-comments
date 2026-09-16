@@ -12,7 +12,7 @@ npm run dev
 
 `npm test` runs the ISO 29119 cases in `backend/iso/iso29119.test.ts`. The written versions live in `docs/TEST_CASES.md`.
 
-Runtime POI data comes from AWS RDS (`public.regional_pois`). Copy `.env.example` to `.env.local` and set:
+Runtime POI and area profile data come from AWS RDS (`public.regional_pois`, `public.sal_profiles`, and `public.lga_profiles`). Copy `.env.example` to `.env.local` and set:
 
 ```env
 REACH_DATA_SOURCE=database
@@ -46,6 +46,10 @@ GET /api/localities?q=ABBEYARD&limit=10
 
 The endpoint searches locality, LGA, and regional group names. It returns category and subcategory totals derived from the online `public.regional_pois` table.
 
+### SAL and LGA profile enrichment
+
+`/api/compare` attaches a compact `profileEvidence` object to ranked areas. `PostgresAreaProfileRepository` batches SAL lookups by `sal_name` and LGA lookups by `lga_name`. The uploaded SAL table has no LGA key, so duplicate SAL names are deliberately left unresolved instead of being assigned to the wrong LGA. Profile evidence is backend-only, preserves `null` values, reports source years separately, and does not change the facility score by default.
+
 ### Health
 
 ```http
@@ -75,6 +79,7 @@ No transit feed was supplied. `EstimatedJourneyCalculator` therefore uses straig
 | `LocalitySummaryService` | Search locality summaries supplied by the selected repository |
 | `PostgresDatabase` | Own the PostgreSQL connection pool and transactions |
 | `PostgresReachRepository` | Query nearby POIs from the active database version |
+| `PostgresAreaProfileRepository` | Batch SAL and LGA background evidence for ranked areas |
 | `PostgresLocalitySummaryRepository` | Query locality summaries from the active version |
 
 ## AWS development deployment

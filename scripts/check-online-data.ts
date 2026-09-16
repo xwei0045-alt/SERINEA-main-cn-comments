@@ -13,10 +13,16 @@ async function main(): Promise<void> {
     const subsidies = await database.query<{ count: number }>(
       'SELECT COUNT(*)::int AS count FROM public.subsidies WHERE is_synthetic IS TRUE'
     );
-    if (!pois.rows[0]?.count || !subsidies.rows[0]?.count) {
-      throw new Error("Online regional POIs or synthetic subsidies are empty; deployment cannot import local CSV files.");
+    const salProfiles = await database.query<{ count: number }>(
+      'SELECT COUNT(*)::int AS count FROM public.sal_profiles'
+    );
+    const lgaProfiles = await database.query<{ count: number }>(
+      'SELECT COUNT(*)::int AS count FROM public.lga_profiles'
+    );
+    if (!pois.rows[0]?.count || !subsidies.rows[0]?.count || !salProfiles.rows[0]?.count || !lgaProfiles.rows[0]?.count) {
+      throw new Error("One or more required online backend tables are empty.");
     }
-    console.log(`Online data ready: ${pois.rows[0].count} POIs, ${subsidies.rows[0].count} synthetic subsidies.`);
+    console.log(`Online data ready: ${pois.rows[0].count} POIs, ${subsidies.rows[0].count} synthetic subsidies, ${salProfiles.rows[0].count} SAL profiles, ${lgaProfiles.rows[0].count} LGA profiles.`);
   } finally {
     await database.close();
   }

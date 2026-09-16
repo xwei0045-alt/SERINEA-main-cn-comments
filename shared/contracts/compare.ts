@@ -66,6 +66,34 @@ export const compareBreakdownSchema = z.object({
   weighted: z.number().nonnegative()
 });
 
+const areaProfileSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  population: z.number().nonnegative().nullable(),
+  medianAgeYears: z.number().nonnegative().nullable(),
+  medianPersonalIncomeWeeklyAud: z.number().nonnegative().nullable(),
+  medianHouseholdIncomeWeeklyAud: z.number().nonnegative().nullable(),
+  unemploymentRatePct: z.number().min(0).max(100).nullable(),
+  labourForceParticipationPct: z.number().min(0).max(100).nullable(),
+  irsadScore: z.number().nullable(),
+  irsadDecile: z.number().int().min(1).max(10).nullable(),
+  ierScore: z.number().nullable(),
+  ierDecile: z.number().int().min(1).max(10).nullable(),
+  censusYear: z.number().int().nullable(),
+  seifaYear: z.number().int().nullable(),
+  seifaStatus: z.string().nullable()
+});
+
+const profileEvidenceSchema = z.object({
+  sal: areaProfileSchema.nullable(),
+  lga: areaProfileSchema.extend({
+    incomeYear: z.number().int().nullable(),
+    jobsYear: z.number().int().nullable()
+  }).nullable(),
+  /** Profile facts explain an area but do not change facility ranking by default. */
+  affectsRanking: z.literal(false)
+});
+
 export const compareRankItemSchema = z.object({
   rank: z.number().int().positive(),
   locality: z.string(),
@@ -75,7 +103,8 @@ export const compareRankItemSchema = z.object({
   totalPoiCount: z.number().int().nonnegative(),
   latitude: z.number().finite().optional(),
   longitude: z.number().finite().optional(),
-  breakdown: z.array(compareBreakdownSchema)
+  breakdown: z.array(compareBreakdownSchema),
+  profileEvidence: profileEvidenceSchema.optional()
 });
 
 export const compareResponseSchema = z.object({

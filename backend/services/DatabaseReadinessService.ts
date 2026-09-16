@@ -12,6 +12,8 @@ export class DatabaseReadinessService {
     try {
       await this.database.query("SELECT 1 FROM public.regional_pois LIMIT 1");
       await this.database.query("SELECT 1 FROM public.subsidies WHERE is_synthetic IS TRUE LIMIT 1");
+      await this.database.query("SELECT 1 FROM public.sal_profiles LIMIT 1");
+      await this.database.query("SELECT 1 FROM public.lga_profiles LIMIT 1");
       return true;
     } catch {
       return false;
