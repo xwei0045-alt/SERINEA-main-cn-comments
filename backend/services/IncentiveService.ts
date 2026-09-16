@@ -94,13 +94,23 @@ export class IncentiveService {
   /** Finds the . */
   async find(input: IncentiveRequest): Promise<IncentiveResponse> {
     const records = await this.load();
-    const requestedAreas = input.towns.length
+    let requestedAreas = input.towns.length
       ? input.towns.map((town) => ({
           locality: normalizeArea(town.locality),
           lgaName: normalizeArea(town.lgaName),
           source: "lifestyle_ranking" as const
         }))
       : this.areaFromMessage(input.message, input.profile.locality, input.profile.lga_name, records);
+
+    if (requestedAreas.length === 0 && (!input.towns.length && !input.profile.locality)) {
+      // If no town is specified, just show top incentives across all towns
+      const allLgas = [...new Set(records.map(r => r.lgaName))].slice(0, 5); // Pick top 5 LGAs
+      requestedAreas = allLgas.map(lga => {
+        const locality = records.find(r => r.lgaName === lga)?.locality || "";
+        return { locality, lgaName: lga, source: "named_area_query" as const };
+      });
+    }
+
     const wantedCategories = categoriesIn(input.message);
     const groups = requestedAreas.map((area) => {
       const candidates = records

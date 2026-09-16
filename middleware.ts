@@ -56,6 +56,29 @@ function maybePrune(now: number) {
 }
 
 export function middleware(request: NextRequest) {
+  // Basic Authentication
+  const basicAuth = request.headers.get('authorization');
+  let isAuthenticated = false;
+
+  if (basicAuth) {
+    const authValue = basicAuth.split(' ')[1];
+    const [user, pwd] = atob(authValue).split(':');
+
+    // Username and password for the website
+    if (user === 'admin' && pwd === 'password123') {
+      isAuthenticated = true;
+    }
+  }
+
+  if (!isAuthenticated) {
+    return new NextResponse('Authentication required', {
+      status: 401,
+      headers: {
+        'WWW-Authenticate': 'Basic realm="Secure Area"',
+      },
+    });
+  }
+
   if (!request.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
@@ -90,5 +113,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"]
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|Images/).*)"]
 };

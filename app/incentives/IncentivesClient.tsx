@@ -28,8 +28,6 @@ import type {
 } from "@/shared/contracts/incentives";
 import styles from "./incentives.module.css";
 
-type Stage = "planning_to_move" | "already_moved" | "unknown";
-
 // Make town names nicer for the screen (DAYLESFORD becomes Daylesford).
 function titleCase(value: string): string {
   return value
@@ -53,7 +51,6 @@ export default function IncentivesClient() {
   const [occupation, setOccupation] = useState("");
   const [locality, setLocality] = useState("");
   const [lgaName, setLgaName] = useState(""); // set when they pick a suggested town
-  const [stage, setStage] = useState<Stage>("planning_to_move");
   const [age, setAge] = useState("");
   const [income, setIncome] = useState("");
   const [newResident, setNewResident] = useState<"unknown" | "yes" | "no">("unknown");
@@ -67,10 +64,6 @@ export default function IncentivesClient() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const town = locality.trim();
-    if (!town) {
-      setError("Pick a town from the suggestions.");
-      return;
-    }
 
     setBusy(true);
     setError(null);
@@ -79,16 +72,11 @@ export default function IncentivesClient() {
       const response = await incentiveApiClient.find({
         message: [
           occupation.trim() ? `Occupation: ${occupation.trim()}.` : null,
-          `Looking at incentives for ${town}${lga ? ` (${lga})` : ""}.`,
-          stage === "planning_to_move"
-            ? "I am planning to move."
-            : stage === "already_moved"
-              ? "I have already moved."
-              : null
+          town ? `Looking at incentives for ${town}${lga ? ` (${lga})` : ""}.` : null
         ]
           .filter(Boolean)
           .join(" "),
-        relocationStage: stage,
+        relocationStage: "unknown",
         profile: {
           age: parseOptionalNumber(age),
           income: parseOptionalNumber(income),
@@ -155,14 +143,22 @@ export default function IncentivesClient() {
                 <option value="Primary school teacher" />
                 <option value="Diesel mechanic" />
                 <option value="Aged care worker" />
+                <option value="General Practitioner" />
+                <option value="Software Engineer" />
+                <option value="Electrician" />
+                <option value="Plumber" />
+                <option value="Chef" />
+                <option value="Accountant" />
+                <option value="Social Worker" />
+                <option value="Police Officer" />
               </datalist>
             </div>
 
-            {/* Step 2: town from our dataset (same search as Compare) */}
+            {/* Step 2: town from our dataset (optional) */}
             <div className={styles.townField}>
               <TownSearchField
                 id="locality"
-                label="Town"
+                label="Town (Optional)"
                 value={locality}
                 onValueChange={(value) => {
                   setLocality(value);
@@ -176,21 +172,6 @@ export default function IncentivesClient() {
                 }}
               />
               {lgaName ? <p className={styles.lgaHint}>{lgaName}</p> : null}
-            </div>
-
-            {/* Step 3: planning or already moved */}
-            <div className={styles.field}>
-              <label htmlFor="stage">Moving status</label>
-              <select
-                id="stage"
-                name="stage"
-                value={stage}
-                onChange={(e) => setStage(e.target.value as Stage)}
-              >
-                <option value="planning_to_move">Planning to move</option>
-                <option value="already_moved">Already moved</option>
-                <option value="unknown">Not sure</option>
-              </select>
             </div>
 
             {/* Optional fields stay hidden until opened */}
