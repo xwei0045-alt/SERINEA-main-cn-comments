@@ -29,7 +29,12 @@ test("Compare and AI default to database without reading CSV, preserving dedupe 
   assert.equal(result.dataSource, "database");
   assert.equal(result.items[0].breakdown[0].count, 1);
   assert.equal(result.items[0].latitude, -37);
-  assert.equal(result.items[0].score, 100);
+  assert.equal(result.items[0].score, 90);
+  assert.deepEqual(result.items[0].scoreComponents, {
+    userNeeds: { score: 100, weight: 0.75 },
+    poiCoverage: { score: 100, weight: 0.15 },
+    areaProfile: { score: 0, weight: 0.1 }
+  });
   const plan = planSchema.parse({ include: ["park"], area: "TEST", intent: "recommend", town: "", priority: false, bonus: [], exclude: [], unverified: [] });
   const reply = await buildRecommendations(plan);
   assert.equal(reply.places[0].name, "Test Town");

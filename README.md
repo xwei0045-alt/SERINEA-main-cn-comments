@@ -101,7 +101,7 @@ SERINEA/
 
 - **Online regional POIs.** Runtime POI and locality data come from PostgreSQL; the row count follows the database rather than an old CSV snapshot.
 - **Backend-only area profiles.** Compare results are enriched from `public.sal_profiles` and `public.lga_profiles`. Census/SEIFA evidence keeps its 2021 year, LGA income/jobs evidence keeps its 2023 year, and missing values stay `null` rather than becoming zero.
-- **User priorities remain authoritative.** Profile evidence is explanatory and does not alter facility ranking unless a future, explicit profile preference contract enables it.
+- **Composite ranking weights.** `/api/compare` calculates the final score from explicit user needs (75%), overall POI coverage and geographic evidence (15%), and SAL/LGA profile indicators (10%). User-selected preference weights are applied inside the 75% component. For each available geographic level, the profile component averages IRSD decile, IER decile, inverse unemployment rate, labour-force participation, and capped weekly household income, then averages the available SAL and LGA level scores. Missing indicators are omitted and a missing profile earns zero for that component.
 - **Not live GTFS.** Journeys are straight-line walking estimates at 4.8 km/h.
 - **Fixed 15-minute window.** A place fits when the estimated walk **from the pin** is no more than 15 minutes; return time is not included.
 - **Incomplete route guidance.** A street-path backend endpoint exists, but the current map does not display its path; a real walk may take longer than the estimate.
