@@ -17,6 +17,7 @@ function request(overrides: Partial<IncentiveRequest> = {}): IncentiveRequest {
     message: "What mock incentives are available in Lucas?",
     relocationStage: "already_moved",
     profile: {
+      occupation: null,
       age: 28,
       income: 80_000,
       income_scope: "household",
@@ -114,6 +115,7 @@ test("profile locality and LGA are treated as one exact area", async () => {
     benefitType: "grant",
     maxAmountAud: 1000,
     incomeLimitAnnual: null,
+    occupationRestriction: null,
     incomeAssessmentUnit: "household",
     ageSubject: "applicant",
     ageMin: null,
@@ -141,6 +143,48 @@ test("profile locality and LGA are treated as one exact area", async () => {
 
   assert.deepEqual(result.groups.map((group) => group.lgaName), ["LGA TWO"]);
   assert.deepEqual(result.groups[0].items.map((item) => item.subsidyId), ["MOCK-SUB-OTHER"]);
+});
+
+test("occupation rules are applied only when a catalogue record supplies one", async () => {
+  const baseRecord: SubsidyRecord = {
+    subsidyId: "MOCK-SUB-OCCUPATION",
+    subsidyName: "[MOCK] Nurse support",
+    category: "relocation",
+    locality: "LUCAS",
+    lgaName: "BALLARAT",
+    anchorLatitude: null,
+    anchorLongitude: null,
+    benefitType: "grant",
+    maxAmountAud: 500,
+    incomeLimitAnnual: null,
+    occupationRestriction: "Registered nurse; General Practitioner",
+    incomeAssessmentUnit: "household",
+    ageSubject: "applicant",
+    ageMin: null,
+    ageMax: null,
+    newResidentRequired: false,
+    applyWithinDays: null,
+    minimumMoveDistanceKm: null,
+    eligibilitySummary: "Synthetic occupation rule",
+    requiredEvidence: "Occupation evidence",
+    mockStatus: "mock_open",
+    recordNotice: "Fictional subsidy for testing only."
+  };
+  const repository: SubsidyRepository = { dataSource: "database", async load() { return [baseRecord]; } };
+  const occupationService = new IncentiveService(repository);
+  const base = request();
+
+  const matching = await occupationService.find(request({
+    message: "Occupation: Registered nurse. Looking at incentives for Lucas.",
+    profile: { ...base.profile, age: 30, occupation: "Registered nurse" }
+  }));
+  assert.deepEqual(matching.groups[0]?.items[0]?.matched, ["Locality", "Occupation", "Applicant age"]);
+
+  const nonMatching = await occupationService.find(request({
+    message: "Occupation: Chef. Looking at incentives for Lucas.",
+    profile: { ...base.profile, age: 30, occupation: "Chef" }
+  }));
+  assert.equal(nonMatching.groups[0]?.items.length, 0);
 });
 
 test("database records refresh after the cache TTL", async () => {

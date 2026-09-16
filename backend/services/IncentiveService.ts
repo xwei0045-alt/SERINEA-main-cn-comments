@@ -21,7 +21,8 @@ import {
  * - Preserve incoming lifestyle town order (never re-rank by incentive $).
  * - planning_to_move → "Potential Incentive"; already_moved → "Possible Match"
  *   or "More Information Needed"; missing[] drives the UI "To verify" list.
- * - No occupation matching (current occupation_restriction values are none).
+ * - Occupation restrictions apply when the catalogue supplies them. Current
+ *   synthetic RDS rows say `none`, so a job does not change today's results.
  */
 
 type CheckResult = {
@@ -29,6 +30,23 @@ type CheckResult = {
   missing: string[];
   failed: string[];
 };
+
+/** Normalizes a job title or stored restriction for case-insensitive comparison. */
+function normalizeOccupation(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-AU");
+}
+
+/** Applies an explicit catalogue restriction without inventing unavailable data. */
+function checkOccupation(restriction: string | null, occupation: string | null): CheckResult {
+  const rule = restriction ? normalizeOccupation(restriction) : "";
+  if (!rule || rule === "none" || rule === "all") return { matched: [], missing: [], failed: [] };
+  if (!occupation) return { matched: [], missing: ["Occupation"], failed: [] };
+  const requested = normalizeOccupation(occupation);
+  const allowed = rule.split(/[;,|/]/).map(normalizeOccupation).filter(Boolean);
+  return allowed.some((item) => item === requested || item.includes(requested) || requested.includes(item))
+    ? { matched: ["Occupation"], missing: [], failed: [] }
+    : { matched: [], missing: [], failed: ["Occupation"] };
+}
 
 const CATEGORY_TERMS: Record<string, string[]> = {
   relocation: ["moving cost", "moving expense", "relocation support", "relocation grant"],
@@ -240,6 +258,11 @@ export class IncentiveService {
     const matched = ["Locality"];
     const missing: string[] = [];
     const failed: string[] = [];
+
+    const occupation = checkOccupation(record.occupationRestriction, profile.occupation);
+    matched.push(...occupation.matched);
+    missing.push(...occupation.missing);
+    failed.push(...occupation.failed);
 
     if (record.ageSubject === "applicant") {
       if (profile.age == null) missing.push("Applicant age");

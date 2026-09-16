@@ -56,21 +56,26 @@ function maybePrune(now: number) {
 }
 
 export function middleware(request: NextRequest) {
-  // Basic Authentication
-  const basicAuth = request.headers.get('authorization');
-  let isAuthenticated = false;
+  // Read review credentials from the environment so secrets never enter Git.
+  const username = process.env.BASIC_AUTH_USERNAME;
+  const password = process.env.BASIC_AUTH_PASSWORD;
+  if (!username || !password) {
+    return new NextResponse("Authentication is not configured.", { status: 503 });
+  }
 
-  if (basicAuth) {
-    const authValue = basicAuth.split(' ')[1];
-    const [user, pwd] = atob(authValue).split(':');
-
-    // Username and password for the website
-    if (user === 'admin' && pwd === 'password123') {
-      isAuthenticated = true;
+  const authorization = request.headers.get("authorization");
+  let credentials: [string, string] | null = null;
+  if (authorization?.startsWith("Basic ")) {
+    try {
+      const decoded = atob(authorization.slice("Basic ".length));
+      const separator = decoded.indexOf(":");
+      if (separator >= 0) credentials = [decoded.slice(0, separator), decoded.slice(separator + 1)];
+    } catch {
+      credentials = null;
     }
   }
 
-  if (!isAuthenticated) {
+  if (!credentials || credentials[0] !== username || credentials[1] !== password) {
     return new NextResponse('Authentication required', {
       status: 401,
       headers: {

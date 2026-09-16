@@ -122,7 +122,9 @@ export default function AssistantClient() {
     return incentiveApiClient.find({
       message,
       relocationStage: state.relocation_stage,
-      profile: state.profile,
+      // The conversation extractor has no occupation field yet; keep the
+      // Incentives API contract explicit rather than sending unstructured text.
+      profile: { ...state.profile, occupation: null },
       towns: result?.items.map((item) => ({ locality: item.locality, lgaName: item.lgaName })) ?? [],
       limitPerTown: 3
     });

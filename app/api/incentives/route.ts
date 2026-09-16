@@ -20,7 +20,12 @@ import { incentiveRequestSchema } from "@/shared/contracts/incentives";
  *
  * DOES NOT
  * - change lifestyle scores or town order (incentives stay separate)
- * - match occupations (occupation_restriction is empty in current data)
+ * - alter the lifestyle ranking or its town order
+ *
+ * OCCUPATION RULES
+ * - evaluates occupation_restriction when a catalogue record supplies a real
+ *   restriction. The current synthetic RDS catalogue uses "none", so the
+ *   rule is deliberately neutral until data owners provide constrained values.
  *
  * DATA SOURCE
  * - IncentiveService → SubsidyRepository → Postgres public.subsidies
