@@ -90,8 +90,13 @@ const profileEvidenceSchema = z.object({
     incomeYear: z.number().int().nullable(),
     jobsYear: z.number().int().nullable()
   }).nullable(),
-  /** Profile facts explain an area but do not change facility ranking by default. */
-  affectsRanking: z.literal(false)
+  /** Profile facts supply the 10% auxiliary component of the composite score. */
+  affectsRanking: z.literal(true)
+});
+
+const scoreComponentSchema = z.object({
+  score: z.number().min(0).max(100),
+  weight: z.number().min(0).max(1)
 });
 
 export const compareRankItemSchema = z.object({
@@ -100,6 +105,11 @@ export const compareRankItemSchema = z.object({
   lgaName: z.string(),
   regionalGroup: z.string(),
   score: z.number().min(0).max(100),
+  scoreComponents: z.object({
+    userNeeds: scoreComponentSchema,
+    poiCoverage: scoreComponentSchema,
+    areaProfile: scoreComponentSchema
+  }),
   totalPoiCount: z.number().int().nonnegative(),
   latitude: z.number().finite().optional(),
   longitude: z.number().finite().optional(),

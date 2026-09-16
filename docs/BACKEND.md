@@ -48,7 +48,9 @@ The endpoint searches locality, LGA, and regional group names. It returns catego
 
 ### SAL and LGA profile enrichment
 
-`/api/compare` attaches a compact `profileEvidence` object to ranked areas. `PostgresAreaProfileRepository` batches SAL lookups by `sal_name` and LGA lookups by `lga_name`. The uploaded SAL table has no LGA key, so duplicate SAL names are deliberately left unresolved instead of being assigned to the wrong LGA. Profile evidence is backend-only, preserves `null` values, reports source years separately, and does not change the facility score by default.
+`/api/compare` attaches a compact `profileEvidence` object to ranked areas. `PostgresAreaProfileRepository` batches SAL lookups by `sal_name` and LGA lookups by `lga_name`. The uploaded SAL table has no LGA key, so duplicate SAL names are deliberately left unresolved instead of being assigned to the wrong LGA. Profile evidence is backend-only, preserves `null` values, and reports source years separately.
+
+The final ranking is calculated for every eligible area before the requested result limit is applied: explicit user needs contribute 75%, overall POI coverage contributes 15%, and SAL/LGA profile indicators contribute 10%. Preference-order weights remain inside the user-needs component. For each available geographic level, the profile score averages IRSD decile, IER decile, inverse unemployment, labour-force participation, and capped weekly household income; the available SAL and LGA level scores are then averaged. A missing indicator is omitted; a completely missing profile receives zero for the 10% component. The response exposes all three values and weights in `scoreComponents`.
 
 ### Health
 

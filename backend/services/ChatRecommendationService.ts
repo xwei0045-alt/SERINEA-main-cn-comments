@@ -138,7 +138,7 @@ export async function buildRecommendations(input: RecommendationPlan,
   const all = await compare.rank({ prefs: preferenceIds, q: plan.area, limit: catalog.items.length });
   const extrasByTown = new Map(all.items.map(row => [key(row), row.breakdown]));
   const selectedNames = include.slice(0, 8).map(name).join(", ") + (include.length > 8 ? ` and ${include.length - 8} more` : "");
-  const lines = [`Shortlist for ${selectedNames}${plan.area ? `, within ${plan.area}` : " in regional Victoria"}. Preferences are in ${plan.priority ? "priority order (highest first)" : "equal-weight order"}. This uses town-wide record counts, not quality or walking accessibility.`];
+  const lines = [`Shortlist for ${selectedNames}${plan.area ? `, within ${plan.area}` : " in regional Victoria"}. Preferences are in ${plan.priority ? "priority order (highest first)" : "equal-weight order"}. The composite score uses explicit needs (75%), overall POI coverage (15%), and SAL/LGA profile evidence (10%).`];
 
   const visibleExtras = new Set<string>();
   for (const [index, row] of result.items.entries()) {
@@ -161,8 +161,8 @@ export async function buildRecommendations(input: RecommendationPlan,
 
   const top = result.items[0];
   const tied = result.items[1]?.score === top.score;
-  lines.push(`\nInspect first: ${title(top.locality)}. ${tied ? "The count score is tied; the website breaks ties by total records and name, not personal suitability." : "It leads the current weighted, category-normalised count score, so it is a starting point, not proof of the best overall fit."}`);
-  const cautions = ["Scores weight each category against its highest count in the search area. Missing categories earn zero for their weight; first place is not automatically 100. Scores do not measure service quality or personal suitability. Zero records do not prove absence. Address-level distance, hours and quality are unverified."];
+  lines.push(`\nInspect first: ${title(top.locality)}. ${tied ? "The composite score is tied; the website breaks ties by total records and name, not personal suitability." : "It leads the current 75/15/10 composite score, so it is a starting point, not proof of the best overall fit."}`);
+  const cautions = ["The user-needs component normalises each selected category against its highest count in the search area. Missing categories and missing profiles earn zero for their component; first place is not automatically 100. Scores do not measure service quality or personal suitability. Zero records do not prove absence. Address-level distance, hours and quality are unverified."];
   if (include.includes("school")) cautions.push("School records do not establish school level, quality, enrolment or catchments.");
   if (include.some(id => ["supermarket", "convenience_store"].includes(id))) cautions.push("Grocery records are supermarkets/convenience stores; snack range, prices and shop quality are unknown.");
   if ([...include, ...visibleExtras].some(id => /^(bus_|railway_|tram_|platform$|station$|stop_position$)/.test(id))) cautions.push("Transit records are not necessarily distinct stops; frequency, commute time and reliability are unknown.");

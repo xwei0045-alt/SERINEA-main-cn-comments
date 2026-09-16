@@ -12,8 +12,43 @@ import type {
 import type { LocalitySummaryItem } from "@/shared/contracts/localities";
 import {
   areaProfileKey,
+  type AreaProfileEvidence,
   type AreaProfileRepository
 } from "@/backend/repositories/AreaProfileRepository";
+
+const RANKING_WEIGHTS = {
+  userNeeds: 0.75,
+  poiCoverage: 0.15,
+  areaProfile: 0.10
+} as const;
+
+/** Keeps a calculated component inside the public 0-100 score range. */
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, value));
+}
+
+/** Converts the available SAL/LGA indicators into a small, explainable profile score. */
+function profileScore(evidence: AreaProfileEvidence): number {
+  const levelScores = [evidence.sal, evidence.lga].flatMap((profile) => {
+    if (!profile) return [];
+    const values = [
+      profile.irsadDecile == null ? null : profile.irsadDecile * 10,
+      profile.ierDecile == null ? null : profile.ierDecile * 10,
+      profile.unemploymentRatePct == null ? null : 100 - profile.unemploymentRatePct,
+      profile.labourForceParticipationPct,
+      profile.medianHouseholdIncomeWeeklyAud == null
+        ? null
+        : (profile.medianHouseholdIncomeWeeklyAud / 2_500) * 100
+    ].filter((value): value is number => value != null && Number.isFinite(value));
+    return values.length
+      ? [values.reduce((sum, value) => sum + clampScore(value), 0) / values.length]
+      : [];
+  });
+
+  return levelScores.length
+    ? levelScores.reduce((sum, value) => sum + value, 0) / levelScores.length
+    : 0;
+}
 
 /** Handles the locality key step. */
 function localityKey(item: Pick<LocalitySummaryItem, "locality" | "lgaName" | "regionalGroup">) {
@@ -87,40 +122,63 @@ export class CompareService {
     );
     const scored = pool
       .map((item) => this.scoreLocality(item, selected, weights, categoryMaximums))
-      .filter((item) => item.rawScore > 0)
-      .sort(
-        (a, b) =>
-          b.rawScore - a.rawScore ||
-          b.totalPoiCount - a.totalPoiCount ||
-          a.locality.localeCompare(b.locality, "en-AU")
-      );
+      .filter((item) => item.rawScore > 0);
 
     const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-    let ranked: CompareRankItem[] = scored.slice(0, query.limit).map((row, index) => ({
+    const maximumPoiCount = Math.max(0, ...scored.map((row) => row.totalPoiCount));
+    const evidence = this.profiles && scored.length > 0
+      ? await this.profiles.findForAreas(scored)
+      : new Map<string, AreaProfileEvidence>();
+
+    // Score every eligible area before sorting so profile evidence can change the shortlist.
+    const composite = scored.map((row) => {
+      const areaEvidence = evidence.get(areaProfileKey(row.locality, row.lgaName)) ?? {
+        sal: null,
+        lga: null
+      };
+      const userNeeds = totalWeight > 0 ? clampScore((row.rawScore / totalWeight) * 100) : 0;
+      const poiCoverage = maximumPoiCount > 0
+        ? clampScore((row.totalPoiCount / maximumPoiCount) * 100)
+        : 0;
+      const areaProfile = profileScore(areaEvidence);
+      const score =
+        userNeeds * RANKING_WEIGHTS.userNeeds +
+        poiCoverage * RANKING_WEIGHTS.poiCoverage +
+        areaProfile * RANKING_WEIGHTS.areaProfile;
+
+      return {
+        ...row,
+        score,
+        scoreComponents: {
+          userNeeds: { score: userNeeds, weight: RANKING_WEIGHTS.userNeeds },
+          poiCoverage: { score: poiCoverage, weight: RANKING_WEIGHTS.poiCoverage },
+          areaProfile: { score: areaProfile, weight: RANKING_WEIGHTS.areaProfile }
+        },
+        profileEvidence: {
+          ...areaEvidence,
+          affectsRanking: true as const
+        }
+      };
+    }).sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.totalPoiCount - a.totalPoiCount ||
+        a.locality.localeCompare(b.locality, "en-AU")
+    );
+
+    const ranked: CompareRankItem[] = composite.slice(0, query.limit).map((row, index) => ({
       rank: index + 1,
       locality: row.locality,
       lgaName: row.lgaName,
       regionalGroup: row.regionalGroup,
-      // Missing categories retain their weight; the winner is not rescaled to 100.
-      // Keep precision here; round only when displaying the score.
-      score: totalWeight > 0 ? Math.min(100, (row.rawScore / totalWeight) * 100) : 0,
+      score: row.score,
+      scoreComponents: row.scoreComponents,
       totalPoiCount: row.totalPoiCount,
       latitude: row.latitude,
       longitude: row.longitude,
-      breakdown: row.breakdown
+      breakdown: row.breakdown,
+      profileEvidence: row.profileEvidence
     }));
-
-    if (this.profiles && ranked.length > 0) {
-      const evidence = await this.profiles.findForAreas(ranked);
-      ranked = ranked.map((row) => ({
-        ...row,
-        profileEvidence: {
-          ...(evidence.get(areaProfileKey(row.locality, row.lgaName)) ?? { sal: null, lga: null }),
-          // Population, income and SEIFA remain explanatory until the user explicitly asks for them.
-          affectsRanking: false as const
-        }
-      }));
-    }
 
     const top = ranked[0] ?? null;
     const recommendation = top
