@@ -71,10 +71,10 @@ export function LandingExperience() {
         <figure className={styles.mistMat}>
           <div className={styles.mistFrame}>
             <Image
-              src="/editorial/victoria.png"
-              alt="Regional Victoria harbour town"
+              src="/images/wendouree.jpg"
+              alt="Regional Victoria town"
               width={900}
-              height={720}
+              height={600}
               className={styles.mistPhoto}
             />
             <figcaption className={styles.mistCaption}>Fifteen minutes.</figcaption>
@@ -116,10 +116,10 @@ export function LandingExperience() {
         <h2 className={styles.forestTitle}>See what a pin can reach</h2>
         <figure className={styles.engraving}>
           <Image
-            src="/editorial/victoria.png"
-            alt="Archival-style view of a Victorian regional harbour town"
+            src="/images/reginal.jpg"
+            alt="View of a Victorian regional town"
             width={1200}
-            height={675}
+            height={800}
             className={styles.engravingImg}
           />
           <figcaption>
