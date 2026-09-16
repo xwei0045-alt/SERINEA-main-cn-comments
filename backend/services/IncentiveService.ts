@@ -121,6 +121,7 @@ export class IncentiveService {
         .filter(({ check }) => check.failed.length === 0)
         .map(({ record, check }) => this.toResult(record, check, input.relocationStage))
         .sort((first, second) =>
+          second.matched.length - first.matched.length ||
           first.missing.length - second.missing.length ||
           Number(first.mockStatus === "mock_upcoming") - Number(second.mockStatus === "mock_upcoming") ||
           second.maxAmountAud - first.maxAmountAud ||
@@ -237,7 +238,7 @@ export class IncentiveService {
       : check.missing.length > 0 ? "More Information Needed" : "Possible Match";
     return {
       subsidyId: record.subsidyId,
-      subsidyName: record.subsidyName,
+      subsidyName: record.subsidyName.replace(/^\[MOCK\]\s*/i, ""),
       category: record.category,
       benefitType: record.benefitType,
       maxAmountAud: record.maxAmountAud,
