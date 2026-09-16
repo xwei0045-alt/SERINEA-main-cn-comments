@@ -71,7 +71,7 @@ export function LandingExperience() {
       <section className={styles.hero} aria-label="SERINEA">
         {/* User assets: Images/desk1.webp (laptop) · Images/mobile1.webp (phone) */}
         <Image
-          src="/images/geelong.jpg"
+          src="/images/mobile1.webp"
           alt=""
           fill
           priority
