@@ -9,7 +9,8 @@ import { RANKING_PREFERENCES } from "./types";
  *   - profile + relocationStage + towns → IncentiveApiClient (POST /api/incentives)
  *
  * Field names match the handoff AI JSON contract (intent, profile, preferences,
- * unsupported, needs_incentive_guidance). Do not invent occupation fields here.
+ * unsupported, needs_incentive_guidance). Occupation stays outside this frozen
+ * recommendation shape and is extracted separately for incentive screening.
  */
 
 export const IMPORTANCE_LEVELS = [
@@ -252,6 +253,13 @@ function parseProfile(message: string): RecommendationProfile {
     days_since_move: days ? Number(days[1]) : null,
     new_resident: explicitlyNotNew ? false : explicitlyNew ? true : null
   };
+}
+
+/** Extracts only an explicitly labelled occupation for incentive screening. */
+export function extractOccupation(message: string): string | null {
+  const match = /\b(?:occupation|job)\s*(?:is|:)?\s*([a-z][a-z .'-]{1,80})(?=[,.;]|$)/i.exec(message)
+    ?? /\bI\s+work\s+as\s+(?:an?\s+)?([a-z][a-z .'-]{1,80})(?=[,.;]|$)/i.exec(message);
+  return match?.[1]?.trim() ?? null;
 }
 
 function relocationStage(message: string): RecommendationExtraction["relocation_stage"] {

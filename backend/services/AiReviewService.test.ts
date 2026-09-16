@@ -39,3 +39,21 @@ test("provider failures are not cached", async () => {
   await assert.rejects(service.review("I need a library", deterministic));
   assert.equal(repository.values.size, 0);
 });
+
+test("cache read failures do not block inference", async () => {
+  let providerCalls = 0;
+  const result: AiReviewResult = { preferences: [{ target: "library", importance: "high" }], unsupported: [] };
+  const service = new AiReviewService({
+    repository: {
+      find: async () => { throw new Error("cache unavailable"); },
+      save: async () => { throw new Error("cache unavailable"); }
+    },
+    modelVersion: "qwen-v1",
+    policyVersion: "policy-v1",
+    provider: { review: async () => { providerCalls += 1; return result; } }
+  });
+
+  const response = await service.review("I need a library", extractRecommendation("I need a library"));
+  assert.equal(response.source, "inference");
+  assert.equal(providerCalls, 1);
+});

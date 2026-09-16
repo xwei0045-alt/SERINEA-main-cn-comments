@@ -65,13 +65,14 @@ export class AiReviewService {
   async review(message: string, deterministic: RecommendationExtraction): Promise<AiReviewResponse> {
     const cacheKey = createAiReviewCacheKey({ message, deterministic,
       modelVersion: this.options.modelVersion, policyVersion: this.options.policyVersion });
-    const cached = await this.options.repository.find(cacheKey);
+    // The cache improves latency but must never make optional inference unavailable.
+    const cached = await this.options.repository.find(cacheKey).catch(() => null);
     if (cached) return responseFor(cached, deterministic, "cache",
       this.options.modelVersion, this.options.policyVersion);
 
     const result = aiReviewResultSchema.parse(await this.options.provider.review(message, deterministic));
     await this.options.repository.save({ cacheKey, modelVersion: this.options.modelVersion,
-      policyVersion: this.options.policyVersion, result });
+      policyVersion: this.options.policyVersion, result }).catch(() => undefined);
     return responseFor(result, deterministic, "inference",
       this.options.modelVersion, this.options.policyVersion);
   }

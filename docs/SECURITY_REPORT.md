@@ -12,7 +12,7 @@ Basic Authentication is a coursework review gate, not a complete production iden
 
 ### API rate limiting
 
-The middleware applies an in-memory, per-instance sliding-window limiter to API traffic. The window is 60 seconds. Route-specific limits are applied to `walk`, `reach`, `localities`, `compare` and `health`; other API routes use a default limit. Rejected calls receive HTTP 429 and `Retry-After`.
+The middleware applies an in-memory, per-instance sliding-window limiter to API traffic. It retains request timestamps from the preceding 60 seconds rather than resetting all callers at a fixed boundary. Route-specific limits are applied to `walk`, `reach`, `localities`, `compare` and `health`; other API routes use a default limit. Rejected calls receive HTTP 429 and an exact `Retry-After` based on the oldest request still in the window.
 
 This is useful protection for the single-instance coursework deployment. It is not distributed: a multi-instance production deployment should replace it with a shared store or edge rate limiter.
 
@@ -31,5 +31,4 @@ Avoid placing names, contact details, addresses or other directly identifying in
 
 ## Verification
 
-`backend/MiddlewareSecurity.test.ts` verifies that missing and incorrect credentials are rejected, configured credentials are accepted, and absent environment credentials fail closed. The backend test suite and TypeScript/build checks should be run before deployment.
-
+`backend/MiddlewareSecurity.test.ts` verifies that missing and incorrect credentials are rejected, configured credentials are accepted, absent environment credentials fail closed, and requests crossing a fixed minute boundary are still constrained by the rolling 60-second window. The backend test suite and TypeScript/build checks should be run before deployment.

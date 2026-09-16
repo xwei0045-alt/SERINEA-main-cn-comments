@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 // Ask the optional reviewer to check deterministic preference extraction.
 export async function POST(request: Request) {
-  const modelVersion = process.env.AI_REVIEW_MODEL_VERSION?.trim() || "qwen3-0.6b-q4f16-v1";
+  const modelVersion = process.env.AI_REVIEW_MODEL_VERSION?.trim() || "qwen3-4b-instruct-2507-hf-router-v1";
   const policyVersion = process.env.AI_REVIEW_POLICY_VERSION?.trim() || "serinea-review-v1";
   let body: unknown;
   try {
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       repository: new PostgresAiReviewCacheRepository(PostgresDatabase.getInstance(databaseUrl)),
       provider: new HuggingFaceAiReviewProvider({
         token: hfToken,
-        model: process.env.HF_MODEL?.trim() || "serinea-qwen3-browser-model/serinea-qwen3-browser-model",
+        model: process.env.HF_MODEL?.trim() || "Qwen/Qwen3-4B-Instruct-2507",
         timeoutMs: Number.isFinite(timeout) ? timeout : 8000
       }),
       modelVersion, policyVersion

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-type Bucket = { count: number; resetAt: number };
+type Bucket = { requestTimes: number[] };
 
 /** Per-instance sliding window. Good enough for coursework / demo abuse control. */
 const buckets = new Map<string, Bucket>();
@@ -29,30 +29,34 @@ function routeBucket(pathname: string): string {
 
 function allow(key: string, limit: number): { ok: boolean; retryAfterSec: number } {
   const now = Date.now();
-  const existing = buckets.get(key);
+  const cutoff = now - WINDOW_MS;
+  const requestTimes = (buckets.get(key)?.requestTimes ?? [])
+    .filter((timestamp) => timestamp > cutoff);
 
-  if (!existing || now >= existing.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return { ok: true, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
-  }
-
-  if (existing.count >= limit) {
+  if (requestTimes.length >= limit) {
+    buckets.set(key, { requestTimes });
     return {
       ok: false,
-      retryAfterSec: Math.max(1, Math.ceil((existing.resetAt - now) / 1000))
+      retryAfterSec: Math.max(1, Math.ceil((requestTimes[0] + WINDOW_MS - now) / 1000))
     };
   }
 
-  existing.count += 1;
-  return { ok: true, retryAfterSec: Math.ceil((existing.resetAt - now) / 1000) };
+  requestTimes.push(now);
+  buckets.set(key, { requestTimes });
+  return { ok: true, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
 }
 
 // Trim the map occasionally so long-lived instances do not grow forever.
 function maybePrune(now: number) {
   if (buckets.size < 500) return;
   for (const [key, value] of buckets) {
-    if (now >= value.resetAt) buckets.delete(key);
+    if (!value.requestTimes.some((timestamp) => timestamp > now - WINDOW_MS)) buckets.delete(key);
   }
+}
+
+/** Clears process-local limiter state for deterministic middleware tests. */
+export function resetRateLimitForTests() {
+  buckets.clear();
 }
 
 export function middleware(request: NextRequest) {

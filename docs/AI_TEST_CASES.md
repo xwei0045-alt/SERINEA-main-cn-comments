@@ -23,6 +23,20 @@ npm run build
 | AI-07 | An incentive record contains a real occupation rule. | A matching occupation is reported in `matched`; a non-matching occupation excludes the record. | `backend/services/IncentiveService.test.ts`. |
 | AI-08 | An incentive record has `occupation_restriction = none`. | Occupation screening is neutral, matching the current synthetic RDS catalogue. | `backend/services/IncentiveService.ts` and RDS catalogue check. |
 | AI-09 | Basic-auth credentials are missing, wrong or valid. | Missing/wrong requests are rejected; valid configured credentials continue to the API route; unconfigured middleware returns 503. | `backend/MiddlewareSecurity.test.ts`. |
+| AI-10 | The PostgreSQL review cache is temporarily unavailable. | The provider is still called, a validated result returns with `source: inference`, and the failed cache write does not discard it. | `backend/services/AiReviewService.test.ts`. |
+| AI-11 | The user says `My occupation is registered nurse. What incentives are available?` | The dedicated occupation extractor returns `registered nurse`; the AI Assistant forwards it through the shared incentive contract without changing the frozen recommendation shape. | `lib/recommendationAssistant.test.ts` and `app/ai-assistant/AssistantClient.tsx`. |
+| AI-12 | The user says `I hate noisy places. I need nature.` | The supported part is extracted as `nature_reserve` with `high` importance. The unsupported sentiment does not create an invented facility category. | `lib/recommendationAssistant.test.ts`. |
+
+### AI-12 expected deterministic result
+
+```json
+{
+  "preferences": [
+    { "target": "nature_reserve", "importance": "high" }
+  ],
+  "unsupported": []
+}
+```
 
 ## Manual end-to-end regression
 
@@ -31,4 +45,3 @@ npm run build
 3. Use the separate incentive path with a town and eligibility facts. Verify the lifestyle order does not change.
 4. Enter an occupation. With current RDS synthetic data (`none` rules), the result must remain neutral. Repeat with the unit-test fixture to verify a real occupational restriction is enforced.
 5. Enable optional cloud review only when valid server-side Hugging Face credentials are configured. Confirm that a failure reports fallback rather than changing the deterministic extraction.
-

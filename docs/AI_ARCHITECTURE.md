@@ -47,7 +47,12 @@ The cache key is a SHA-256 hash of the normalized message, deterministic extract
 
 The reviewer receives the user request together with the deterministic catalogue result. Its allowed task is to assess supported preference targets and importance. It must not invent facilities, financial eligibility, factual locality claims, or a new ranking. The server validates reviewer output with the shared AI-review schema before it can be cached.
 
+The exact system prompt sent by `HuggingFaceAiReviewProvider` is:
+
+> Understand the user's request and produce the best supported catalogue preferences. Return JSON only with preferences [{target, importance}] and unsupported [string]. Importance must be very_high, high, medium, low or very_low. Use only supported targets present in the catalogue; remove negated requirements and correct deterministic extraction when the user's meaning is clear.
+
+The PostgreSQL cache is best-effort. A cache read or write failure no longer prevents a valid Hugging Face request; inference continues and returns `source: inference`, while provider/configuration/schema failures still return the deterministic fallback.
+
 ## Ranking boundary
 
 AI does not own the score weights. `CompareService` applies the backend composite: user needs 75%, POI coverage 15%, and SAL/LGA profile evidence 10%. The profile component applies seven explicit dimensions: employment/industry 25%, income/economic 20%, demographic 15%, socioeconomic 15%, community/culture 10%, regional capacity 10%, and data quality 5%.
-
