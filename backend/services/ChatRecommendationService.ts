@@ -1,4 +1,5 @@
 import { LocalitySummaryServiceFactory } from "@/backend/factories/LocalitySummaryServiceFactory";
+import { CompareServiceFactory } from "@/backend/factories/CompareServiceFactory";
 import { preferenceWeights } from "@/lib/comparePriorities";
 import type { CompareResponse } from "@/shared/contracts/compare";
 import { CompareService } from "./CompareService";
@@ -49,7 +50,11 @@ export function findTownNames(query: string, names: string[]): string[] {
   return result;
 }
 
-async function townDetails(plan: RecommendationPlan, localities: LocalitySummaryService) {
+async function townDetails(
+  plan: RecommendationPlan,
+  localities: LocalitySummaryService,
+  compare: CompareService
+) {
   const catalog = await localities.listAll();
   // Require a real, unique locality. Never silently substitute a different town.
   const names = findTownNames(plan.town, catalog.items.map(item => item.locality));
@@ -66,7 +71,7 @@ async function townDetails(plan: RecommendationPlan, localities: LocalitySummary
     preferences: [], priority: plan.priority, area: plan.area, places: [],
   });
   const town = matches[0];
-  const all = await new CompareService(localities).rank({ prefs: preferenceIds, q: "", limit: catalog.items.length });
+  const all = await compare.rank({ prefs: preferenceIds, q: "", limit: catalog.items.length });
   const row = all.items.find(item => key(item) === key(town));
   const counts = row?.breakdown ?? preferenceIds.map(preferenceId => ({ preferenceId, count: 0 }));
   const relevant = counts.filter(item => plan.include.includes(item.preferenceId));
@@ -102,8 +107,15 @@ async function townDetails(plan: RecommendationPlan, localities: LocalitySummary
 // Facts and explanations come from application data, not generated numbers.
 // Build the user-facing recommendation text from the confirmed plan.
 export async function buildRecommendations(input: RecommendationPlan,
-  localities = LocalitySummaryServiceFactory.create(),
-  explain?: (result: CompareResponse) => Promise<string>) {
+  localities?: LocalitySummaryService,
+  explain?: (result: CompareResponse) => Promise<string>,
+  compare?: CompareService) {
+  const localityService = localities ?? LocalitySummaryServiceFactory.create();
+  // Production uses the same fully wired Compare service as /api/compare.
+  // Tests that inject a locality service stay isolated unless they inject Compare too.
+  const compareService = compare ?? (localities
+    ? new CompareService(localityService)
+    : CompareServiceFactory.create());
   const plan = planSchema.parse(input);
   const name = (id: string) => preferenceNames[id];
   const include = [...new Set(plan.include)];
@@ -114,7 +126,7 @@ export async function buildRecommendations(input: RecommendationPlan,
   }
 
   // Answer a named-town question before considering a new recommendation.
-  if (plan.intent === "town_details") return townDetails(plan, localities);
+  if (plan.intent === "town_details") return townDetails(plan, localityService, compareService);
 
   if (!include.length) {
     return chatReplySchema.parse({
@@ -123,9 +135,8 @@ export async function buildRecommendations(input: RecommendationPlan,
     });
   }
 
-  const compare = new CompareService(localities);
   // Use exactly the same ranking algorithm and area filter as /api/compare.
-  const result = await compare.rank({ prefs: include, weights: preferenceWeights(include.length, plan.priority), q: plan.area, limit: 3 });
+  const result = await compareService.rank({ prefs: include, weights: preferenceWeights(include.length, plan.priority), q: plan.area, limit: 3 });
   if (!result.items.length) {
     return chatReplySchema.parse({
       reply: `No dataset matches for these preferences${plan.area ? ` in "${plan.area}"` : ""}. Try a supported regional Victorian town or different facilities. Missing records do not prove that a facility does not exist.`,
@@ -134,8 +145,8 @@ export async function buildRecommendations(input: RecommendationPlan,
   }
 
   // A second local lookup supplies optional facilities; it does not change the score.
-  const catalog = await localities.listAll();
-  const all = await compare.rank({ prefs: preferenceIds, q: plan.area, limit: catalog.items.length });
+  const catalog = await localityService.listAll();
+  const all = await compareService.rank({ prefs: preferenceIds, q: plan.area, limit: catalog.items.length });
   const extrasByTown = new Map(all.items.map(row => [key(row), row.breakdown]));
   const selectedNames = include.slice(0, 8).map(name).join(", ") + (include.length > 8 ? ` and ${include.length - 8} more` : "");
   const lines = [`Shortlist for ${selectedNames}${plan.area ? `, within ${plan.area}` : " in regional Victoria"}. Preferences are in ${plan.priority ? "priority order (highest first)" : "equal-weight order"}. The composite score uses explicit needs (75%), overall POI coverage (15%), and SAL/LGA profile evidence (10%).`];

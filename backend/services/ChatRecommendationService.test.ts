@@ -1,4 +1,5 @@
 import { LocalitySummaryServiceFactory } from "@/backend/factories/LocalitySummaryServiceFactory";
+import { CompareServiceFactory } from "@/backend/factories/CompareServiceFactory";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildRecommendations, findTownNames } from "./ChatRecommendationService";
@@ -104,6 +105,7 @@ test("API connects extraction to data; handles failures without inventing a fall
   try {
     // Use the CSV fixture for this offline provider test.
     t.mock.method(LocalitySummaryServiceFactory, "create", csvLocalities);
+    t.mock.method(CompareServiceFactory, "create", () => new CompareService(csvLocalities()));
     globalThis.fetch = async (url, init) => {
       calls++;
       assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");

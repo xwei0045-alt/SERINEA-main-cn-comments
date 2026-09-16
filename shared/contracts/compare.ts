@@ -90,6 +90,20 @@ const profileEvidenceSchema = z.object({
     incomeYear: z.number().int().nullable(),
     jobsYear: z.number().int().nullable()
   }).nullable(),
+  dimensions: z.object({
+    employmentIndustry: z.object({ score: z.number().min(0).max(100), weight: z.number().min(0).max(1) }),
+    incomeEconomic: z.object({ score: z.number().min(0).max(100), weight: z.number().min(0).max(1) }),
+    demographic: z.object({ score: z.number().min(0).max(100), weight: z.number().min(0).max(1) }),
+    socioeconomic: z.object({ score: z.number().min(0).max(100), weight: z.number().min(0).max(1) }),
+    communityCulture: z.object({ score: z.number().min(0).max(100), weight: z.number().min(0).max(1) }),
+    regionalCapacity: z.object({ score: z.number().min(0).max(100), weight: z.number().min(0).max(1) }),
+    dataQuality: z.object({ score: z.number().min(0).max(100), weight: z.number().min(0).max(1) })
+  }),
+  fieldUsage: z.object({
+    uniqueFieldsUsed: z.number().int().positive(),
+    availableValues: z.number().int().nonnegative(),
+    totalValues: z.number().int().nonnegative()
+  }),
   /** Profile facts supply the 10% auxiliary component of the composite score. */
   affectsRanking: z.literal(true)
 });

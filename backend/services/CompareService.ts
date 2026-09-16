@@ -15,6 +15,7 @@ import {
   type AreaProfileEvidence,
   type AreaProfileRepository
 } from "@/backend/repositories/AreaProfileRepository";
+import { publicProfile, scoreAreaProfiles } from "./AreaProfileScorer";
 
 const RANKING_WEIGHTS = {
   userNeeds: 0.75,
@@ -25,29 +26,6 @@ const RANKING_WEIGHTS = {
 /** Keeps a calculated component inside the public 0-100 score range. */
 function clampScore(value: number): number {
   return Math.max(0, Math.min(100, value));
-}
-
-/** Converts the available SAL/LGA indicators into a small, explainable profile score. */
-function profileScore(evidence: AreaProfileEvidence): number {
-  const levelScores = [evidence.sal, evidence.lga].flatMap((profile) => {
-    if (!profile) return [];
-    const values = [
-      profile.irsadDecile == null ? null : profile.irsadDecile * 10,
-      profile.ierDecile == null ? null : profile.ierDecile * 10,
-      profile.unemploymentRatePct == null ? null : 100 - profile.unemploymentRatePct,
-      profile.labourForceParticipationPct,
-      profile.medianHouseholdIncomeWeeklyAud == null
-        ? null
-        : (profile.medianHouseholdIncomeWeeklyAud / 2_500) * 100
-    ].filter((value): value is number => value != null && Number.isFinite(value));
-    return values.length
-      ? [values.reduce((sum, value) => sum + clampScore(value), 0) / values.length]
-      : [];
-  });
-
-  return levelScores.length
-    ? levelScores.reduce((sum, value) => sum + value, 0) / levelScores.length
-    : 0;
 }
 
 /** Handles the locality key step. */
@@ -129,18 +107,21 @@ export class CompareService {
     const evidence = this.profiles && scored.length > 0
       ? await this.profiles.findForAreas(scored)
       : new Map<string, AreaProfileEvidence>();
+    const evidenceByRow = scored.map((row) => evidence.get(areaProfileKey(row.locality, row.lgaName)) ?? {
+      sal: null,
+      lga: null
+    });
+    const profileScores = scoreAreaProfiles(evidenceByRow);
 
     // Score every eligible area before sorting so profile evidence can change the shortlist.
-    const composite = scored.map((row) => {
-      const areaEvidence = evidence.get(areaProfileKey(row.locality, row.lgaName)) ?? {
-        sal: null,
-        lga: null
-      };
+    const composite = scored.map((row, rowIndex) => {
+      const areaEvidence = evidenceByRow[rowIndex];
+      const profile = profileScores[rowIndex];
       const userNeeds = totalWeight > 0 ? clampScore((row.rawScore / totalWeight) * 100) : 0;
       const poiCoverage = maximumPoiCount > 0
         ? clampScore((row.totalPoiCount / maximumPoiCount) * 100)
         : 0;
-      const areaProfile = profileScore(areaEvidence);
+      const areaProfile = profile.score;
       const score =
         userNeeds * RANKING_WEIGHTS.userNeeds +
         poiCoverage * RANKING_WEIGHTS.poiCoverage +
@@ -155,7 +136,10 @@ export class CompareService {
           areaProfile: { score: areaProfile, weight: RANKING_WEIGHTS.areaProfile }
         },
         profileEvidence: {
-          ...areaEvidence,
+          sal: publicProfile(areaEvidence.sal),
+          lga: publicProfile(areaEvidence.lga),
+          dimensions: profile.dimensions,
+          fieldUsage: profile.fieldUsage,
           affectsRanking: true as const
         }
       };

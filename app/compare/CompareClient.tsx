@@ -414,7 +414,9 @@ export default function CompareClient() {
 
             {result && matches.length > 0 && (
               <p className={styles.methodNote}>
-                Scores use town-wide facility counts. They do not measure distance or quality.
+                Scores combine explicit needs (75%), overall POI coverage (15%), and
+                SAL/LGA profile evidence (10%). They do not measure nearby walking
+                distance or service quality.
               </p>
             )}
 
@@ -476,6 +478,11 @@ function LadderRow({ item, rank }: { item: CompareRankItem; rank: number }) {
             </div>
           ))}
         </dl>
+        <p>
+          Score mix: needs {scoreFormat.format(item.scoreComponents.userNeeds.score)} × 75%;
+          POI coverage {scoreFormat.format(item.scoreComponents.poiCoverage.score)} × 15%;
+          area profile {scoreFormat.format(item.scoreComponents.areaProfile.score)} × 10%.
+        </p>
       </div>
       <div className={styles.rungScore}>
         <span>Fit score</span>
