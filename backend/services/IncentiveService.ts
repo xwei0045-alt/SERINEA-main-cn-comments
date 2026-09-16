@@ -80,6 +80,20 @@ function categoriesIn(message: string): Set<string> {
     .map(([category]) => category));
 }
 
+/** Distance from Melbourne using Haversine formula */
+function distanceFromMelbourne(lat: number, lon: number): number {
+  const melbourneLat = -37.8136;
+  const melbourneLon = 144.9631;
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat - melbourneLat) * Math.PI / 180;
+  const dLon = (lon - melbourneLon) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(melbourneLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
 export class IncentiveService {
   private recordsPromise: Promise<SubsidyRecord[]> | undefined;
   private recordsLoadedAt = 0;
@@ -103,12 +117,52 @@ export class IncentiveService {
       : this.areaFromMessage(input.message, input.profile.locality, input.profile.lga_name, records);
 
     if (requestedAreas.length === 0 && (!input.towns.length && !input.profile.locality)) {
-      // If no town is specified, just show top incentives across all towns
-      const allLgas = [...new Set(records.map(r => r.lgaName))].slice(0, 5); // Pick top 5 LGAs
-      requestedAreas = allLgas.map(lga => {
-        const locality = records.find(r => r.lgaName === lga)?.locality || "";
-        return { locality, lgaName: lga, source: "named_area_query" as const };
-      });
+      // If no town is specified, find the best towns based on distance and income
+      let eligibleRecords = records;
+      
+      if (input.profile.move_distance_km != null) {
+        eligibleRecords = eligibleRecords.filter(r => 
+          r.anchorLatitude != null && r.anchorLongitude != null &&
+          distanceFromMelbourne(r.anchorLatitude, r.anchorLongitude) <= input.profile.move_distance_km!
+        );
+      }
+
+      // Group by LGA to rank them
+      const lgaStats = new Map<string, { locality: string, totalAmount: number, distance: number }>();
+      
+      for (const record of eligibleRecords) {
+        if (!lgaStats.has(record.lgaName)) {
+          lgaStats.set(record.lgaName, {
+            locality: record.locality,
+            totalAmount: 0,
+            distance: (record.anchorLatitude != null && record.anchorLongitude != null) 
+              ? distanceFromMelbourne(record.anchorLatitude, record.anchorLongitude) 
+              : 9999
+          });
+        }
+        
+        // Add extra layer of ranking if income matches
+        const check = this.check(record, input);
+        if (check.failed.length === 0) {
+          lgaStats.get(record.lgaName)!.totalAmount += record.maxAmountAud;
+        }
+      }
+
+      const rankedLgas = [...lgaStats.entries()]
+        .sort((a, b) => {
+          // Rank by total matched subsidy amount (descending), then by distance (ascending)
+          if (b[1].totalAmount !== a[1].totalAmount) {
+            return b[1].totalAmount - a[1].totalAmount;
+          }
+          return a[1].distance - b[1].distance;
+        })
+        .slice(0, 5); // Pick top 5 LGAs
+
+      requestedAreas = rankedLgas.map(([lgaName, stats]) => ({
+        locality: stats.locality,
+        lgaName,
+        source: "named_area_query" as const
+      }));
     }
 
     const wantedCategories = categoriesIn(input.message);
@@ -215,12 +269,6 @@ export class IncentiveService {
         if (annualIncome != null && annualIncome <= record.incomeLimitAnnual) matched.push("Annual gross income");
         else failed.push("Income limit");
       }
-    }
-
-    if (record.minimumMoveDistanceKm != null) {
-      if (profile.move_distance_km == null) missing.push("Move distance");
-      else if (profile.move_distance_km >= record.minimumMoveDistanceKm) matched.push("Move distance");
-      else failed.push("Minimum move distance");
     }
 
     if (relocationStage === "unknown") missing.push("Relocation stage");

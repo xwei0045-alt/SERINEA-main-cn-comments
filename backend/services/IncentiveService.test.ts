@@ -109,6 +109,8 @@ test("profile locality and LGA are treated as one exact area", async () => {
     category: "relocation",
     locality: "SPRINGFIELD",
     lgaName: "LGA ONE",
+    anchorLatitude: null,
+    anchorLongitude: null,
     benefitType: "grant",
     maxAmountAud: 1000,
     incomeLimitAnnual: null,

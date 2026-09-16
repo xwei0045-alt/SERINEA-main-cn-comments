@@ -44,6 +44,8 @@ export class CsvSubsidyRepository implements SubsidyRepository {
         category: requiredText(row, "subsidy_category", line),
         locality: requiredText(row, "locality", line).toLocaleUpperCase("en-AU"),
         lgaName: requiredText(row, "lga_name", line).toLocaleUpperCase("en-AU"),
+        anchorLatitude: optionalNumber(row.anchor_latitude),
+        anchorLongitude: optionalNumber(row.anchor_longitude),
         benefitType: requiredText(row, "benefit_type", line),
         maxAmountAud: optionalNumber(row.max_amount_aud) ?? 0,
         incomeLimitAnnual: optionalNumber(row.income_limit_aud_annual),

@@ -8,6 +8,8 @@ export type SubsidyRecord = {
   category: string;
   locality: string;
   lgaName: string;
+  anchorLatitude: number | null;
+  anchorLongitude: number | null;
   benefitType: string;
   maxAmountAud: number;
   incomeLimitAnnual: number | null;
@@ -33,6 +35,8 @@ type DatabaseRow = Omit<SubsidyRecord,
   "maxAmountAud" | "incomeLimitAnnual" | "ageMin" | "ageMax" |
   "applyWithinDays" | "minimumMoveDistanceKm"> & {
     maxAmountAud: string | number | null;
+    anchorLatitude: string | number | null;
+    anchorLongitude: string | number | null;
     incomeLimitAnnual: string | number | null;
     ageMin: string | number | null;
     ageMax: string | number | null;
@@ -54,6 +58,8 @@ const subsidyRecordSchema = z.object({
   category: z.string().trim().min(1),
   locality: z.string().trim().min(1),
   lgaName: z.string().trim().min(1),
+  anchorLatitude: z.number().nullable(),
+  anchorLongitude: z.number().nullable(),
   benefitType: z.string().trim().min(1),
   maxAmountAud: z.number().nonnegative(),
   incomeLimitAnnual: z.number().nonnegative().nullable(),
@@ -99,6 +105,8 @@ export class PostgresSubsidyRepository implements SubsidyRepository {
       subsidy_category AS category,
       UPPER(locality) AS locality,
       UPPER(lga_name) AS "lgaName",
+      anchor_latitude AS "anchorLatitude",
+      anchor_longitude AS "anchorLongitude",
       benefit_type AS "benefitType",
       max_amount_aud AS "maxAmountAud",
       income_limit_aud_annual AS "incomeLimitAnnual",
@@ -118,6 +126,8 @@ export class PostgresSubsidyRepository implements SubsidyRepository {
 
     return result.rows.map((row) => validateRecord({
       ...row,
+      anchorLatitude: nullableNumber(row.anchorLatitude),
+      anchorLongitude: nullableNumber(row.anchorLongitude),
       maxAmountAud: nullableNumber(row.maxAmountAud) ?? 0,
       incomeLimitAnnual: nullableNumber(row.incomeLimitAnnual),
       ageMin: nullableNumber(row.ageMin),

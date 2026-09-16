@@ -199,14 +199,14 @@ export default function IncentivesClient() {
                 </div>
                 <div className={styles.row}>
                   <div className={styles.field}>
-                    <label htmlFor="distance">Move distance (km)</label>
+                    <label htmlFor="distance">Distance from Melbourne (km)</label>
                     <input
                       id="distance"
                       name="distance"
                       inputMode="decimal"
                       value={moveDistanceKm}
                       onChange={(e) => setMoveDistanceKm(e.target.value)}
-                      placeholder="60"
+                      placeholder="e.g. 150"
                     />
                   </div>
                 </div>
