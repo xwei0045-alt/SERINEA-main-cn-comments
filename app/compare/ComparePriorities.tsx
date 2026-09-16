@@ -84,8 +84,9 @@ export default function ComparePriorities({
           : "All selected categories have equal weight. Switch to Set priority to try an order."}
       </p>
       <p className={styles.notice}>
-        <strong>Ranking method:</strong> scores normalise town-wide facility counts by
-        category, then apply these weights; they do not measure nearby walking access.
+        <strong>Ranking method:</strong> explicit needs contribute 75%, overall POI
+        coverage contributes 15%, and SAL/LGA profile evidence contributes 10%.
+        These controls set the preference weights inside the 75% needs component.
       </p>
 
       <ol className={styles.list} aria-label="Selected preferences">

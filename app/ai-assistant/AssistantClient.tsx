@@ -56,6 +56,7 @@ const examples = [
   "I need a park and a library. A gym is only a minor bonus.",
   "I am 28 and recently moved 60 km to Lucas 30 days ago. I am a new resident. My annual gross household income is $80,000. What moving support could match?"
 ] as const;
+const scoreFormat = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 2 });
 
 function titleCase(value: string): string {
   return value
@@ -73,7 +74,7 @@ function evidenceReply(
 ): string {
   const names = state.preferences.map((item) => preferenceLabel(item.target)).join(", ");
   const opening = result
-    ? `I used your confirmed lifestyle preferences (${names}) to rank about five towns from the current POI records.`
+    ? `I used your confirmed lifestyle preferences (${names}) to rank about five towns. The score combines your needs (75%), overall POI coverage (15%), and SAL/LGA profile evidence (10%).`
     : incentives?.needsAreaOrLifestyle
       ? "Tell me a town to inspect, or add at least one lifestyle preference so I can rank towns first."
       : "I screened the named area's mock incentive records against the facts you provided.";
@@ -311,8 +312,9 @@ export default function AssistantClient() {
                 <div className={styles.welcome}>
                   <h2>What should your next town have?</h2>
                   <p>
-                    Lifestyle preferences determine the town order. Facility counts show dataset availability,
-                    not service quality or distance from a home.
+                    Rankings combine your stated needs (75%), overall POI coverage (15%),
+                    and SAL/LGA profile evidence (10%). They do not measure service quality
+                    or distance from a home.
                   </p>
                   <div className={styles.suggestions} aria-label="Example requests">
                     {examples.map((example) => (
@@ -516,6 +518,12 @@ function TownCard({
           <div key={entry.preferenceId}><dt>{entry.label}</dt><dd>{entry.count.toLocaleString("en-AU")} records</dd></div>
         ))}
       </dl>
+      <p>
+        <strong>Fit score: {scoreFormat.format(item.score)} / 100.</strong>{" "}
+        Needs {scoreFormat.format(item.scoreComponents.userNeeds.score)} × 75%;
+        POI coverage {scoreFormat.format(item.scoreComponents.poiCoverage.score)} × 15%;
+        area profile {scoreFormat.format(item.scoreComponents.areaProfile.score)} × 10%.
+      </p>
       {incentives && <TownIncentives group={incentives} />}
       <Link href={mapHref}>View town on map →</Link>
     </li>

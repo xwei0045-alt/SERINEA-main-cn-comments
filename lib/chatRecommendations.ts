@@ -64,9 +64,9 @@ export const preferenceNames: Record<string, string> = Object.fromEntries(
 export function explanationOptions(result: import("@/shared/contracts/compare").CompareResponse): [string, ...string[]] {
   const top = result.items[0];
   return [
-    `${top.locality} ranks first for the selected preferences and weights.`,
-    "Each category is normalised before weights are applied, so a high-volume category does not automatically dominate.",
-    "The score describes relative facility records, not overall suitability or service quality.",
+    `${top.locality} ranks first under the 75% needs, 15% POI coverage and 10% area-profile formula.`,
+    "Selected categories are normalised inside the 75% needs component before their preference weights are applied.",
+    "The composite score is a screening aid, not proof of overall suitability or service quality.",
     ...top.breakdown.filter(item => item.count > 0).map(item =>
       `${top.locality} has ${item.count} ${item.label} records in the current dataset.`),
   ];

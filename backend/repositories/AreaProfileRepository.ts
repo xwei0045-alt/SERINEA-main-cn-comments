@@ -1,4 +1,6 @@
-/** A compact, explainable subset of the uploaded ABS profile tables. */
+export type ProfileAttributeValue = number | string | null;
+
+/** One complete SAL or LGA row. Every uploaded column is retained for scoring or provenance. */
 export type AreaProfile = {
   code: string;
   name: string;
@@ -15,6 +17,7 @@ export type AreaProfile = {
   censusYear: number | null;
   seifaYear: number | null;
   seifaStatus: string | null;
+  attributes: Record<string, ProfileAttributeValue>;
 };
 
 export type AreaProfileEvidence = {
