@@ -11,7 +11,7 @@ import AssistantClient from "./AssistantClient";
  *   3) POST /api/incentives → mock subsidy screening (IncentiveService)
  *
  * LeanKit: US2.2 Get AI-Assisted Incentive Guidance (+ AC2.2.1–AC2.2.3).
- * Occupation search (US2.1) is out of scope until occupation data exists.
+ * This route assembles an incentive request but does not alter town ranking.
  */
 export const metadata: Metadata = {
   title: "SERINEA AI Recommendation",

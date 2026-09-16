@@ -25,6 +25,7 @@ import { compareApiClient } from "@/frontend/api/CompareApiClient";
 import { incentiveApiClient } from "@/frontend/api/IncentiveApiClient";
 import {
   emptyRecommendationState,
+  extractOccupation,
   extractRecommendation,
   IMPORTANCE_LABELS,
   IMPORTANCE_LEVELS,
@@ -99,6 +100,7 @@ export default function AssistantClient() {
   const [profile, setProfile] = useState<RecommendationState>(emptyRecommendationState);
   const [latestResult, setLatestResult] = useState<CompareResponse | null>(null);
   const [latestIncentives, setLatestIncentives] = useState<IncentiveResponse | null>(null);
+  const [occupation, setOccupation] = useState<string | null>(null);
   const [chosenTowns, setChosenTowns] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [useTiny, setUseTiny] = useState(false);
@@ -119,10 +121,11 @@ export default function AssistantClient() {
     message: string,
     result?: CompareResponse
   ): Promise<IncentiveResponse> {
+    const explicitOccupation = extractOccupation(message);
     return incentiveApiClient.find({
       message,
       relocationStage: state.relocation_stage,
-      profile: state.profile,
+      profile: { ...state.profile, occupation: explicitOccupation ?? occupation },
       towns: result?.items.map((item) => ({ locality: item.locality, lgaName: item.lgaName })) ?? [],
       limitPerTown: 3
     });
@@ -134,6 +137,8 @@ export default function AssistantClient() {
 
     const userMessage: Message = { id: nextMessageId.current++, role: "user", text: value };
     const extraction = extractRecommendation(value);
+    const explicitOccupation = extractOccupation(value);
+    if (explicitOccupation) setOccupation(explicitOccupation);
     let nextProfile = mergeRecommendationState(profile, extraction);
     setMessages((current) => [...current, userMessage]);
     setProfile(nextProfile);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import cases from "@/features/ai-assistant/evaluation/frozen-cases.json";
-import { extractRecommendation, mergeRecommendationState, emptyRecommendationState } from "./recommendationAssistant";
+import { extractOccupation, extractRecommendation, mergeRecommendationState, emptyRecommendationState } from "./recommendationAssistant";
 
 type Expected = {
   intent: string;
@@ -80,4 +80,19 @@ test("moving support enters the incentive flow and preserves explicit facts", ()
   assert.equal(extracted.profile.income_scope, "household");
   assert.equal(extracted.profile.income_period, "annual");
   assert.equal(extracted.profile.income_basis, "gross");
+});
+
+test("explicit occupation is passed through for incentive screening", () => {
+  const message = "My occupation is registered nurse. What incentives are available?";
+  const extracted = extractRecommendation(message);
+  assert.equal(extractOccupation(message), "registered nurse");
+  assert.equal(extracted.needs_incentive_guidance, true);
+});
+
+test("plain-language quiet and nature request keeps the supported nature preference", () => {
+  const extracted = extractRecommendation("I hate noisy places. I need nature.");
+  assert.deepEqual(extracted.preferences.map(({ target, importance }) => ({ target, importance })), [
+    { target: "nature_reserve", importance: "high" }
+  ]);
+  assert.deepEqual(extracted.unsupported, []);
 });

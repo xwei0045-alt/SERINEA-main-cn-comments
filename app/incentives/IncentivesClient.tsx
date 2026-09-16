@@ -76,6 +76,7 @@ export default function IncentivesClient() {
           .join(" "),
         relocationStage: "unknown",
         profile: {
+          occupation: occupation.trim() || null,
           age: parseOptionalNumber(age),
           income: parseOptionalNumber(income),
           income_scope: "household",

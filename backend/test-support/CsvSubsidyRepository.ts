@@ -49,6 +49,7 @@ export class CsvSubsidyRepository implements SubsidyRepository {
         benefitType: requiredText(row, "benefit_type", line),
         maxAmountAud: optionalNumber(row.max_amount_aud) ?? 0,
         incomeLimitAnnual: optionalNumber(row.income_limit_aud_annual),
+        occupationRestriction: row.occupation_restriction?.trim() || null,
         incomeAssessmentUnit: requiredText(row, "income_assessment_unit", line) as SubsidyRecord["incomeAssessmentUnit"],
         ageSubject: requiredText(row, "age_subject", line) as SubsidyRecord["ageSubject"],
         ageMin: optionalNumber(row.age_min),

@@ -7,6 +7,8 @@ export const relocationStageSchema = z.enum([
 ]);
 
 export const incentiveProfileSchema = z.object({
+  // Kept structured so occupation rules can be applied without parsing prose.
+  occupation: z.string().trim().min(1).max(120).nullable(),
   age: z.number().int().min(0).max(120).nullable(),
   income: z.number().nonnegative().nullable(),
   income_scope: z.enum(["individual", "household", "unknown"]),

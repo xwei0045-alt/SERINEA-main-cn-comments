@@ -13,6 +13,7 @@ export type SubsidyRecord = {
   benefitType: string;
   maxAmountAud: number;
   incomeLimitAnnual: number | null;
+  occupationRestriction: string | null;
   incomeAssessmentUnit: "individual" | "household";
   ageSubject: "applicant" | "dependent_child";
   ageMin: number | null;
@@ -38,6 +39,7 @@ type DatabaseRow = Omit<SubsidyRecord,
     anchorLatitude: string | number | null;
     anchorLongitude: string | number | null;
     incomeLimitAnnual: string | number | null;
+    occupationRestriction: string | null;
     ageMin: string | number | null;
     ageMax: string | number | null;
     applyWithinDays: string | number | null;
@@ -63,6 +65,7 @@ const subsidyRecordSchema = z.object({
   benefitType: z.string().trim().min(1),
   maxAmountAud: z.number().nonnegative(),
   incomeLimitAnnual: z.number().nonnegative().nullable(),
+  occupationRestriction: z.string().trim().max(500).nullable(),
   incomeAssessmentUnit: z.enum(["individual", "household"]),
   ageSubject: z.enum(["applicant", "dependent_child"]),
   ageMin: z.number().int().nonnegative().nullable(),
@@ -110,6 +113,7 @@ export class PostgresSubsidyRepository implements SubsidyRepository {
       benefit_type AS "benefitType",
       max_amount_aud AS "maxAmountAud",
       income_limit_aud_annual AS "incomeLimitAnnual",
+      NULLIF(BTRIM(occupation_restriction), '') AS "occupationRestriction",
       income_assessment_unit AS "incomeAssessmentUnit",
       age_subject AS "ageSubject",
       age_min AS "ageMin",

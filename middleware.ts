@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-type Bucket = { count: number; resetAt: number };
+type Bucket = { requestTimes: number[] };
 
 /** Per-instance sliding window. Good enough for coursework / demo abuse control. */
 const buckets = new Map<string, Bucket>();
@@ -29,48 +29,57 @@ function routeBucket(pathname: string): string {
 
 function allow(key: string, limit: number): { ok: boolean; retryAfterSec: number } {
   const now = Date.now();
-  const existing = buckets.get(key);
+  const cutoff = now - WINDOW_MS;
+  const requestTimes = (buckets.get(key)?.requestTimes ?? [])
+    .filter((timestamp) => timestamp > cutoff);
 
-  if (!existing || now >= existing.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return { ok: true, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
-  }
-
-  if (existing.count >= limit) {
+  if (requestTimes.length >= limit) {
+    buckets.set(key, { requestTimes });
     return {
       ok: false,
-      retryAfterSec: Math.max(1, Math.ceil((existing.resetAt - now) / 1000))
+      retryAfterSec: Math.max(1, Math.ceil((requestTimes[0] + WINDOW_MS - now) / 1000))
     };
   }
 
-  existing.count += 1;
-  return { ok: true, retryAfterSec: Math.ceil((existing.resetAt - now) / 1000) };
+  requestTimes.push(now);
+  buckets.set(key, { requestTimes });
+  return { ok: true, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
 }
 
 // Trim the map occasionally so long-lived instances do not grow forever.
 function maybePrune(now: number) {
   if (buckets.size < 500) return;
   for (const [key, value] of buckets) {
-    if (now >= value.resetAt) buckets.delete(key);
+    if (!value.requestTimes.some((timestamp) => timestamp > now - WINDOW_MS)) buckets.delete(key);
   }
 }
 
+/** Clears process-local limiter state for deterministic middleware tests. */
+export function resetRateLimitForTests() {
+  buckets.clear();
+}
+
 export function middleware(request: NextRequest) {
-  // Basic Authentication
-  const basicAuth = request.headers.get('authorization');
-  let isAuthenticated = false;
+  // Read review credentials from the environment so secrets never enter Git.
+  const username = process.env.BASIC_AUTH_USERNAME;
+  const password = process.env.BASIC_AUTH_PASSWORD;
+  if (!username || !password) {
+    return new NextResponse("Authentication is not configured.", { status: 503 });
+  }
 
-  if (basicAuth) {
-    const authValue = basicAuth.split(' ')[1];
-    const [user, pwd] = atob(authValue).split(':');
-
-    // Username and password for the website
-    if (user === 'admin' && pwd === 'password123') {
-      isAuthenticated = true;
+  const authorization = request.headers.get("authorization");
+  let credentials: [string, string] | null = null;
+  if (authorization?.startsWith("Basic ")) {
+    try {
+      const decoded = atob(authorization.slice("Basic ".length));
+      const separator = decoded.indexOf(":");
+      if (separator >= 0) credentials = [decoded.slice(0, separator), decoded.slice(separator + 1)];
+    } catch {
+      credentials = null;
     }
   }
 
-  if (!isAuthenticated) {
+  if (!credentials || credentials[0] !== username || credentials[1] !== password) {
     return new NextResponse('Authentication required', {
       status: 401,
       headers: {
