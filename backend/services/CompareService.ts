@@ -23,17 +23,17 @@ const RANKING_WEIGHTS = {
   areaProfile: 0.10
 } as const;
 
-/** Keeps a calculated component inside the public 0-100 score range. */
+// 将中间分数限制在对外展示使用的 0 到 100 范围内。
 function clampScore(value: number): number {
   return Math.max(0, Math.min(100, value));
 }
 
-/** Handles the locality key step. */
+// 用 locality、LGA 和区域组合成稳定键，避免同名地点相互覆盖。
 function localityKey(item: Pick<LocalitySummaryItem, "locality" | "lgaName" | "regionalGroup">) {
   return `${item.locality}\u0000${item.lgaName}\u0000${item.regionalGroup}`;
 }
 
-/** Handles the subcategory count step. */
+// 汇总一个城镇中指定子类别的 POI 数量，作为设施覆盖评分输入。
 function subcategoryCount(item: LocalitySummaryItem, subcategories: string[]): number {
   const wanted = new Set(subcategories);
   let total = 0;
@@ -45,7 +45,7 @@ function subcategoryCount(item: LocalitySummaryItem, subcategories: string[]): n
   return total;
 }
 
-/** Handles the title case step. */
+// 将数据集中的名称转换为适合界面展示的标题格式。
 function titleCase(value: string): string {
   return value
     .toLocaleLowerCase("en-AU")
@@ -55,18 +55,16 @@ function titleCase(value: string): string {
     .join(" ");
 }
 
-/** Ranks regional localities by weighted preference coverage from the regional extract. */
+// 按用户偏好、POI 覆盖和区域画像的加权结果对城镇排序，并附带可核验的证据。
 export class CompareService {
-  /** Sets up this component with the dependencies it needs. */
+  // 保存城镇摘要、POI 和区域画像仓储，排名时从这些数据源读取信息。
   constructor(
     private readonly localities = LocalitySummaryServiceFactory.create(),
-    /** Pass null in unit tests to keep counts on the injected locality summary. */
     private readonly detailLoader?: { load(): Promise<{ pois: ComparePoi[] }> } | null,
-    /** Profile evidence is optional so offline tests never require RDS. */
     private readonly profiles: AreaProfileRepository | null = null
   ) {}
 
-  /** Ranks towns using the selected preference weights. */
+  // 读取候选城镇，计算各偏好维度分数，合并区域画像后按总分降序返回。
   async rank(query: CompareQuery): Promise<CompareResponse> {
     const selected = query.prefs
       .map((id) => RANKING_PREFERENCES.find((pref) => pref.id === id))
@@ -113,7 +111,6 @@ export class CompareService {
     });
     const profileScores = scoreAreaProfiles(evidenceByRow);
 
-    // Score every eligible area before sorting so profile evidence can change the shortlist.
     const composite = scored.map((row, rowIndex) => {
       const areaEvidence = evidenceByRow[rowIndex];
       const profile = profileScores[rowIndex];
@@ -184,11 +181,7 @@ export class CompareService {
     };
   }
 
-  /**
-   * Rebuild subcategory counts from deduped detail rows so OSM node/way clones
-   * do not inflate park or grocery totals. Also move the map pin onto a place
-   * that matches the user's top preference when possible.
-   */
+  // 先按 OSM 标识和空间规则去重，再生成设施计数，避免重复 POI 扭曲排名。
   private async withDedupedCounts(
     items: LocalitySummaryItem[],
     preferredSubcategories: string[],
@@ -206,7 +199,6 @@ export class CompareService {
     try {
       dataset = await loader.load();
     } catch (error) {
-      // Keep ranking available from locality summaries if detail POIs fail.
       console.error("Compare detail load failed; using summary counts.", error);
       return items;
     }
@@ -260,7 +252,6 @@ export class CompareService {
         subCounts.set(entry.subcategory, entry);
       }
 
-      // Keep the original category buckets but replace counts with deduped totals.
       const categories = item.categories
         .map((category) => {
           const subcategories = category.subcategories
@@ -278,7 +269,6 @@ export class CompareService {
               poiCount: entry.poiCount
             });
           }
-          // Derived rows describe existing POIs, so do not add them to category totals.
           const poiCount = subcategories
             .filter((sub) => !["primary_school", "gym"].includes(sub.subcategory))
             .reduce((sum, sub) => sum + sub.poiCount, 0);
@@ -298,7 +288,6 @@ export class CompareService {
     });
   }
 
-  /** Handles the score locality step. */
   private scoreLocality(
     item: LocalitySummaryItem,
     selected: typeof RANKING_PREFERENCES,
@@ -330,7 +319,7 @@ export class CompareService {
   }
 }
 
-/** Prefer a real facility pin so "View on map" lands inside walk range of that place. */
+// 作用：实现 mapPinForLocality 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function mapPinForLocality(
   pois: ComparePoi[],
   item: LocalitySummaryItem,

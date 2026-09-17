@@ -5,12 +5,12 @@ import { PostgresComparePoiLoader } from "@/backend/repositories/PostgresCompare
 import { LocalitySummaryServiceFactory } from "./LocalitySummaryServiceFactory";
 import { CompareService } from "@/backend/services/CompareService";
 
-/** Wires Compare to the shared RDS connection and backend-only profile data. */
+// 将 Compare 连接到共享 RDS 和仅后端可访问的区域画像数据。
 export class CompareServiceFactory {
-  /** Prevents construction because this class only exposes a factory method. */
+  // 工厂类不保存实例，因此禁止直接构造。
   private constructor() {}
 
-  /** Builds the production service with POI, SAL, and LGA repositories. */
+  // 创建生产环境服务，并注入 POI、SAL 和 LGA 仓储。
   static create(): CompareService {
     const environment = Environment.getInstance();
     const database = PostgresDatabase.getInstance(environment.databaseUrl as string);

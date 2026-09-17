@@ -46,16 +46,20 @@ const dimensionFields: Record<ProfileDimension, string[]> = {
 const countLike = /(?:_count|_jobs|_earners|population|total_jobs|employee_jobs_total)$/;
 const inverseFields = new Set(["unemployed_count", "unemployment_rate_pct"]);
 
+// 作用：实现 numeric 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function numeric(profile: AreaProfile, field: string): number | null {
+  // 只接受有限数字，避免缺失值或文本字段参与数学计算。
   const value = profile.attributes[field];
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+// 作用：实现 clamp 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function clamp(value: number): number {
+  // 将画像维度分数限制在 0 到 100。
   return Math.max(0, Math.min(100, value));
 }
 
-/** Scores one numeric field against peers at the same geography level. */
+// 把当前区域字段与同层级区域比较，生成相对百分比分数；失业类指标反向计分。
 function relativeFieldScore(profile: AreaProfile, peers: AreaProfile[], field: string): number | null {
   const value = numeric(profile, field);
   if (value == null) return null;
@@ -70,7 +74,7 @@ function relativeFieldScore(profile: AreaProfile, peers: AreaProfile[], field: s
   return inverseFields.has(field) ? 100 - normalised : normalised;
 }
 
-/** Converts a category vector into a 0-100 diversity/evenness score. */
+// 用熵衡量多个类别的分布均衡程度，并归一化为 0 到 100 分。
 function evenness(profile: AreaProfile, fields: string[]): number | null {
   const values = fields.map((field) => numeric(profile, field)).filter((value): value is number => value != null && value > 0);
   if (values.length < 2) return values.length ? 0 : null;
@@ -82,7 +86,9 @@ function evenness(profile: AreaProfile, fields: string[]): number | null {
   return clamp((entropy / Math.log(values.length)) * 100);
 }
 
+// 作用：实现 qualityScore 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function qualityScore(profile: AreaProfile): number {
+  // 根据字段年份、来源和质量状态计算画像数据质量分数。
   const expectedYears: Record<string, number> = { census_year: 2021, seifa_year: 2021, income_year: 2023, jobs_year: 2023 };
   const scores = dimensionFields.dataQuality.flatMap((field) => {
     const value = profile.attributes[field];
@@ -96,7 +102,9 @@ function qualityScore(profile: AreaProfile): number {
   return scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : 0;
 }
 
+// 作用：实现 oneLevelScore 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function oneLevelScore(profile: AreaProfile, peers: AreaProfile[], dimension: ProfileDimension): number {
+  // 在一个地理层级内计算指定画像维度，再合并该维度的字段分数。
   if (dimension === "dataQuality") return qualityScore(profile);
   if (dimension === "demographic") {
     const vectorScores = [evenness(profile, ageCountFields), evenness(profile, agePctFields)].filter((value): value is number => value != null);
@@ -117,12 +125,14 @@ function oneLevelScore(profile: AreaProfile, peers: AreaProfile[], dimension: Pr
   return scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : 0;
 }
 
+// 作用：实现 combineLevels 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function combineLevels(sal: number | null, lga: number | null): number {
+  // 优先按 SAL 60% 与 LGA 40% 合并；缺少一层时使用另一层结果。
   if (sal != null && lga != null) return sal * 0.6 + lga * 0.4;
   return sal ?? lga ?? 0;
 }
 
-/** Scores every profile dimension using all available fields and same-level peers. */
+// 对所有区域画像计算各维度及总分，并记录实际可用字段数量。
 export function scoreAreaProfiles(evidence: AreaProfileEvidence[]): Array<{
   score: number;
   dimensions: ProfileDimensionResult;
@@ -154,7 +164,7 @@ export function scoreAreaProfiles(evidence: AreaProfileEvidence[]): Array<{
   });
 }
 
-/** Removes the internal all-column map before evidence is returned to the browser. */
+// 删除内部完整字段字典，只向浏览器返回可公开展示的画像摘要。
 export function publicProfile<T extends AreaProfile>(profile: T | null): Omit<T, "attributes"> | null {
   if (!profile) return null;
   const { attributes: _attributes, ...summary } = profile;

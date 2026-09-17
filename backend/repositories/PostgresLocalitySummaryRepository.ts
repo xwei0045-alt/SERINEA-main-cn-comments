@@ -16,19 +16,16 @@ type CentroidRow = QueryResultRow & {
   longitude: number;
 };
 
-/** Builds locality summaries directly from the deployed POI table. */
 export class PostgresLocalitySummaryRepository
   implements LocalitySummaryRepository
 {
   readonly dataSource = "database" as const;
 
-  /** Sets up this component with the dependencies it needs. */
+  // 注入共享数据库连接池，城镇摘要通过 SQL 聚合 POI 得到。
   constructor(private readonly database: PostgresDatabase) {}
 
-  /** Loads the records required by this repository. */
+  // 读取并聚合城镇、LGA、区域和设施子类别计数，返回比较页使用的摘要数据。
   async load(): Promise<LocalitySummaryData> {
-    // RDS supplies detailed POIs only, so these read-only aggregates replace
-    // the retired CSV and dataset-version summary tables at request startup.
     const [rowsResult, countResult, centroidResult] = await Promise.all([
       this.database.query<SummaryRow>(
         `SELECT
@@ -39,6 +36,7 @@ export class PostgresLocalitySummaryRepository
            COALESCE(category, 'unknown') AS category,
            COALESCE(subcategory, 'unknown') AS subcategory,
            COALESCE(NULLIF(display_name, ''), subcategory, 'Unknown') AS "displayName",
+           // 作用：实现 COUNT 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
            COUNT(*)::int AS "poiCount"
          FROM public.regional_pois
          WHERE NULLIF(TRIM(locality), '') IS NOT NULL

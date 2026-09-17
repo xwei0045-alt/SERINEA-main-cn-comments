@@ -1,13 +1,13 @@
 import type { ReachRepository } from "@/backend/repositories/ReachRepository";
 import type { ReachQuery, ReachResponse } from "@/shared/contracts/reach";
 
-// Product rules sit here, not in the HTTP layer.
-// A place appears if the walk from the pin fits inside the fixed 15-minute window.
+// 可达性产品规则集中在服务层，HTTP 控制器只负责解析请求和返回响应。
+// 地点只有在从定位点出发的单程步行估算不超过固定 15 分钟时才会进入结果。
 export class ReachService {
-  /** Sets up this component with the dependencies it needs. */
+  // 保存可达性仓储，后续查询和健康检查都通过这个依赖完成。
   constructor(private readonly repository: ReachRepository) {}
 
-  /** Searches the data using the validated request. */
+  // 使用已校验的查询条件读取候选 POI，再按步行时间和类别过滤并排序。
   async search(query: ReachQuery): Promise<ReachResponse> {
     const calculation = await this.repository.findReachable({
       pin: query.pin,
@@ -45,7 +45,7 @@ export class ReachService {
     };
   }
 
-  /** Checks whether the required data source is available. */
+  // 委托仓储检查当前数据源是否可用，供健康检查接口调用。
   async isHealthy(): Promise<boolean> {
     return this.repository.isHealthy();
   }

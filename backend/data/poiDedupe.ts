@@ -11,11 +11,8 @@ export type DedupePoi = {
 
 const DEFAULT_METRES = 75;
 
-/**
- * OSM often stores the same place as a node and a way a few metres apart.
- * Collapse those clones so Compare counts and map pins match lived places.
- */
 export function dedupeRegionalPois<T extends DedupePoi>(
+  // 先按 OSM ID 分组，再按空间距离合并近似重复点，返回可用于统计的唯一 POI。
   pois: T[],
   maxMetres = DEFAULT_METRES
 ): T[] {
@@ -37,9 +34,8 @@ export function dedupeRegionalPois<T extends DedupePoi>(
   return kept;
 }
 
-/** Handles the collapse near step. */
 function collapseNear<T extends DedupePoi>(bucket: T[], maxKm: number): T[] {
-  // Prefer a named record when choosing the survivor of a near-duplicate pair.
+  // 在同一标识组内按名称优先级和距离判断重复项，只保留代表记录。
   const ordered = [...bucket].sort((a, b) => {
     const named = Number(Boolean(b.name?.trim())) - Number(Boolean(a.name?.trim()));
     if (named !== 0) return named;

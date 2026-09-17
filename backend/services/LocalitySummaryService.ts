@@ -9,7 +9,7 @@ import type {
 } from "@/shared/contracts/localities";
 import { rankLocalityMatches } from "@/lib/localitySearch";
 
-/** Handles the locality key step. */
+// 用城镇、LGA 和区域组成聚合键，确保同一城镇的多条设施记录合并。
 function localityKey(locality: string, lgaName: string, regionalGroup: string) {
   return `${locality}\u0000${lgaName}\u0000${regionalGroup}`;
 }
@@ -34,15 +34,15 @@ type MutableLocality = {
   >;
 };
 
-// Town search. We group the summary CSV so Shepparton is one row, not 40 category rows.
+// 城镇搜索服务把同一城镇的多条设施记录聚合成一个摘要对象。
 export class LocalitySummaryService {
   private dataPromise: ReturnType<LocalitySummaryRepository["load"]> | undefined;
   private summariesPromise: Promise<LocalitySummaryItem[]> | undefined;
 
-  /** Sets up this component with the dependencies it needs. */
+  // 保存摘要仓储，并在首次请求时延迟加载数据。
   constructor(private readonly repository: LocalitySummaryRepository) {}
 
-  /** Searches the data using the validated request. */
+  // 从缓存的聚合摘要中按城镇、LGA 或区域名称搜索，并按匹配度截取结果。
   async search(query: LocalitySummaryQuery): Promise<LocalitySummaryResponse> {
     const data = await this.getData();
     const summaries = await this.getSummaries(data);
@@ -54,7 +54,7 @@ export class LocalitySummaryService {
           )
         )
       : summaries;
-    // Exact / prefix town names rise first so every regional name can be found quickly.
+    // 让精确名称和前缀匹配优先，方便用户快速找到区域名称。
     const matches = searchText ? rankLocalityMatches(filtered, searchText) : filtered;
 
     return {
@@ -67,7 +67,7 @@ export class LocalitySummaryService {
     };
   }
 
-  /** Full aggregated locality list for ranking (not capped like the search API). */
+  // 返回完整聚合列表供排名使用，不受搜索接口的数量限制。
   async listAll(): Promise<{
     items: LocalitySummaryItem[];
     totalPois: number;
@@ -82,13 +82,13 @@ export class LocalitySummaryService {
     };
   }
 
-  /** Returns the data. */
+  // 延迟加载并缓存原始摘要数据，避免每次请求重复访问数据库。
   private getData(): ReturnType<LocalitySummaryRepository["load"]> {
     if (!this.dataPromise) this.dataPromise = this.repository.load();
     return this.dataPromise;
   }
 
-  /** Returns the summaries. */
+  // 延迟生成并缓存聚合后的城镇摘要列表。
   private getSummaries(data: LocalitySummaryData): Promise<LocalitySummaryItem[]> {
     if (!this.summariesPromise) {
       this.summariesPromise = Promise.resolve(this.aggregate(data));
@@ -96,7 +96,7 @@ export class LocalitySummaryService {
     return this.summariesPromise;
   }
 
-  /** Handles the aggregate step. */
+  // 按城镇和类别合并 POI 计数，并附加中心点后按总数量排序。
   private aggregate(data: LocalitySummaryData): LocalitySummaryItem[] {
     const localities = new Map<string, MutableLocality>();
     const centroidByKey = new Map(

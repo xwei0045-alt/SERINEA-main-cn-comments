@@ -4,8 +4,10 @@ import type { AiReviewCacheRepository } from "./AiReviewCacheRepository";
 import type { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 
 export class PostgresAiReviewCacheRepository implements AiReviewCacheRepository {
+  // 保存数据库依赖，缓存读写统一通过 PostgreSQL 完成。
   constructor(private readonly database: PostgresDatabase) {}
 
+  // 按缓存键读取尚未过期的模型复核结果；缓存不可用时允许上层继续调用模型。
   async find(cacheKey: string): Promise<AiReviewResult | null> {
     try {
       const response = await this.database.query<{ result: unknown }>(
@@ -18,6 +20,7 @@ export class PostgresAiReviewCacheRepository implements AiReviewCacheRepository 
     }
   }
 
+  // 保存成功的复核结果，并通过唯一缓存键避免重复插入。
   async save(input: {
     cacheKey: string;
     modelVersion: string;
@@ -35,6 +38,7 @@ export class PostgresAiReviewCacheRepository implements AiReviewCacheRepository 
   }
 }
 
+// 判断错误是否只是缓存表或连接暂时不可用，以便不阻断主推荐流程。
 function isCacheUnavailable(error: unknown): boolean {
   const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
   return code === "42P01" || code === "42501";

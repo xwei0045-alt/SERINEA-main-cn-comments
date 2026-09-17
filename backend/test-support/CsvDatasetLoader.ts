@@ -14,15 +14,13 @@ const DETAIL_FILE_NAME = "regional_pois_detail_optimized_iteration1.csv";
 const SUMMARY_FILE_NAME = "locality_poi_summary_iteration1.csv";
 const DATASET_HANDOVER_DATE = "2026-09-02";
 
-// Loads the two CSVs Xiaowei handed over.
-// Keep the parsed offline fixture in memory for repeated tests; runtime reads PostgreSQL.
 export class CsvDatasetLoader {
   private datasetPromise: Promise<RegionalDataset> | undefined;
 
-  /** Sets up this component with the dependencies it needs. */
+  // 作用：实现 constructor 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   constructor(private readonly dataDirectory = path.join(process.cwd(), "data")) {}
 
-  /** Loads the records required by this repository. */
+  // 作用：实现 load 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   load(): Promise<RegionalDataset> {
     if (!this.datasetPromise) {
       this.datasetPromise = this.readDataset();
@@ -30,7 +28,7 @@ export class CsvDatasetLoader {
     return this.datasetPromise;
   }
 
-  /** Reads and validates the regional CSV files. */
+  // 作用：实现 readDataset 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private async readDataset(): Promise<RegionalDataset> {
     const detailPath = path.join(this.dataDirectory, DETAIL_FILE_NAME);
     const summaryPath = path.join(this.dataDirectory, SUMMARY_FILE_NAME);
@@ -73,7 +71,7 @@ export class CsvDatasetLoader {
     };
   }
 
-  // Town search needs a pin. We average the POI coordinates in that locality.
+  // 作用：实现 centroidsFrom 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private centroidsFrom(pois: RegionalPoiRecord[]): LocalityCentroid[] {
     const totals = new Map<
       string,
@@ -115,7 +113,7 @@ export class CsvDatasetLoader {
     }));
   }
 
-  /** Parses CSV text into named rows. */
+  // 作用：实现 parseRows 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private parseRows(text: string, fileName: string): CsvRow[] {
     try {
       return parse(text, {
@@ -129,7 +127,7 @@ export class CsvDatasetLoader {
     }
   }
 
-  /** Converts one CSV row into a place record. */
+  // 作用：实现 toPoi 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private toPoi(row: CsvRow, line: number): RegionalPoiRecord {
     const latitude = this.requiredNumber(row.latitude, "latitude", DETAIL_FILE_NAME, line);
     const longitude = this.requiredNumber(
@@ -178,7 +176,7 @@ export class CsvDatasetLoader {
     };
   }
 
-  /** Converts one CSV row into a locality summary. */
+  // 作用：实现 toSummary 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private toSummary(row: CsvRow, line: number): LocalityPoiSummaryRecord {
     const poiCount = this.requiredNumber(
       row.poi_count,
@@ -208,7 +206,6 @@ export class CsvDatasetLoader {
     };
   }
 
-  /** Handles the required text step. */
   private requiredText(
     value: string | undefined,
     column: string,
@@ -222,7 +219,6 @@ export class CsvDatasetLoader {
     return normalized;
   }
 
-  /** Handles the required number step. */
   private requiredNumber(
     value: string | undefined,
     column: string,
@@ -236,7 +232,7 @@ export class CsvDatasetLoader {
     return number;
   }
 
-  /** Checks that every place identifier is unique. */
+  // 作用：实现 validateUniquePoiIds 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private validateUniquePoiIds(pois: RegionalPoiRecord[]): void {
     const ids = new Set<string>();
     for (const poi of pois) {

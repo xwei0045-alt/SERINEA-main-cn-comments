@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import type { ReachService } from "@/backend/services/ReachService";
 import { reachQuerySchema } from "@/shared/contracts/reach";
 
-// HTTP in, ReachService out. Bad query is 400. Real failures stay in the server log.
+// 接收 HTTP 查询并交给 ReachService；参数错误返回 400，内部故障只记录在服务端日志中。
 export class ReachController {
-  /** Sets up this component with the dependencies it needs. */
+  // 注入可达性服务，控制器不直接访问数据库。
   constructor(private readonly service: ReachService) {}
 
-  /** Validates the request and returns the API response. */
+  // 解析并校验查询参数，调用服务层后统一转换为 JSON 响应。
   async handle(request: NextRequest): Promise<NextResponse> {
     const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsedQuery = reachQuerySchema.safeParse(rawQuery);
@@ -32,7 +32,7 @@ export class ReachController {
       const result = await this.service.search(parsedQuery.data);
       return NextResponse.json(result);
     } catch (error) {
-      // The detailed error stays in server logs; browsers receive a safe message.
+      // 详细错误只写入服务端日志，浏览器收到不泄露内部信息的安全提示。
       console.error("Reachability request failed.", error);
       return NextResponse.json(
         {

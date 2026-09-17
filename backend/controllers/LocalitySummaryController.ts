@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import type { LocalitySummaryService } from "@/backend/services/LocalitySummaryService";
 import { localitySummaryQuerySchema } from "@/shared/contracts/localities";
 
-/** Translates HTTP requests into locality summary service calls. */
+// 将 HTTP 请求转换为城镇摘要服务调用，并集中处理输入校验和错误响应。
 export class LocalitySummaryController {
-  /** Sets up this component with the dependencies it needs. */
+  // 注入城镇摘要服务，保持控制器与具体数据源解耦。
   constructor(private readonly service: LocalitySummaryService) {}
 
-  /** Validates the request and returns the API response. */
+  // 校验搜索参数，调用服务层并返回城镇摘要 JSON。
   async handle(request: NextRequest): Promise<NextResponse> {
     const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsedQuery = localitySummaryQuerySchema.safeParse(rawQuery);

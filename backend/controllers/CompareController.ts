@@ -4,10 +4,10 @@ import { CompareServiceFactory } from "@/backend/factories/CompareServiceFactory
 import { compareQuerySchema } from "@/shared/contracts/compare";
 
 export class CompareController {
-  /** Sets up this component with the dependencies it needs. */
+  // 创建或接收比较服务，保证 HTTP 层不包含排名算法。
   constructor(private readonly service = CompareServiceFactory.create()) {}
 
-  /** Validates the request and returns the API response. */
+  // 校验偏好参数，调用排名服务，并把参数错误或服务异常转换为 HTTP 状态码。
   async handle(request: NextRequest) {
     const parsed = compareQuerySchema.safeParse(
       Object.fromEntries(request.nextUrl.searchParams.entries())

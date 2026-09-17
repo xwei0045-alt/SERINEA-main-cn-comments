@@ -6,14 +6,13 @@ export type ComparePoi = Pick<RegionalPoiRecord,
   "osmId" | "name" | "locality" | "lgaName" | "regionalGroup" |
   "subcategory" | "displayName" | "latitude" | "longitude">;
 
-/** Loads the same production POIs as town search for ranking deduplication and pins. */
 export class PostgresComparePoiLoader {
-  /** Sets up this component with the dependencies it needs. */
+  // 使用共享数据库实例，避免比较请求重复创建连接池。
   constructor(private readonly database = PostgresDatabase.getInstance(
     Environment.getInstance().databaseUrl as string
   )) {}
 
-  /** Loads the records required by this repository. */
+  // 读取比较所需的 POI 字段，过滤无效坐标后交给 CompareService 去重和统计。
   async load(): Promise<{ pois: ComparePoi[] }> {
     const result = await this.database.query<ComparePoi>(`SELECT
       osm_id::text AS "osmId", COALESCE(name, '') AS name, locality,
@@ -34,7 +33,6 @@ export class PostgresComparePoiLoader {
       if (row.latitude == null || row.longitude == null) continue;
       const latitude = Number(row.latitude);
       const longitude = Number(row.longitude);
-      // Skip bad rows instead of failing the whole Compare ladder.
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
       if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) continue;
       pois.push({ ...row, latitude, longitude });

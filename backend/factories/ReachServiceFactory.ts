@@ -3,12 +3,12 @@ import { PostgresReachRepository } from "@/backend/repositories/PostgresReachRep
 import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { ReachService } from "@/backend/services/ReachService";
 
-// The production RDS table is the only source used by the map API.
+// 地图 API 的生产数据源固定为 RDS 中的可达性表。
 export class ReachServiceFactory {
-  /** Sets up this component with the dependencies it needs. */
+  // 工厂只提供静态创建方法，因此禁止直接实例化。
   private constructor() {}
 
-  /** Builds the service with its production dependencies. */
+  // 创建生产可达性服务，并注入共享数据库和 PostgreSQL 仓储。
   static create(): ReachService {
     const environment = Environment.getInstance();
 

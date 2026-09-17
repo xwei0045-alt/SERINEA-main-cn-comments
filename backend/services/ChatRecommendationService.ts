@@ -17,7 +17,7 @@ const key = (row: { locality: string; lgaName: string; regionalGroup: string }) 
 const normaliseTown = (value: string) => value.normalize("NFKD").replace(/\p{M}/gu, "")
   .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
-// Match minor spelling errors against real names, retaining tied candidates.
+// 作用：实现 findTownNames 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 export function findTownNames(query: string, names: string[]): string[] {
   const input = normaliseTown(query);
   if (!input) return [];
@@ -36,7 +36,6 @@ export function findTownNames(query: string, names: string[]): string[] {
       for (let j = 1; j <= target.length; j++) {
         distance[i][j] = Math.min(distance[i - 1][j] + 1, distance[i][j - 1] + 1,
           distance[i - 1][j - 1] + (input[i - 1] === target[j - 1] ? 0 : 1));
-        // An adjacent letter swap counts as one typo.
         if (i > 1 && j > 1 && input[i - 1] === target[j - 2] && input[i - 2] === target[j - 1]) {
           distance[i][j] = Math.min(distance[i][j], distance[i - 2][j - 2] + 1);
         }
@@ -50,13 +49,13 @@ export function findTownNames(query: string, names: string[]): string[] {
   return result;
 }
 
+// 作用：实现 townDetails 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 async function townDetails(
   plan: RecommendationPlan,
   localities: LocalitySummaryService,
   compare: CompareService
 ) {
   const catalog = await localities.listAll();
-  // Require a real, unique locality. Never silently substitute a different town.
   const names = findTownNames(plan.town, catalog.items.map(item => item.locality));
   let matches = catalog.items.filter(item => names.includes(item.locality));
   if (matches.length > 1 && plan.area) {
@@ -99,20 +98,16 @@ async function townDetails(
   lines.push("\nLimits: these are town-wide records, not proof of nearby access or service quality. Education categories are separate; school level and catchments are unverified. Grocery records do not verify snack products. Transport records may describe parts of the same stop and do not establish timetables or reliability. Housing costs, safety and employment are not covered.");
   if (plan.unverified.length) lines.push(`Unverified requirements: ${plan.unverified.join("; ")}.`);
   lines.push(`Source: ${sourceLabel(all.dataSource)}. This is a town overview, not a new shortlist. Your filters have not changed.`);
-  // Details are read-only: offer a map link, not a button that changes preferences.
   return chatReplySchema.parse({ reply: lines.join("\n"), preferences: [], priority: plan.priority, area: plan.area,
     places: [{ name: title(town.locality), latitude: town.latitude, longitude: town.longitude }] });
 }
 
-// Facts and explanations come from application data, not generated numbers.
-// Build the user-facing recommendation text from the confirmed plan.
+// 作用：实现 buildRecommendations 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 export async function buildRecommendations(input: RecommendationPlan,
   localities?: LocalitySummaryService,
   explain?: (result: CompareResponse) => Promise<string>,
   compare?: CompareService) {
   const localityService = localities ?? LocalitySummaryServiceFactory.create();
-  // Production uses the same fully wired Compare service as /api/compare.
-  // Tests that inject a locality service stay isolated unless they inject Compare too.
   const compareService = compare ?? (localities
     ? new CompareService(localityService)
     : CompareServiceFactory.create());
@@ -125,7 +120,6 @@ export async function buildRecommendations(input: RecommendationPlan,
     throw new Error("Conflicting extracted preferences.");
   }
 
-  // Answer a named-town question before considering a new recommendation.
   if (plan.intent === "town_details") return townDetails(plan, localityService, compareService);
 
   if (!include.length) {
@@ -135,7 +129,6 @@ export async function buildRecommendations(input: RecommendationPlan,
     });
   }
 
-  // Use exactly the same ranking algorithm and area filter as /api/compare.
   const result = await compareService.rank({ prefs: include, weights: preferenceWeights(include.length, plan.priority), q: plan.area, limit: 3 });
   if (!result.items.length) {
     return chatReplySchema.parse({
@@ -144,7 +137,6 @@ export async function buildRecommendations(input: RecommendationPlan,
     });
   }
 
-  // A second local lookup supplies optional facilities; it does not change the score.
   const catalog = await localityService.listAll();
   const all = await compareService.rank({ prefs: preferenceIds, q: plan.area, limit: catalog.items.length });
   const extrasByTown = new Map(all.items.map(row => [key(row), row.breakdown]));
@@ -182,7 +174,6 @@ export async function buildRecommendations(input: RecommendationPlan,
   lines.push(`Source: ${sourceLabel(result.dataSource)}. Tell me which preferences to add or remove.`);
 
   if (explain) {
-    // Provider failure leaves the authoritative, locally formatted answer intact.
     try { lines.push(`\nWhy this ranking: ${await explain(result)}`); } catch { /* Local evidence remains available. */ }
   }
   return chatReplySchema.parse({ reply: lines.join("\n"), preferences: include, priority: plan.priority, area: plan.area,

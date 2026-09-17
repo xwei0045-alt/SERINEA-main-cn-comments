@@ -2,7 +2,6 @@ import type { Poi } from "@/lib/types";
 import type { PoiCategoryId } from "@/shared/contracts/reach";
 import type { RegionalPoiRecord } from "@/backend/data/RegionalDataset";
 
-/** Every Iteration 1 subcategory maps onto a labelled map type. */
 const CATEGORY_BY_SUBCATEGORY: Record<string, PoiCategoryId> = {
   park: "park",
   nature_reserve: "park",
@@ -47,9 +46,8 @@ export type MappableRegionalPoi = Pick<
   | "locality"
 >;
 
-/** Maps every supplied subcategory. Falls back to a readable unknown bucket only if a new tag appears. */
 export class RegionalPoiMapper {
-  /** Converts a stored record into a map place. */
+  // 将数据库区域 POI 转换为地图契约；无法识别类别时返回 null 以跳过无效记录。
   toMapPoi(record: MappableRegionalPoi): Poi | null {
     const category = CATEGORY_BY_SUBCATEGORY[record.subcategory];
     if (!category) return null;
@@ -65,7 +63,7 @@ export class RegionalPoiMapper {
     };
   }
 
-  /** Handles the readable name step. */
+  // 作用：实现 readableName 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private readableName(value: string): string {
     return value
       .split("_")

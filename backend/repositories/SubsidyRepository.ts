@@ -29,6 +29,7 @@ export type SubsidyRecord = {
 
 export interface SubsidyRepository {
   readonly dataSource: "database" | "SERINEA_mock_subsidies_450.csv";
+  // 作用：实现 load 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   load(): Promise<SubsidyRecord[]>;
 }
 
@@ -46,7 +47,7 @@ type DatabaseRow = Omit<SubsidyRecord,
     minimumMoveDistanceKm: string | number | null;
   };
 
-/** Handles the nullable number step. */
+// 将补贴字段转换成有限数字；数据库中的空值保持为 null。
 function nullableNumber(value: string | number | null): number | null {
   if (value == null) return null;
   const number = Number(value);
@@ -79,7 +80,7 @@ const subsidyRecordSchema = z.object({
   recordNotice: z.string().trim().min(1)
 });
 
-/** Handles the validate record step. */
+// 校验补贴记录的枚举和年龄范围，防止非法政策数据进入筛选流程。
 export function validateRecord(record: SubsidyRecord): SubsidyRecord {
   const result = subsidyRecordSchema.safeParse(record);
   if (!result.success) {
@@ -91,16 +92,15 @@ export function validateRecord(record: SubsidyRecord): SubsidyRecord {
   return result.data;
 }
 
-/** Reads the synthetic subsidy dataset from the production PostgreSQL table. */
 export class PostgresSubsidyRepository implements SubsidyRepository {
   readonly dataSource = "database" as const;
 
-  /** Sets up this component with the dependencies it needs. */
+  // 默认使用共享 PostgreSQL 连接池，也允许测试注入替代数据库。
   constructor(private readonly database = PostgresDatabase.getInstance(
     Environment.getInstance().databaseUrl as string
   )) {}
 
-  /** Loads the records required by this repository. */
+  // 读取仍可用于原型展示的合成补贴记录，并将数据库行映射为领域对象。
   async load(): Promise<SubsidyRecord[]> {
     const result = await this.database.query<DatabaseRow>(`SELECT
       subsidy_id AS "subsidyId",

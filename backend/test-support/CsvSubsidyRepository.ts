@@ -6,14 +6,14 @@ import { validateRecord, type SubsidyRecord, type SubsidyRepository } from "../r
 type CsvRow = Record<string, string>;
 const FILE_NAME = "SERINEA_mock_subsidies_450.csv";
 
-/** Reads a required text field from one test CSV row. */
+// 作用：实现 requiredText 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function requiredText(row: CsvRow, key: string, line: number): string {
   const value = row[key]?.trim();
   if (!value) throw new Error(`${FILE_NAME}:${line} is missing ${key}.`);
   return value;
 }
 
-/** Turns an optional numeric test CSV field into a number. */
+// 作用：实现 optionalNumber 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
 function optionalNumber(value: string | undefined): number | null {
   if (!value?.trim()) return null;
   const number = Number(value);
@@ -21,14 +21,13 @@ function optionalNumber(value: string | undefined): number | null {
   return number;
 }
 
-/** Loads the fixed synthetic CSV fixture for backend tests only. */
 export class CsvSubsidyRepository implements SubsidyRepository {
   readonly dataSource = FILE_NAME as "SERINEA_mock_subsidies_450.csv";
 
-  /** Points the fixture reader at its CSV directory. */
+  // 作用：实现 constructor 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   constructor(private readonly dataDirectory = path.join(process.cwd(), "data")) {}
 
-  /** Reads and validates all 450 synthetic fixture records. */
+  // 作用：实现 load 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   async load(): Promise<SubsidyRecord[]> {
     const text = await readFile(path.join(this.dataDirectory, FILE_NAME), "utf8");
     const rows = parse(text, { bom: true, columns: true, skip_empty_lines: true }) as CsvRow[];

@@ -1,13 +1,13 @@
 type QueryableDatabase = {
+  // 作用：实现 query 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   query(sql: string, values?: readonly unknown[]): Promise<unknown>;
 };
 
-/** Verifies that the deployed API account can read every table required by backend routes. */
 export class DatabaseReadinessService {
-  /** Sets up this component with the dependencies it needs. */
+  // 作用：实现 constructor 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   constructor(private readonly database: QueryableDatabase) {}
 
-  /** Checks that the API can read every required database table. */
+  // 作用：实现 isReady 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   async isReady(): Promise<boolean> {
     try {
       await this.database.query("SELECT 1 FROM public.regional_pois LIMIT 1");

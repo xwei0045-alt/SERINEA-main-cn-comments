@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import type { FootWalkRouter } from "@/backend/services/FootWalkRouter";
 import { walkQuerySchema } from "@/shared/contracts/walkRoute";
 
-// Checks the walk query, then asks the street router. Bad coords get 400, no path gets 502.
+// 校验步行路线参数后调用街道路由器；坐标错误返回 400，路线服务失败返回 502。
 export class WalkRouteController {
-  /** Sets up this component with the dependencies it needs. */
+  // 注入街道路由器，控制器只负责协议转换。
   constructor(private readonly router: FootWalkRouter) {}
 
-  /** Validates the request and returns the API response. */
+  // 校验路线请求，调用路由器并将结果或错误转换为 HTTP 响应。
   async handle(request: NextRequest): Promise<NextResponse> {
     const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsedQuery = walkQuerySchema.safeParse(rawQuery);

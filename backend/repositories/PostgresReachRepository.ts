@@ -22,25 +22,22 @@ type DatabasePoiRow = QueryResultRow & {
   locality: string;
 };
 
-/** Reads POIs directly from Lucian's deployed RDS table without changing the API shape. */
 export class PostgresReachRepository implements ReachRepository {
   readonly dataSource = "database" as const;
 
-  /** Sets up this component with the dependencies it needs. */
+  // 保存数据库和地图数据映射依赖，查询时复用同一个连接池。
   constructor(
     private readonly database: PostgresDatabase,
     private readonly mapper = new RegionalPoiMapper(),
     private readonly journeyCalculator = new EstimatedJourneyCalculator()
   ) {}
 
-  /** Finds places reachable under the supplied rules. */
+  // 用 PostGIS 按定位点读取候选 POI，再计算步行估算并组成可达性响应。
   async findReachable(criteria: ReachSearchCriteria): Promise<ReachComputation> {
     const searchRadiusKm = this.journeyCalculator.maximumOutboundDistanceKm(
       criteria.windowMinutes
     );
     const searchRadiusMetres = searchRadiusKm * 1_000;
-    // ST_DWithin on the generated GEOGRAPHY(Point, 4326) location column lets
-    // PostgreSQL use Lucian's GiST index before the product walk-time filter.
     const result = await this.database.query<DatabasePoiRow>(
       `SELECT
          osm_id AS "osmId",
@@ -99,7 +96,7 @@ export class PostgresReachRepository implements ReachRepository {
     };
   }
 
-  /** Checks whether the required data source is available. */
+  // 检查可达性所需的 PostgreSQL 数据表是否可以读取。
   async isHealthy(): Promise<boolean> {
     try {
       await this.database.query("SELECT 1 FROM public.regional_pois LIMIT 1");

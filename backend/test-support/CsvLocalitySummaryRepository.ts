@@ -4,14 +4,13 @@ import type {
   LocalitySummaryRepository
 } from "@/backend/repositories/LocalitySummaryRepository";
 
-/** Reads the archived CSV locality snapshot for offline backend tests only. */
 export class CsvLocalitySummaryRepository implements LocalitySummaryRepository {
   readonly dataSource = "csv" as const;
 
-  /** Uses the archived regional CSV fixture reader. */
+  // 作用：实现 constructor 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   constructor(private readonly loader = new CsvDatasetLoader()) {}
 
-  /** Loads locality rows and totals from the test snapshot. */
+  // 作用：实现 load 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   async load(): Promise<LocalitySummaryData> {
     const dataset = await this.loader.load();
     return {

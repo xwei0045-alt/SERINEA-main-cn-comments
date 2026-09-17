@@ -10,20 +10,6 @@ import {
   type SubsidyRepository
 } from "@/backend/repositories/SubsidyRepository";
 
-/**
- * Mock incentive screening for Iteration 2 (AC2.2.2 + AC2.2.3).
- *
- * COMES FROM: POST /api/incentives (AssistantClient after Compare ranking).
- * GOES TO: SubsidyRepository (Postgres public.subsidies, or CSV in tests).
- *
- * RULES (handoff)
- * - Filter mock_closed records.
- * - Preserve incoming lifestyle town order (never re-rank by incentive $).
- * - planning_to_move → "Potential Incentive"; already_moved → "Possible Match"
- *   or "More Information Needed"; missing[] drives the UI "To verify" list.
- * - Occupation restrictions apply when the catalogue supplies them. Current
- *   synthetic RDS rows say `none`, so a job does not change today's results.
- */
 
 type CheckResult = {
   matched: string[];
@@ -31,12 +17,12 @@ type CheckResult = {
   failed: string[];
 };
 
-/** Normalizes a job title or stored restriction for case-insensitive comparison. */
+// 统一职业名称和限制文本的大小写与空格，便于不区分大小写比较。
 function normalizeOccupation(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-AU");
 }
 
-/** Applies an explicit catalogue restriction without inventing unavailable data. */
+// 只执行补贴目录中明确给出的职业限制，不为缺失的政策数据臆造规则。
 function checkOccupation(restriction: string | null, occupation: string | null): CheckResult {
   const rule = restriction ? normalizeOccupation(restriction) : "";
   if (!rule || rule === "none" || rule === "all") return { matched: [], missing: [], failed: [] };
@@ -64,22 +50,22 @@ const CATEGORY_TERMS: Record<string, string[]> = {
 
 const NOTICE = "Fictional subsidy data for SERINEA prototype testing only. These are not government programs or official eligibility decisions.";
 
-/** Handles the normalize area step. */
+// 统一地点名称的空格和大小写，确保用户输入能与目录字段匹配。
 function normalizeArea(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLocaleUpperCase("en-AU");
 }
 
-/** Handles the escape reg exp step. */
+// 转义地点文本中的正则特殊字符，保证后续搜索按字面量执行。
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Handles the contains area step. */
+// 判断用户消息是否提到指定地点，支持名称中的空格变化。
 function containsArea(message: string, area: string): boolean {
   return new RegExp(`\\b${escapeRegExp(area).replaceAll("\\ ", "\\s+")}\\b`, "i").test(message);
 }
 
-/** Handles the to annual income step. */
+// 将年、月或周收入统一换算为年度金额，供补贴上限比较。
 function toAnnualIncome(
   amount: number,
   period: IncentiveRequest["profile"]["income_period"]
@@ -90,7 +76,7 @@ function toAnnualIncome(
   return null;
 }
 
-/** Handles the categories in step. */
+// 根据用户消息中的关键词提取补贴类别，结果用于缩小政策候选范围。
 function categoriesIn(message: string): Set<string> {
   const normalized = message.toLocaleLowerCase("en-AU");
   return new Set(Object.entries(CATEGORY_TERMS)
@@ -98,7 +84,7 @@ function categoriesIn(message: string): Set<string> {
     .map(([category]) => category));
 }
 
-/** Distance from Melbourne using Haversine formula */
+// 用 Haversine 公式计算地点与墨尔本之间的球面距离，单位为公里。
 function distanceFromMelbourne(lat: number, lon: number): number {
   const melbourneLat = -37.8136;
   const melbourneLon = 144.9631;
@@ -116,14 +102,14 @@ export class IncentiveService {
   private recordsPromise: Promise<SubsidyRecord[]> | undefined;
   private recordsLoadedAt = 0;
 
-  /** Sets up this component with the dependencies it needs. */
+  // 注入补贴仓储和缓存时间，默认使用 PostgreSQL 仓储。
   constructor(
     private readonly repository: SubsidyRepository = new PostgresSubsidyRepository(),
     private readonly cacheTtlMs = 5 * 60 * 1000,
     private readonly now = Date.now
   ) {}
 
-  /** Finds the . */
+  // 读取并缓存补贴记录，按地点、类别和用户资格条件返回筛选结果。
   async find(input: IncentiveRequest): Promise<IncentiveResponse> {
     const records = await this.load();
     let requestedAreas = input.towns.length
@@ -135,7 +121,6 @@ export class IncentiveService {
       : this.areaFromMessage(input.message, input.profile.locality, input.profile.lga_name, records);
 
     if (requestedAreas.length === 0 && (!input.towns.length && !input.profile.locality)) {
-      // If no town is specified, find the best towns based on distance and income
       let eligibleRecords = records;
       
       if (input.profile.move_distance_km != null) {
@@ -145,7 +130,6 @@ export class IncentiveService {
         );
       }
 
-      // Group by LGA to rank them
       const lgaStats = new Map<string, { locality: string, totalAmount: number, distance: number }>();
       
       for (const record of eligibleRecords) {
@@ -159,7 +143,6 @@ export class IncentiveService {
           });
         }
         
-        // Add extra layer of ranking if income matches
         const check = this.check(record, input);
         if (check.failed.length === 0) {
           lgaStats.get(record.lgaName)!.totalAmount += record.maxAmountAud;
@@ -168,7 +151,6 @@ export class IncentiveService {
 
       const rankedLgas = [...lgaStats.entries()]
         .sort((a, b) => {
-          // Rank by total matched subsidy amount (descending), then by distance (ascending)
           if (b[1].totalAmount !== a[1].totalAmount) {
             return b[1].totalAmount - a[1].totalAmount;
           }
@@ -216,7 +198,6 @@ export class IncentiveService {
     };
   }
 
-  /** Handles the area from message step. */
   private areaFromMessage(
     message: string,
     profileLocality: string | null,
@@ -252,7 +233,7 @@ export class IncentiveService {
       .slice(0, 5);
   }
 
-  /** Checks one incentive against the user's facts. */
+  // 作用：实现 check 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private check(record: SubsidyRecord, input: IncentiveRequest): CheckResult {
     const { profile, relocationStage } = input;
     const matched = ["Locality"];
@@ -298,7 +279,6 @@ export class IncentiveService {
     return { matched, missing: [...new Set(missing)], failed: [...new Set(failed)] };
   }
 
-  /** Handles the to result step. */
   private toResult(
     record: SubsidyRecord,
     check: CheckResult,
@@ -322,7 +302,7 @@ export class IncentiveService {
     };
   }
 
-  /** Loads the records required by this repository. */
+  // 作用：实现 load 的后端职责；实现：在函数体内完成参数处理、数据访问或结果转换。
   private load(): Promise<SubsidyRecord[]> {
     if (!this.recordsPromise || this.now() - this.recordsLoadedAt >= this.cacheTtlMs) {
       this.recordsLoadedAt = this.now();

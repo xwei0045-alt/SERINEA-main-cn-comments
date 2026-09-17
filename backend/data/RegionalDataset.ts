@@ -1,4 +1,3 @@
-/** One point of interest read from the supplied detailed CSV file. */
 export type RegionalPoiRecord = {
   osmId: string;
   name: string;
@@ -27,7 +26,6 @@ export type RegionalPoiRecord = {
   wheelchair: string;
 };
 
-/** One category row read from the locality summary CSV file. */
 export type LocalityPoiSummaryRecord = {
   locality: string;
   lgaName: string;
@@ -39,7 +37,6 @@ export type LocalityPoiSummaryRecord = {
   poiCount: number;
 };
 
-/** Metadata recorded while loading and validating both source files. */
 export type RegionalDatasetMetadata = {
   detailFileName: string;
   summaryFileName: string;
@@ -49,7 +46,6 @@ export type RegionalDatasetMetadata = {
   summaryPoiCount: number;
 };
 
-/** Mean coordinate for one locality, used to drop the map pin on a town name. */
 export type LocalityCentroid = {
   locality: string;
   lgaName: string;
@@ -58,7 +54,6 @@ export type LocalityCentroid = {
   longitude: number;
 };
 
-/** Validated in-memory representation of the complete Iteration 1 handover. */
 export type RegionalDataset = {
   pois: RegionalPoiRecord[];
   localitySummaries: LocalityPoiSummaryRecord[];

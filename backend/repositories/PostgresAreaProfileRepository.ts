@@ -9,14 +9,14 @@ import {
 
 type ProfileRow = QueryResultRow & Record<string, unknown>;
 
-/** Converts PostgreSQL numeric strings while preserving unavailable values as null. */
+// 将数据库中的数字或数字字符串安全转换为数字，空值和非法值统一为 null。
 function nullableNumber(value: string | number | null | undefined): number | null {
   if (value == null) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-/** Preserves text provenance and converts PostgreSQL numeric strings for scoring. */
+// 把画像查询行整理为字段字典，并补齐兼容旧字段名所需的别名。
 function profileAttributes(row: ProfileRow): Record<string, number | string | null> {
   const attributes = Object.fromEntries(Object.entries(row).map(([field, value]) => {
     if (value == null) return [field, null];
@@ -42,7 +42,7 @@ function profileAttributes(row: ProfileRow): Record<string, number | string | nu
   return attributes;
 }
 
-/** Maps a complete database row while keeping a compact public summary. */
+// 将一行 SAL 或 LGA 画像映射成统一的区域画像对象。
 function mapProfile(row: ProfileRow, geography: "sal" | "lga"): AreaProfile {
   const attributes = profileAttributes(row);
   const canonicalAliases: Record<string, string> = {
@@ -74,12 +74,11 @@ function mapProfile(row: ProfileRow, geography: "sal" | "lga"): AreaProfile {
   };
 }
 
-/** Reads SAL and LGA profiles in two batched, parameterised queries. */
 export class PostgresAreaProfileRepository implements AreaProfileRepository {
-  /** Stores the shared database connection used by the other repositories. */
+  // 保存 PostgreSQL 依赖，后续按城镇批量读取 SAL 和 LGA 画像。
   constructor(private readonly database: PostgresDatabase) {}
 
-  /** Finds profile evidence for the ranked areas without treating null as zero. */
+  // 批量查询区域画像并按 locality/LGA 建立索引，供比较服务合并评分证据。
   async findForAreas(areas: ReadonlyArray<{ locality: string; lgaName: string }>): Promise<Map<string, AreaProfileEvidence>> {
     const localityNames = [...new Set(areas.map((area) => area.locality.trim()).filter(Boolean))];
     const lgaNames = [...new Set(areas.map((area) => area.lgaName.trim()).filter(Boolean))];
@@ -94,7 +93,6 @@ export class PostgresAreaProfileRepository implements AreaProfileRepository {
       [lgaNames.map((name) => name.toLocaleUpperCase("en-AU"))])
     ]);
 
-    // A duplicated SAL name is ambiguous because the supplied SAL table has no LGA key.
     const salBuckets = new Map<string, ProfileRow[]>();
     for (const row of salResult.rows) {
       const key = String(row.sal_name ?? row.name).toLocaleUpperCase("en-AU");
