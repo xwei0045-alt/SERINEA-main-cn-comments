@@ -4,13 +4,13 @@ import { aiReviewRequestSchema } from "@/shared/contracts/aiReview";
 import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
 import { PostgresAiReviewCacheRepository } from "@/backend/repositories/PostgresAiReviewCacheRepository";
 import { AiReviewService } from "@/backend/services/AiReviewService";
-import { HuggingFaceAiReviewProvider } from "@/backend/services/HuggingFaceAiReviewProvider";
+import { HuggingFaceEndpointAiReviewProvider } from "@/backend/services/HuggingFaceEndpointAiReviewProvider";
 
 export const runtime = "nodejs";
 
 // Ask the optional reviewer to check deterministic preference extraction.
 export async function POST(request: Request) {
-  const modelVersion = process.env.AI_REVIEW_MODEL_VERSION?.trim() || "qwen3-4b-instruct-2507-hf-router-v1";
+  const modelVersion = process.env.AI_REVIEW_MODEL_VERSION?.trim() || "qwen3-0.6b-g2-q4f16-v1";
   const policyVersion = process.env.AI_REVIEW_POLICY_VERSION?.trim() || "serinea-review-v1";
   let body: unknown;
   try {
@@ -26,15 +26,17 @@ export async function POST(request: Request) {
   const deterministic = extractRecommendation(parsed.data.message);
   try {
     const databaseUrl = process.env.DATABASE_URL?.trim();
-    const hfToken = process.env.HF_TOKEN?.trim();
-    if (!databaseUrl || !hfToken) throw new Error("AI review is not configured.");
-    const timeout = Number(process.env.AI_REVIEW_TIMEOUT_MS || 8000);
+    const endpointUrl = process.env.HF_ENDPOINT_URL?.trim();
+    const endpointToken = process.env.HF_ENDPOINT_TOKEN?.trim() || process.env.HF_TOKEN?.trim();
+    if (!databaseUrl || !endpointUrl || !endpointToken) throw new Error("AI review is not configured.");
+    const timeout = Number(process.env.AI_REVIEW_TIMEOUT_MS || 60000);
     const service = new AiReviewService({
       repository: new PostgresAiReviewCacheRepository(PostgresDatabase.getInstance(databaseUrl)),
-      provider: new HuggingFaceAiReviewProvider({
-        token: hfToken,
-        model: process.env.HF_MODEL?.trim() || "Qwen/Qwen3-4B-Instruct-2507",
-        timeoutMs: Number.isFinite(timeout) ? timeout : 8000
+      provider: new HuggingFaceEndpointAiReviewProvider({
+        endpointUrl,
+        token: endpointToken,
+        timeoutMs: Number.isFinite(timeout) ? timeout : 60000,
+        policyVersion
       }),
       modelVersion, policyVersion
     });

@@ -10,11 +10,11 @@ SERINEA keeps catalogue extraction and ranking deterministic. The optional cloud
 | --- | --- |
 | `extractRecommendation` | Deterministically extracts supported catalogue preferences and unsupported requests from the user message. |
 | `POST /api/ai/review` | Validates a review request, runs the deterministic extractor and invokes the optional reviewer. |
-| `HuggingFaceAiReviewProvider` | Calls the configured Hugging Face provider using server-side credentials. |
+| `HuggingFaceEndpointAiReviewProvider` | Calls a private Hugging Face Endpoint from the server and keeps its token out of browser code. |
 | `AiReviewService` | Creates cache keys, compares reviewer output with deterministic output and reports `cache`, `inference` or `fallback`. |
 | `PostgresAiReviewCacheRepository` | Stores successful, validated review results in RDS. |
 
-The configured provider model is `Qwen/Qwen3-4B-Instruct-2507` through `HF_MODEL`. It requires `HF_TOKEN` and `DATABASE_URL`. If either configuration is absent, the provider times out, or its structured response is invalid, the endpoint returns `source: "fallback"` and keeps the deterministic result active.
+The configured review model is SERINEA Qwen3-0.6B G2 q4f16, served by the private Hugging Face Endpoint `serinea-qwen3-06b`. The Hub repository URL is not itself an inference API: the endpoint uses the repository's custom `handler.py`, which runs the ONNX model through ONNX Runtime. The application requires `HF_ENDPOINT_URL`, a server-only endpoint token, and `DATABASE_URL`. If configuration is absent, the provider times out, or its structured response is invalid, the route returns `source: "fallback"` and keeps the deterministic result active. See [AI Model Training and Runtime Summary](AI_MODEL_TRAINING_SUMMARY.md).
 
 ## Review workflow
 
@@ -24,7 +24,7 @@ sequenceDiagram
   participant D as Deterministic extractor
   participant A as /api/ai/review
   participant C as RDS cache
-  participant Q as Hugging Face Qwen
+  participant Q as Hugging Face Endpoint
   B->>A: Message (1-2000 characters)
   A->>D: Extract supported preferences
   A->>C: Look up SHA-256 cache key
@@ -32,7 +32,7 @@ sequenceDiagram
     C-->>A: Validated review result
     A-->>B: source = cache
   else Cache miss
-    A->>Q: Structured review request
+    A->>Q: Authenticated custom-handler request
     Q-->>A: Candidate structured result
     A->>C: Save validated success
     A-->>B: source = inference
@@ -47,11 +47,9 @@ The cache key is a SHA-256 hash of the normalized message, deterministic extract
 
 The reviewer receives the user request together with the deterministic catalogue result. Its allowed task is to assess supported preference targets and importance. It must not invent facilities, financial eligibility, factual locality claims, or a new ranking. The server validates reviewer output with the shared AI-review schema before it can be cached.
 
-The exact system prompt sent by `HuggingFaceAiReviewProvider` is:
+After deployment, the backend sends the user message, deterministic extraction and policy version to the endpoint's custom handler. The endpoint owns the model prompt and canonicalisation. The required API response is validated against the shared `preferences` and `unsupported` schema before it can be cached.
 
-> Understand the user's request and produce the best supported catalogue preferences. Return JSON only with preferences [{target, importance}] and unsupported [string]. Importance must be very_high, high, medium, low or very_low. Use only supported targets present in the catalogue; remove negated requirements and correct deterministic extraction when the user's meaning is clear.
-
-The PostgreSQL cache is best-effort. A cache read or write failure no longer prevents a valid Hugging Face request; inference continues and returns `source: inference`, while provider/configuration/schema failures still return the deterministic fallback.
+The PostgreSQL cache is best-effort. A cache read or write failure no longer prevents a valid Qwen API request; inference continues and returns `source: inference`, while provider/configuration/schema failures still return the deterministic fallback.
 
 ## Ranking boundary
 
