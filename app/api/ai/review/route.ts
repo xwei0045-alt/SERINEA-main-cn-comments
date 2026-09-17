@@ -30,12 +30,14 @@ export async function POST(request: Request) {
     const endpointToken = process.env.HF_ENDPOINT_TOKEN?.trim() || process.env.HF_TOKEN?.trim();
     if (!databaseUrl || !endpointUrl || !endpointToken) throw new Error("AI review is not configured.");
     const timeout = Number(process.env.AI_REVIEW_TIMEOUT_MS || 60000);
+    const coldStartTimeout = Number(process.env.AI_REVIEW_COLD_START_TIMEOUT_MS || 180000);
     const service = new AiReviewService({
       repository: new PostgresAiReviewCacheRepository(PostgresDatabase.getInstance(databaseUrl)),
       provider: new HuggingFaceEndpointAiReviewProvider({
         endpointUrl,
         token: endpointToken,
         timeoutMs: Number.isFinite(timeout) ? timeout : 60000,
+        coldStartTimeoutMs: Number.isFinite(coldStartTimeout) ? coldStartTimeout : 180000,
         policyVersion
       }),
       modelVersion, policyVersion

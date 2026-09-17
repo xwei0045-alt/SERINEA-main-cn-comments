@@ -47,7 +47,7 @@ function responseFor(result: AiReviewResult, deterministic: RecommendationExtrac
     agreed,
     summary: agreed
       ? `Cloud Qwen review agreed with the catalogue extraction (${source}).`
-      : "Cloud Qwen review differed, so the website kept the deterministic extraction for confirmation.",
+      : "Cloud Qwen review refined the extracted preferences. Please confirm them before ranking.",
     source, modelVersion, policyVersion,
     preferences: result.preferences,
     unsupported: result.unsupported

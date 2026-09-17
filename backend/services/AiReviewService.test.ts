@@ -57,3 +57,16 @@ test("cache read failures do not block inference", async () => {
   assert.equal(response.source, "inference");
   assert.equal(providerCalls, 1);
 });
+
+test("a differing Qwen review tells the user that its refined preferences are shown", async () => {
+  const service = new AiReviewService({
+    repository: new MemoryRepository(),
+    modelVersion: "qwen-v1",
+    policyVersion: "policy-v1",
+    provider: { review: async () => ({ preferences: [{ target: "library", importance: "high" }], unsupported: [] }) }
+  });
+
+  const response = await service.review("I need a pharmacy", extractRecommendation("I need a pharmacy"));
+  assert.equal(response.agreed, false);
+  assert.match(response.summary, /refined the extracted preferences/);
+});

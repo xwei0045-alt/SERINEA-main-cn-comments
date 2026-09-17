@@ -24,6 +24,7 @@ test("Hugging Face endpoint receives the authenticated deterministic review cont
       endpointUrl: "https://serinea.example.endpoints.huggingface.cloud/",
       token: "test-token",
       timeoutMs: 1_000,
+      coldStartTimeoutMs: 1_000,
       policyVersion: "serinea-review-v1"
     }).review("A library is essential.", extraction);
 
@@ -34,6 +35,33 @@ test("Hugging Face endpoint receives the authenticated deterministic review cont
       policyVersion: "serinea-review-v1"
     } });
     assert.deepEqual(result.preferences, [{ target: "library", importance: "high" }]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("Hugging Face endpoint waits through a scale-to-zero startup response", async () => {
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  globalThis.fetch = async () => {
+    attempts += 1;
+    if (attempts === 1) return new Response("starting", { status: 502 });
+    return new Response(JSON.stringify({ preferences: [], unsupported: [] }), {
+      status: 200, headers: { "Content-Type": "application/json" }
+    });
+  };
+
+  try {
+    const result = await new HuggingFaceEndpointAiReviewProvider({
+      endpointUrl: "https://serinea.example.endpoints.huggingface.cloud",
+      token: "test-token",
+      timeoutMs: 1_000,
+      coldStartTimeoutMs: 1_000,
+      retryDelayMs: 0,
+      policyVersion: "serinea-review-v1"
+    }).review("Hello", extractRecommendation("Hello"));
+    assert.equal(attempts, 2);
+    assert.deepEqual(result, { preferences: [], unsupported: [] });
   } finally {
     globalThis.fetch = originalFetch;
   }
