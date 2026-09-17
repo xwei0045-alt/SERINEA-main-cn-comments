@@ -36,9 +36,11 @@ Deterministic eligibility-condition screening
 Separate Potential Incentive / Possible Match / More Information Needed signal
 ```
 
-Qwen3-0.6B is an optional browser-side review. It never produces or changes a
-town ranking. A disagreement, download failure, or lack of WebGPU leaves the
-deterministic extraction active.
+SERINEA Qwen3-0.6B G2 q4f16 is an optional server-side review, served by the
+private Hugging Face Endpoint `serinea-qwen3-06b`. It can refine validated
+facility preferences for user confirmation, but it never produces or changes a
+town ranking. If the Endpoint is unavailable, deterministic extraction remains
+active.
 
 The deployment data path remains PostgreSQL/RDS. Local development can set
 `REACH_DATA_SOURCE=csv` and use the two supplied Iteration 1 CSV files through
@@ -80,19 +82,22 @@ Proxy counts describe existing POI rows and are not added again to category or
 total POI counts. The response includes `evidenceMethod` and a user-visible
 warning for each name proxy.
 
-## 4. Browser model integration
+## 4. Current Qwen Endpoint integration
 
-- Model: `onnx-community/Qwen3-0.6B-ONNX`
-- Runtime: `@huggingface/transformers` 3.8.1
-- Device: WebGPU
+- Model: SERINEA Qwen3-0.6B G2
+- Runtime: private Hugging Face Endpoint custom `handler.py` with ONNX Runtime
+- Device: dedicated AWS CPU instance (2 vCPU / 4 GB)
 - Quantisation: `q4f16`
-- First model download: approximately 657 MB, then browser-cached
-- External LLM API: none
+- Endpoint model version: `qwen3-0.6b-g2-q4f16-hf-endpoint-v1`
+- API: server-side `POST /api/ai/review` using `HF_ENDPOINT_URL` and a server-only token
 
-The runtime is loaded only after the user enables **Local Qwen review**. The
-model receives the message and deterministic catalogue matches, then returns a
-small JSON review. Its output is compared with the deterministic extraction.
-It cannot write preferences, scores, town names, or ranking results.
+The endpoint receives the message and deterministic catalogue matches, then
+returns a small JSON review. The browser calls the review only when the user
+enables **Cloud Qwen review**. A valid differing review is displayed as the
+refined preference set for confirmation; it cannot write scores, town names or
+ranking results. Cold-start responses (502/503/504) are retried server-side for
+up to three minutes. The Endpoint currently remains warm for two hours after
+its last request before it can scale to zero.
 
 No fine-tuning was performed during website integration. Earlier frozen Tiny
 evidence showed high preference-target recall but insufficient complete-field
@@ -249,9 +254,9 @@ It is outside the Assistant integration and did not fail the build.
 - About five ranked town cards from the authoritative Compare service.
 - Per-town verified record counts and name-proxy warnings.
 - Keep/remove town controls and Map links.
-- Optional local Qwen review with WebGPU capability detection.
-- Deterministic fallback when Qwen is disabled, unavailable, or disagrees.
-- Local CSV mode and production RDS mode.
+- Optional private Qwen3-0.6B G2 Endpoint review.
+- Deterministic fallback when Qwen is disabled or unavailable; valid Qwen refinements require user confirmation.
+- Production RDS mode; CSV is retained only for isolated tests.
 - Broad Compare categories with expandable, dataset-backed specific types.
 - Parent/child replacement rules that prevent duplicate category weighting.
 
@@ -265,8 +270,9 @@ It is outside the Assistant integration and did not fail the build.
 2. The application database role must have `SELECT` permission on
    `public.subsidies`. Verify that permission and run the same Assistant request
    against the deployed database before merging to `main`.
-3. The browser model needs WebGPU and a large first download. The deterministic
-   system remains fully usable without it.
+3. The private Endpoint can cold-start after its two-hour idle period. The
+   backend retries startup responses for up to three minutes; the deterministic
+   system remains fully usable if it is unavailable.
 4. Name-based primary-school and gym coverage is incomplete by design. The UI
    states this wherever those targets are used.
 5. The current parser evaluation covers the frozen 67 English cases. Collect
@@ -280,8 +286,9 @@ REACH_DATA_SOURCE=database
 DATABASE_URL=postgresql://...
 ```
 
-Do not add a server-side LLM key. The optional Tiny model is downloaded and run
-inside the user's browser.
+Configure `HF_ENDPOINT_URL` and a server-only `HF_ENDPOINT_TOKEN` (or
+`HF_TOKEN`) on the server. Never expose either token to the browser or use the
+Hub repository URL as an inference API.
 
 ## 9. Combined lifestyle and incentive integration — 12 September 2026
 
@@ -314,11 +321,9 @@ area retrieval replaces embedding RAG for this synthetic dataset. A future RAG
 layer is reserved for retrieving real policy text and citations; it may not
 rank towns or make eligibility decisions.
 
-Qwen3-4B and Qwen3-0.6B are not weight-compatible stages. No 4B weights were
-transferred to Tiny. The frozen 4B notebook remains the evaluated reference;
-browser Tiny remains an optional extraction review. Distillation or LoRA on
-Tiny would require a labelled training dataset and a new frozen evaluation, so
-it was not claimed or performed here.
+Qwen3-4B is a historical notebook reference only; it is not the deployed
+website model. The active model is the trained Qwen3-0.6B G2 q4f16 Endpoint.
+No 4B weights were transferred into the active model artifact.
 
 ### Matching changes from the first notebook
 

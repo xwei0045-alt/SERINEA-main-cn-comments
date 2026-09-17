@@ -295,9 +295,10 @@ The model must not override deterministic ranking, create policy facts, or make 
 
 This document describes Xiaotang's trained `Qwen3-0.6B` LoRA/G2 model artifact.
 
-If the production backend is configured to call a separate cloud model through `HF_MODEL`, that cloud model must be documented separately.
-
-The project should not claim that the deployed website uses the G2 `Qwen3-0.6B` package until the deployed backend or browser configuration has been verified.
+The production backend has been verified to call this G2 artifact through the
+private Hugging Face Endpoint `serinea-qwen3-06b`; it does not use `HF_MODEL`
+or the general Hugging Face Inference Provider. The deployed model version is
+`qwen3-0.6b-g2-q4f16-hf-endpoint-v1`.
 
 ## 14. Supporting Artefacts
 
@@ -318,4 +319,7 @@ On 17 September 2026, the G2 `q4f16` package was deployed as the private Hugging
 - The deployed model version identifier is `qwen3-0.6b-g2-q4f16-hf-endpoint-v1`.
 - The deterministic extractor and ranking engine remain authoritative. The endpoint can review preference extraction but cannot alter town ranking or incentive eligibility.
 
-The endpoint uses scale-to-zero after 15 minutes of inactivity. Its URL is configured only through `HF_ENDPOINT_URL`; never use the model repository URL as an API URL or expose the endpoint token to browser code.
+The Endpoint scales to zero after two hours of inactivity. During a cold start,
+the backend retries 502/503/504 responses for up to three minutes. Its URL is
+configured only through `HF_ENDPOINT_URL`; never use the model repository URL
+as an API URL or expose the endpoint token to browser code.

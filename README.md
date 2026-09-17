@@ -64,7 +64,7 @@ npm test
 | `/map` | Pin, estimated walking reach and nearby POIs; no street-path overlay in the current UI |
 | `/compare` | Town comparison using supported POI facility records, not all aspects of liveability |
 | `/incentives` | Synthetic subsidy screening; job input is present but occupation matching is not supported by current records |
-| `/ai-assistant` | English free-text extraction for supported facilities and backend-ranked town suggestions; optional Cloud Qwen review |
+| `/ai-assistant` | English free-text extraction for supported facilities and backend-ranked town suggestions; optional private Qwen3-0.6B G2 Endpoint review |
 | `/api/reach` | Nearby POIs within the one-way walking window |
 | `/api/localities` | Searchable locality/LGA summaries |
 | `/api/health` | Repository and database readiness |
@@ -106,7 +106,7 @@ SERINEA/
 - **Fixed 15-minute window.** A place fits when the estimated walk **from the pin** is no more than 15 minutes; return time is not included.
 - **Incomplete route guidance.** A street-path backend endpoint exists, but the current map does not display its path; a real walk may take longer than the estimate.
 - **Prototype incentives.** Subsidy records are synthetic, not official government programs or eligibility decisions. Occupation-based matching is not available yet.
-- **Limited recommendation evidence.** Ranking uses supported POI facilities, not safety, housing cost, internet quality or other unverified requests. Cloud Qwen review is optional and off by default; facility ranking and incentive screening remain backend rule-based.
+- **Limited recommendation evidence.** Ranking uses supported POI facilities, not safety, housing cost, internet quality or other unverified requests. The optional private Qwen3-0.6B G2 Endpoint can refine validated preferences, while facility ranking and incentive screening remain backend rule-based.
 
 See [`docs/BACKEND.md`](docs/BACKEND.md) for integration points and [`docs/DATASET.md`](docs/DATASET.md) for data limitations.
 

@@ -4,19 +4,24 @@
 
 `POST /api/ai/review` accepts only `{ "message": "..." }`. The route repeats
 the deterministic catalogue extraction on the server, then asks the private
-Hugging Face Inference Providers to review it. The review can report
-agreement, but it cannot replace deterministic preferences or town ranking.
+Hugging Face Endpoint `serinea-qwen3-06b` to review it. The endpoint serves
+SERINEA Qwen3-0.6B G2 q4f16 through its custom ONNX Runtime handler. A valid
+review may refine the displayed preference set; the user can confirm or edit
+those preferences before the deterministic ranking request is made. The model
+never owns the ranking formula or incentive eligibility.
 
 Successful reviews are stored in PostgreSQL `ai_review_cache`. The SHA-256 key
 contains the whitespace-normalised message, deterministic extraction, model
 version and policy version. Changing either version invalidates old entries.
 Provider failures and invalid model output are not cached; the API returns
-`source: "fallback"` and keeps the deterministic result active.
+`source: "fallback"` and keeps the deterministic result active. When a
+scaled-to-zero Endpoint is starting, the provider retries HTTP 502, 503 and
+504 responses for up to three minutes before falling back.
 
 The server sends `message` and the deterministic extraction to the Hugging Face
-Router. Keep `HF_TOKEN` server-side and never expose it to the browser. The
-configured model must be a Router-supported chat model (the custom
-`serinea-qwen3-browser-model` ONNX repository is not one). The model must return:
+Endpoint. Keep `HF_ENDPOINT_TOKEN` (or the backwards-compatible `HF_TOKEN`)
+server-side and never expose it to the browser. `HF_ENDPOINT_URL` must point to
+the deployed Endpoint, not the Hub repository URL. The model must return:
 
 ```json
 {
@@ -25,10 +30,9 @@ configured model must be a Router-supported chat model (the custom
 }
 ```
 
-It should bind to localhost, load Qwen once before reporting ready, and reuse
-that loaded model for every request. Before enabling it on EC2, record cold
-start time, steady-state RSS, p50/p95 latency and timeout rate on the actual
-instance. Run `npm run db:migrate` before enabling the endpoint.
+The private Endpoint loads Qwen once per running replica and reuses it for each
+request. Its automatic scale-to-zero delay is configured in Hugging Face; it is
+currently two hours after the last request.
 
 **Branch:** `feature/ai-assistant`
 
