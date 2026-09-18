@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { extractRecommendation } from "@/lib/recommendationAssistant";
 import { aiReviewRequestSchema } from "@/shared/contracts/aiReview";
-import { PostgresDatabase } from "@/backend/database/PostgresDatabase";
-import { PostgresAiReviewCacheRepository } from "@/backend/repositories/PostgresAiReviewCacheRepository";
 import { AiReviewService } from "@/backend/services/AiReviewService";
 import { HuggingFaceEndpointAiReviewProvider } from "@/backend/services/HuggingFaceEndpointAiReviewProvider";
 
@@ -25,14 +23,12 @@ export async function POST(request: Request) {
   }
   const deterministic = extractRecommendation(parsed.data.message);
   try {
-    const databaseUrl = process.env.DATABASE_URL?.trim();
     const endpointUrl = process.env.HF_ENDPOINT_URL?.trim();
     const endpointToken = process.env.HF_ENDPOINT_TOKEN?.trim() || process.env.HF_TOKEN?.trim();
-    if (!databaseUrl || !endpointUrl || !endpointToken) throw new Error("AI review is not configured.");
+    if (!endpointUrl || !endpointToken) throw new Error("AI review is not configured.");
     const timeout = Number(process.env.AI_REVIEW_TIMEOUT_MS || 60000);
     const coldStartTimeout = Number(process.env.AI_REVIEW_COLD_START_TIMEOUT_MS || 180000);
     const service = new AiReviewService({
-      repository: new PostgresAiReviewCacheRepository(PostgresDatabase.getInstance(databaseUrl)),
       provider: new HuggingFaceEndpointAiReviewProvider({
         endpointUrl,
         token: endpointToken,
